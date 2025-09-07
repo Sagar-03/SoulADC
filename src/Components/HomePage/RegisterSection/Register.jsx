@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useRef } from "react";
 import "./registersection.css"; // Import external CSS file
-import video from '../../../assets/video.mp4';
+import video from "../../../assets/video.mp4";
 
 // Background Decoration Component
 const BackgroundDecorations = () => {
@@ -20,6 +20,35 @@ const BackgroundDecorations = () => {
   );
 };
 
+// Video Player with Unmute Button
+const VideoPlayer = () => {
+  const videoRef = useRef(null);
+
+  const handleUnmute = () => {
+    if (videoRef.current) {
+      videoRef.current.muted = false;
+      videoRef.current.play();
+    }
+  };
+
+  return (
+    <div className="video-frame">
+      <video
+        ref={videoRef}
+        src={video}
+        autoPlay
+        loop
+        // muted
+        playsInline
+        className="video-main"
+      ></video>
+      {/* <button onClick={handleUnmute} className="unmute-btn">
+        🔊 Unmute
+      </button> */}
+    </div>
+  );
+};
+
 // Main Registration Form Component
 const RegisterSection = () => {
   return (
@@ -27,29 +56,42 @@ const RegisterSection = () => {
       <BackgroundDecorations />
       <main className="register-container">
         <div className="grid-layout">
-
           {/* Left Side: Form */}
           <div className="form-column">
-            {/* Header Section */}
             <div className="form-header">
               <h2 className="form-title">Ace Your Dental Exam</h2>
-              <p className="form-subtitle">Master dental studies with our comprehensive learning platform. Join thousands of successful students today.</p>
+              <p className="form-subtitle">
+                Master dental studies with our comprehensive learning platform.
+                Join thousands of successful students today.
+              </p>
             </div>
 
             <div className="form-inputs">
               <div className="input-wrapper">
                 <i className="fas fa-user input-icon"></i>
-                <input type="text" placeholder="Username" className="form-control" />
+                <input
+                  type="text"
+                  placeholder="Username"
+                  className="form-control"
+                />
               </div>
 
               <div className="input-wrapper">
                 <i className="fas fa-lock input-icon"></i>
-                <input type="password" placeholder="Password" className="form-control" />
+                <input
+                  type="password"
+                  placeholder="Password"
+                  className="form-control"
+                />
               </div>
 
               <div className="input-wrapper">
                 <i className="fas fa-envelope input-icon"></i>
-                <input type="email" placeholder="E-mail" className="form-control" />
+                <input
+                  type="email"
+                  placeholder="E-mail"
+                  className="form-control"
+                />
               </div>
             </div>
 
@@ -63,16 +105,7 @@ const RegisterSection = () => {
 
           {/* Right Side: Video instead of Image */}
           <div className="image-column">
-            <div className="video-frame">
-              <video
-                src={video}   // put your mp4 file inside public/videos/
-                autoPlay
-                loop
-                
-                playsInline
-                className="video-main"
-              ></video>
-            </div>
+            <VideoPlayer />
           </div>
         </div>
       </main>
