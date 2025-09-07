@@ -1,0 +1,38 @@
+.about-section {
+  background-color: #ffffff;
+}
+
+.about-title {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #8b4513; /* brown */
+}
+
+.about-subtitle {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #8b4513; /* brown */
+}
+
+.about-text {
+  font-size: 1rem;
+  color: #333333;
+  line-height: 1.6;
+}
+
+.yellow-bg {
+  position: absolute;
+  right: 15%;
+  top: 10%;
+  width: 250px;
+  height: 250px;
+  background-color: #ffcc00; /* yellow shade */
+  border-radius: 20% 80% 70% 30% / 40% 30% 70% 60%; /* organic shape */
+  z-index: -1;
+}
+
+.about-img {
+  max-width: 300px;
+  position: relative;
+  z-index: 1;
+}
