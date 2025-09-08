@@ -1,40 +1,15 @@
-.nav-link {
-  color: #8B5E3C !important;  /* brown text matching register section */
-  font-weight: 700;
-  font-size: 20px;
-  transition: color 0.3s ease;
-}
-
-.nav-link:hover {
-  color: #6B4228 !important;  /* darker brown on hover */
-}
-
-.btn-signin {
-  background-color: #8B5E3C;
-  color: #fff;
-  border-radius: 25px;
-  padding: 8px 24px;
-  text-decoration: none;
-  border: none;
-  transition: all 0.3s ease;
-  font-weight: 500;
-}
-
-.btn-signin:hover {
-  background-color: #6B4228;
-  color: #fff;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(139, 94, 60, 0.3);
-}
-
-/* Enhanced navbar styling */
+/* -------------------- Navbar -------------------- */
 .navbar {
   background-color: #ffffff !important;
   box-shadow: 0 2px 10px rgba(139, 94, 60, 0.1);
-  padding: 0.8rem 0;
+  padding: 0.8rem 2rem;
+  border-radius: 8px;
 }
 
+/* Logo Left */
 .navbar-brand img {
+  height: 70px;   /* larger logo */
+  width: auto;
   transition: transform 0.3s ease;
 }
 
@@ -42,10 +17,58 @@
   transform: scale(1.05);
 }
 
-.navbar-nav .nav-item {
-  margin: 0 0.5rem;
+/* Nav Links Center */
+.nav-link {
+  color: #6d6a6a !important;
+  font-weight: 500;
+  font-size: 16px;
+  transition: color 0.3s ease;
 }
 
+.nav-link:hover {
+  color: #6B4228 !important;
+}
+
+.navbar-nav .nav-item {
+  margin: 0 0.7rem;
+}
+
+/* -------------------- Buttons Right -------------------- */
+
+/* Login (outlined) */
+.btn-login {
+  background-color: #ffffff;
+  color: #333;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 6px 20px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.btn-login:hover {
+  background-color: #f8f8f8;
+  border-color: #aaa;
+}
+
+/* Enroll Now (filled brown) */
+.btn-enroll {
+  background-color: #8B5E3C;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 20px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-enroll:hover {
+  background-color: #6B4228;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(139, 94, 60, 0.3);
+}
+
+/* -------------------- Toggler -------------------- */
 .navbar-toggler {
   border: none;
   padding: 0.25rem 0.5rem;

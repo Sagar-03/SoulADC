@@ -1,7 +1,7 @@
-import {useState} from "react";
+import { useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
-import "./Navbar.css"; // custom styles
-import logo from "../../assets/logo.png"; // Import logo from src/assets
+import "./Navbar.css"; 
+import logo from "../../assets/logo.png"; 
 import Auth from "../../Pages/Auth";
 
 const Navbar = () => {
@@ -11,10 +11,13 @@ const Navbar = () => {
     <>
       <nav className="navbar navbar-expand-lg bg-white">
         <div className="container-fluid">
+
+          {/* Logo Left */}
           <a className="navbar-brand" href="#">
-            <img src={logo} alt="Logo" width="180" />
+            <img src={logo} alt="Logo" />
           </a>
 
+          {/* Toggler for mobile */}
           <button
             className="navbar-toggler"
             type="button"
@@ -24,38 +27,40 @@ const Navbar = () => {
             <span className="navbar-toggler-icon"></span>
           </button>
 
-          <div className="collapse navbar-collapse justify-content-end me-5" id="navbarNav">
-            <ul className="navbar-nav me-3">
+          {/* Nav links center + buttons right */}
+          <div className="collapse navbar-collapse" id="navbarNav">
+            {/* Center Nav links */}
+            <ul className="navbar-nav mx-auto">
               <li className="nav-item mx-3">
                 <a className="nav-link" href="#home">Home</a>
               </li>
               <li className="nav-item mx-3">
-                <a className="nav-link" href="#about">About us</a>
+                <a className="nav-link" href="#about">About</a>
               </li>
               <li className="nav-item mx-3">
-                <a className="nav-link" href="#courses">Courses</a>
+                <a className="nav-link" href="#courses">Course</a>
               </li>
               <li className="nav-item mx-3">
-                <a className="nav-link" href="#contact">Contact us</a>
+                <a className="nav-link" href="#mentors">Mentors</a>
+              </li>
+              <li className="nav-item mx-3">
+                <a className="nav-link" href="#contact">Contact</a>
               </li>
             </ul>
-            <button 
-              onClick={() => setShowAuth(true)} 
-              className="btn btn-signin"
-              type="button"
-              aria-label="Sign in"
-            >
-              Sign in
-            </button>
+
+            {/* Buttons Right */}
+            <div className="d-flex">
+              <button className="btn btn-login me-2">Login</button>
+              <button className="btn btn-enroll">Enroll Now</button>
+            </div>
           </div>
         </div>
       </nav>
 
-      {/* Auth popup here */}
+      {/* Auth popup */}
       <Auth isOpen={showAuth} onClose={() => setShowAuth(false)} />
     </>
   );
 };
-
 
 export default Navbar;

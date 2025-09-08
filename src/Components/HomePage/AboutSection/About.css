@@ -1,38 +1,107 @@
-.about-section {
-  background-color: #ffffff;
+/* --- Global Styles --- */
+body {
+    background-color: #FBF9F6;
+    font-family: 'Poppins', sans-serif;
 }
 
-.about-title {
-  font-size: 3rem;
-  font-weight: bold;
-  color: #8b4513; /* brown */
+/* --- Mission Section Styles --- */
+.mission-section {
+    padding: 80px 0;
+    text-align: center;
 }
 
-.about-subtitle {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #8b4513; /* brown */
-  justify-content: center;;
+/* --- Top Button --- */
+.btn-mission {
+    background-color: #EFEBE5;
+    border: 1px solid #DCD8D2;
+    border-radius: 50px;
+    padding: 8px 20px;
+    color: #706354;
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin-bottom: 24px;
+    transition: all 0.3s ease;
 }
 
-.about-text {
-  font-size: 1rem;
-  color: #333333;
-  line-height: 1.6;
+.btn-mission:hover {
+    background-color: #dcd8d2;
+    border-color: #c9c4be;
 }
 
-.yellow-bg {
-  position: absolute;
-  right: 15%;
-  top: 10%;
-  max-width: 100%;
-  background-color: #ffcc00; /* yellow shade */
-  border-radius: 20% 80% 70% 30% / 40% 30% 70% 60%; /* organic shape */
-  z-index: -1;
+/* --- Headings and Text --- */
+.main-heading {
+    font-family: 'Lora', serif;
+    font-weight: 600;
+    color: #4B4237;
+    font-size: 2.8rem;
+    margin-bottom: 24px;
 }
 
-.about-img {
-  max-width: 80%;
-  position: relative;
-  z-index: 1;
+/* Updated highlight color to match the image */
+.main-heading .highlight {
+    color: #7F543C; 
+}
+
+/* Updated sub-heading color to match the image */
+.sub-heading {
+    max-width: 800px;
+    margin: 0 auto 50px auto;
+    color: #4B4237; 
+    font-size: 1.1rem;
+    line-height: 1.7;
+}
+
+/* --- Feature Cards --- */
+.feature-card {
+    background-color: #fff;
+    border: 1px solid #F3F0EC;
+    border-radius: 16px;
+    padding: 15px 20px;
+    width: 100%;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    text-align: center;
+}
+
+.feature-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.07);
+}
+
+/* Added a gradient background to the icon container */
+.icon-container {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(145deg, #A98C6A, #7B563D);
+    border-radius: 12px;
+    margin: 0 auto 25px auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+}
+
+.feature-card h3 {
+    font-family: 'Lora', serif;
+    font-weight: 700;
+    color: #4B4237;
+    font-size: 1rem;
+    margin-bottom: 15px;
+}
+
+.feature-card p {
+    color: #706354;
+    font-weight: 400;
+    font-size: 0.95rem;
+}
+
+/* --- Responsive Adjustments --- */
+@media (max-width: 768px) {
+    .main-heading {
+        font-size: 2.2rem;
+    }
+    .sub-heading {
+        font-size: 1rem;
+    }
 }

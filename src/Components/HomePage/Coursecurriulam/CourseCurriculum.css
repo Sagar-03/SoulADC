@@ -1,0 +1,69 @@
+body {
+  background-color: #fcfcfc;
+}
+
+.curriculum-container {
+  font-family: 'Inter', sans-serif;
+  color: #495057;
+}
+
+.curriculum-title {
+  color: #3a3a3a;
+  font-weight: 700;
+}
+
+.curriculum-card {
+  background-color: #ffffff;
+  border: 1px solid #f0f0f0;
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+  padding: 1.5rem 2rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.curriculum-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+}
+
+.week-badge {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #b99d95, #a1887f);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1rem;
+  margin-right: 1.5rem;
+  flex-shrink: 0;
+}
+
+.card-title-section {
+  color: #343a40;
+  font-weight: 600;
+  font-size: 1.25rem;
+}
+
+.card-subtitle-section {
+  font-size: 0.85rem;
+  color: #6c757d;
+  margin-bottom: 0;
+}
+
+.subjects-grid {
+  margin-top: 1.5rem;
+}
+
+.subject-item {
+  color: #495057;
+  display: flex;
+  align-items: center;
+}
+
+.subject-item svg {
+  color: #a1887f;
+}

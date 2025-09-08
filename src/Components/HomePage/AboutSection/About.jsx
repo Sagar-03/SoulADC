@@ -1,40 +1,60 @@
-import React from "react";
-import "bootstrap/dist/css/bootstrap.min.css";
-import "./About.css";
-import studentImg from "../../../assets/Student.png"; // replace with your image path
+import React from 'react';
+import './About.css'; // This line imports the stylesheet
 
-const AboutUs = () => {
-  return (
-    <section className="about-section container py-5">
-      {/* Center Heading */}
-      <h2 className="about-title text-center mb-5">About Us</h2>
+const About = () => {
+  // Card data to avoid repetition in JSX
+ const features = [
+    {
+      icon: 'fa-solid fa-user-doctor',
+      title: 'Expert Mentorship',
+      description: 'Learn from ADC-qualified professionals who understand the examination inside out',
+    },
+    {
+      icon: 'fa-solid fa-book-open',
+      title: 'Comprehensive Curriculum',
+      description: 'Complete Part 1 ADC preparation covering all essential topics and concepts',
+    },
+    {
+      icon: 'fa-solid fa-bullseye',
+      title: 'Focused Approach',
+      description: 'Exclusively designed for Part 1 ADC with targeted 5-month intensive program',
+    },
+    {
+      icon: 'fa-solid fa-users',
+      title: 'Responsible Development',
+      description: 'Building knowledgeable and responsible future Australian dentists',
+    },
+  ];
 
-      <div class="container">
-  <div class="row align-items-center justify-content-center">
+  return (
+    <section className="mission-section">
+      <div className="container">
+        {/* Top Section: Button, Heading, and Sub-heading */}
+        <button className="btn btn-mission">About Our Mission</button>
+        <h1 className="main-heading">
+          Empowering Future <span className="highlight">Australian Dentists</span>
+        </h1>
+        <p className="sub-heading">
+          Discover expert guidance via our mentor/founder who have successfully cleared the Australian Dental Council (ADC) Examination. Gain a clear understanding of the concepts required by the ADC and master the knowledge you need to succeed in the exam.
+        </p>
 
-    <div class="col-md-5">
-      <h3 class="about-subtitle fs-2">
-        Redefining Dental Education for International Dentists
-      </h3>
-      <p class="about-text mt-3 fs-5">
-        Giving every student the opportunity to access the best education
-        and open the door to the world of knowledge.
-      </p>
-      <p class="about-text fs-5">
-        Start your learning journey today with <strong>learnADS</strong> to
-        become an outstanding student in our learning community.
-      </p>
-    </div>
-
-    <div class="col-md-6 text-center position-relative">
-      <div class="yellow-bg"></div>
-      <img src={studentImg} alt="Student" class="about-img img-fluid" />
-    </div>
-
-  </div>
-</div>
-    </section>
-  );
+        {/* Bottom Section: Feature Cards Grid */}
+        <div className="row justify-content-center">
+          {features.map((feature, index) => (
+            <div key={index} className="col-lg-3 col-md-3 mb-4 d-flex align-items-stretch">
+              <div className="feature-card">
+                <div className="icon-container">
+                  <i className={feature.icon}></i>
+                </div>
+                <h3>{feature.title}</h3>
+                <p>{feature.description}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
 };
 
-export default AboutUs;
+export default About;

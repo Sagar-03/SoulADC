@@ -1,0 +1,56 @@
+body {
+  background-color: #f8f9fa;
+  font-family: 'Inter', sans-serif;
+}
+
+/* Feature Icons */
+.feature-icon-container {
+  background: linear-gradient(145deg, #A98C6A, #7B563D);
+  color: #ffffff;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.75rem;
+  flex-shrink: 0;
+}
+
+.feature-icon-container i {
+  font-size: 1.5rem;
+}
+
+/* Section Titles */
+.section-title {
+  font-weight: 700;
+  color: #000000;
+}
+
+/* Custom Card */
+.card-custom {
+  border: none;
+  border-radius: 1.25rem;
+  box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.07) !important;
+  background-color: #faf6f0;
+  height: 100%;
+}
+
+/* Pricing Cards */
+.price-card {
+  background-color: #ffffff;
+  border: 1px solid #eae2d7;
+  border-radius: 0.75rem;
+  padding: 1rem;
+  height: 100%;
+}
+
+.price-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #343a40;
+}
+
+.price-label {
+  color: #6c757d;
+  font-size: 0.9rem;
+}
