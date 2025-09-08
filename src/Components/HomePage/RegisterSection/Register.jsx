@@ -1,6 +1,6 @@
 import React, { useRef, useState } from "react";
 import "./registersection.css"; // Import external CSS file
-import video from "../../../assets/video.mp4";
+import video from "../../../../public/video.mp4";
 
 // Background Decoration Component
 const BackgroundDecorations = () => {
@@ -23,10 +23,8 @@ const BackgroundDecorations = () => {
 // Video Player with Unmute Button
 const VideoPlayer = () => {
   const videoRef = useRef(null);
-  // State to track if the video is muted
   const [isMuted, setIsMuted] = useState(true);
 
-  // Function to toggle mute/unmute
   const toggleMute = () => {
     if (videoRef.current) {
       videoRef.current.muted = !videoRef.current.muted;
@@ -34,26 +32,27 @@ const VideoPlayer = () => {
     }
   };
 
+  return (
+    <div className="single-card">
+      <h3 className="card-title">Meet Your Mentor</h3>
+      <div className="video-container">
+        <video
+          ref={videoRef}
+          src={video}
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="video-main"
+        ></video>
+      </div>
+      <p className="card-text">
+        Learn more about periodontics with Dr. Chidambra Makker
+      </p>
 
- return (
-    <div className="video-frame">
-      <video
-        ref={videoRef}
-        src={video}
-        autoPlay
-        loop
-        muted // Start muted to allow autoplay
-        playsInline
-        className="video-main"
-      ></video>
-      
       {/* Mute/Unmute Button */}
       <button onClick={toggleMute} className="unmute-button">
-        {isMuted ? (
-          <i className="fas fa-volume-mute"></i>
-        ) : (
-          <i className="fas fa-volume-up"></i>
-        )}
+        {isMuted ? <i className="fas fa-volume-mute"></i> : <i className="fas fa-volume-up"></i>}
       </button>
     </div>
   );
@@ -66,7 +65,6 @@ const RegisterSection = () => {
       <BackgroundDecorations />
       <main className="register-container">
         <div className="grid-layout">
-          {/* Left Side: Form */}
           <div className="form-column">
             <div className="form-header">
               <h2 className="form-title">Ace Your Dental Exam</h2>
@@ -75,7 +73,6 @@ const RegisterSection = () => {
                 Join thousands of successful students today.
               </p>
             </div>
-
             <div className="form-inputs">
               <div className="input-wrapper">
                 <i className="fas fa-user input-icon"></i>
@@ -112,8 +109,6 @@ const RegisterSection = () => {
               </div>
             </button>
           </div>
-
-          {/* Right Side: Video instead of Image */}
           <div className="image-column">
             <VideoPlayer />
           </div>
