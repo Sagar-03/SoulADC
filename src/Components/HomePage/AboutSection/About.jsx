@@ -9,28 +9,30 @@ const AboutUs = () => {
       {/* Center Heading */}
       <h2 className="about-title text-center mb-5">About Us</h2>
 
-      <div className="row align-items-center">
-        {/* Left Content */}
-        <div className="col-md-6">
-          <h3 className="about-subtitle">
-            Redefining Dental Education for International Dentists
-          </h3>
-          <p className="about-text mt-3">
-            Giving every student the opportunity to access the best education
-            and open the door to the world of knowledge.
-          </p>
-          <p className="about-text">
-            Start your learning journey today with <strong>learnADS</strong> to
-            become an outstanding student in our learning community.
-          </p>
-        </div>
+      <div class="container">
+  <div class="row align-items-center justify-content-center">
 
-        {/* Right Image */}
-        <div className="col-md-6 text-center position-relative">
-          <div className="yellow-bg"></div>
-          <img src={studentImg} alt="Student" className="about-img img-fluid" />
-        </div>
-      </div>
+    <div class="col-md-5">
+      <h3 class="about-subtitle fs-2">
+        Redefining Dental Education for International Dentists
+      </h3>
+      <p class="about-text mt-3 fs-5">
+        Giving every student the opportunity to access the best education
+        and open the door to the world of knowledge.
+      </p>
+      <p class="about-text fs-5">
+        Start your learning journey today with <strong>learnADS</strong> to
+        become an outstanding student in our learning community.
+      </p>
+    </div>
+
+    <div class="col-md-6 text-center position-relative">
+      <div class="yellow-bg"></div>
+      <img src={studentImg} alt="Student" class="about-img img-fluid" />
+    </div>
+
+  </div>
+</div>
     </section>
   );
 };

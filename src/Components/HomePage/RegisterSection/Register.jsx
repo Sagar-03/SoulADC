@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import "./registersection.css"; // Import external CSS file
 import video from "../../../assets/video.mp4";
 
@@ -23,28 +23,38 @@ const BackgroundDecorations = () => {
 // Video Player with Unmute Button
 const VideoPlayer = () => {
   const videoRef = useRef(null);
+  // State to track if the video is muted
+  const [isMuted, setIsMuted] = useState(true);
 
-  const handleUnmute = () => {
+  // Function to toggle mute/unmute
+  const toggleMute = () => {
     if (videoRef.current) {
-      videoRef.current.muted = false;
-      videoRef.current.play();
+      videoRef.current.muted = !videoRef.current.muted;
+      setIsMuted(!isMuted);
     }
   };
 
-  return (
+
+ return (
     <div className="video-frame">
       <video
         ref={videoRef}
         src={video}
         autoPlay
         loop
-        // muted
+        muted // Start muted to allow autoplay
         playsInline
         className="video-main"
       ></video>
-      {/* <button onClick={handleUnmute} className="unmute-btn">
-        🔊 Unmute
-      </button> */}
+      
+      {/* Mute/Unmute Button */}
+      <button onClick={toggleMute} className="unmute-button">
+        {isMuted ? (
+          <i className="fas fa-volume-mute"></i>
+        ) : (
+          <i className="fas fa-volume-up"></i>
+        )}
+      </button>
     </div>
   );
 };

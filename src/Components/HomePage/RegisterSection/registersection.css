@@ -97,6 +97,45 @@
   margin: 0 auto;
 }
 
+/* Add this to your registersection.css file */
+
+.video-frame {
+  position: relative; /* Required to position the button inside */
+  width: 100%;
+  height: 100%;
+  overflow: hidden; /* Ensures corners are rounded if you add border-radius */
+  border-radius: 12px;
+}
+
+.video-main {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.unmute-button {
+  position: absolute;
+  bottom: 15px;
+  right: 15px;
+  background-color: rgba(0, 0, 0, 0.5);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.3s ease;
+  z-index: 10;
+}
+
+.unmute-button:hover {
+  background-color: rgba(0, 0, 0, 0.8);
+}
+
 /* Form Header Styling */
 .form-header {
   margin-bottom: 3.5rem;

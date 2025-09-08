@@ -3,7 +3,7 @@
 }
 
 .about-title {
-  font-size: 2rem;
+  font-size: 3rem;
   font-weight: bold;
   color: #8b4513; /* brown */
 }
@@ -12,6 +12,7 @@
   font-size: 1.5rem;
   font-weight: 600;
   color: #8b4513; /* brown */
+  justify-content: center;;
 }
 
 .about-text {
@@ -24,15 +25,14 @@
   position: absolute;
   right: 15%;
   top: 10%;
-  width: 250px;
-  height: 250px;
+  max-width: 100%;
   background-color: #ffcc00; /* yellow shade */
   border-radius: 20% 80% 70% 30% / 40% 30% 70% 60%; /* organic shape */
   z-index: -1;
 }
 
 .about-img {
-  max-width: 300px;
+  max-width: 80%;
   position: relative;
   z-index: 1;
 }
