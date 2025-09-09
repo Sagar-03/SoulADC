@@ -1,5 +1,5 @@
 import React from 'react';
-import "./Coursecurriculum.css";  // Import the external CSS file
+import "./CourseCurriculum.css";  // Import the external CSS file
 
 const CourseCurriculum = () => {
   const curriculumData = [
