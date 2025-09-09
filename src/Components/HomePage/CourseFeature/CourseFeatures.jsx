@@ -47,7 +47,7 @@ const CourseFeatures = () => {
                 <div className="icon-wrapper">
                   <ClockIcon />
                 </div>
-                <h3 className="card-title">5 Months</h3>
+                <h3 className="card-title">5 / 10 Months</h3>
                 <p className="card-text">Intensive preparation program</p>
               </div>
             </div>
@@ -69,8 +69,8 @@ const CourseFeatures = () => {
                 <div className="icon-wrapper">
                   <UsersIcon />
                 </div>
-                <h3 className="card-title">Expert Mentors</h3>
-                <p className="card-text">ADC-qualified professionals</p>
+                <h3 className="card-title">Expert Mentor</h3>
+                <p className="card-text">Learn with professional Mentor</p>
               </div>
             </div>
           </div>

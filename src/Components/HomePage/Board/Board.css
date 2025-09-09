@@ -1,11 +1,12 @@
 .cta-body {
   font-family: 'Inter', sans-serif;
   background-color: #ffffff; /* Cleaner white background */
-  padding: 4rem 0;
+  padding: 0;
+  padding-bottom: 10px;
 }
 
 .cta-container {
-  background: linear-gradient(145deg, #A98C6A, #7B563D); /* refined gradient */
+  background: linear-gradient(145deg, #977045, #825334); /* refined gradient */
   border-radius: 20px;
   padding: 4rem 2rem;
   text-align: center;

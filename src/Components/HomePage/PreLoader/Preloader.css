@@ -1,0 +1,106 @@
+.preloader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #fff; /* base */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  overflow: hidden;
+}
+
+/* Shield + glow container */
+.logo-container {
+  position: relative;
+  width: 180px;
+  height: 180px;
+}
+
+/* Shield behind */
+.logo-shield {
+  width: 100%;
+  height: auto;
+  position: relative;
+  z-index: 1; /* logo stays behind */
+}
+
+/* Glow in front of the logo */
+.sun-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 40px;
+  height: 40px;
+  background: radial-gradient(circle, #ffd700, transparent 70%);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  animation: glow-spread 5s forwards;
+  z-index: 2; /* now glow is above shield */
+  mix-blend-mode: screen; /* looks like real light */
+}
+
+/* Optional shine streak (like your logo sparkle) */
+.sun-shine {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 120px;
+  height: 4px;
+  background: linear-gradient(90deg, transparent, #fffacd, transparent);
+  transform: translate(-50%, -50%) rotate(25deg);
+  opacity: 0;
+  animation: shine-flash 3s ease-in-out forwards;
+  z-index: 3;
+}
+
+/* Glow expanding to cover screen */
+@keyframes glow-spread {
+  0% {
+    width: 40px;
+    height: 40px;
+    opacity: 0.7;
+    box-shadow: 0 0 15px #ffd700;
+  }
+  50% {
+    width: 200px;
+    height: 200px;
+    opacity: 1;
+    box-shadow: 0 0 50px #ffcc00, 0 0 100px #ffd700;
+  }
+  100% {
+    width: 2000px;
+    height: 2000px;
+    opacity: 1;
+    background: #fff;
+  }
+}
+
+/* Streak flash animation */
+@keyframes shine-flash {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(25deg) scaleX(0);
+  }
+  30% {
+    opacity: 1;
+    transform: translate(-50%, -50%) rotate(25deg) scaleX(1);
+  }
+  70% {
+    opacity: 1;
+    transform: translate(-50%, -50%) rotate(25deg) scaleX(1.5);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(25deg) scaleX(0);
+  }
+}
+
+/* Fade-out effect before showing home */
+.preloader.fade-out {
+  opacity: 0;
+  transition: opacity 1s ease-in-out;
+  pointer-events: none;
+}

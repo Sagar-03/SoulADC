@@ -4,6 +4,7 @@ body {
 .feature-section {
     background-color: #ffffff ; /* A light grey background */
     padding-bottom: 20px ;
+    padding-top: 20px;
     font-family: 'Inter', sans-serif;
     color: #4A4A4A;
 }
