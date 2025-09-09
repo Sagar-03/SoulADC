@@ -5,7 +5,7 @@ import Footer from "../Components/Footer/footer";
 import Auth from "./Auth";
 import Registration from "../Components/HomePage/RegisterSection/Register";
 import Feature from "../Components/HomePage/FeatureSection/FeatureSection";
-import About from "../Components/HomePage/AboutSection/About";
+import About from "../Components/HomePage/AboutSection/AboutSection";
 import logo from "../assets/logo.png";
 import CourseFeatures from "../Components/HomePage/CourseFeature/CourseFeatures";
 import Highlights from "../Components/HomePage/Highlights/Highlights";

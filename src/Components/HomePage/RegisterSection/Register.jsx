@@ -1,9 +1,7 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import { Container, Row, Col, Button } from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './registersection.css';
-import adcProgramVideo from '../../../../public/video.mp4';
-import ReactPlayer from 'react-player';
 
 
 
@@ -21,9 +19,6 @@ const CheckIcon = () => (
 
 
 const Register = () => {
-  const videoRef = useRef(null);
-  const videoSrc = adcProgramVideo;
-
   return (
     <Container fluid className="register-section-container p-5">
       <Row className="g-5 align-items-center">
