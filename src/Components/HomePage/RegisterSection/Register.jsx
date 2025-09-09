@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { Container, Row, Col, Button } from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import './Registersection.css';
+import './registersection.css';
 import adcProgramVideo from '../../../../public/video.mp4';
 import ReactPlayer from 'react-player';
 

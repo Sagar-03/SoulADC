@@ -1,29 +1,40 @@
 import React, { useEffect, useState } from "react";
-import "./Preloader.css"; 
+import "./Preloader.css";
 import logo from "../../../assets/logo.svg"; // shield-only logo
 
 const Preloader = ({ onFinish }) => {
-  const [isVisible, setIsVisible] = useState(true);
+    const [isVisible, setIsVisible] = useState(true);
+    const [fadeOut, setFadeOut] = useState(false);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsVisible(false);
-      if (onFinish) onFinish();
-    }, 6000); // 6 seconds
+    useEffect(() => {
+        // Start fade out after 5.5 seconds
+        const fadeTimer = setTimeout(() => {
+            setFadeOut(true);
+        }, 5500);
 
-    return () => clearTimeout(timer);
-  }, [onFinish]);
+        // Complete removal after 6.5 seconds (allowing for fade transition)
+        const removeTimer = setTimeout(() => {
+            setIsVisible(false);
+            if (onFinish) onFinish();
+        }, 6500);
 
-  if (!isVisible) return null;
+        return () => {
+            clearTimeout(fadeTimer);
+            clearTimeout(removeTimer);
+        };
+    }, [onFinish]);
 
-  return (
-    <div className="preloader">
-      <div className="logo-container">
-        <img src={logo} alt="Soul ADC Logo" className="logo-shield" />
-        <div className="sun-glow"></div>
-      </div>
-    </div>
-  );
+    if (!isVisible) return null;
+
+    return (
+        <div className={`preloader ${fadeOut ? 'fade-out' : ''}`}>
+            <div className="logo-container">
+                <img src={logo} alt="Soul ADC Logo" className="logo-shield" />
+                <div className="sun-glow"></div>
+            </div>
+            <div className="flash-overlay"></div>
+        </div>
+    );
 };
 
 export default Preloader;
