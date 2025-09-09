@@ -1,121 +1,63 @@
-import React, { useRef, useState } from "react";
-import "./registersection.css"; // Import external CSS file
-import video from "../../../../public/video.mp4";
+import React, { useRef } from 'react';
+import { Container, Row, Col, Button } from 'react-bootstrap';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import './Registersection.css';
+import adcProgramVideo from '../../../../public/video.mp4';
 
-// Background Decoration Component
-const BackgroundDecorations = () => {
-  return (
-    <div className="background-decorations">
-      <i className="fas fa-search decoration-icon icon-1"></i>
-      <i className="fas fa-ruler decoration-icon icon-2"></i>
-      <i className="fas fa-lightbulb decoration-icon icon-3"></i>
-      <i className="fas fa-flask decoration-icon icon-4"></i>
-      <i className="fas fa-cog decoration-icon icon-5"></i>
-      <i className="fas fa-graduation-cap decoration-icon icon-6"></i>
-      <i className="fas fa-atom decoration-icon icon-7"></i>
-      <i className="fas fa-calculator decoration-icon icon-8"></i>
-      <i className="fas fa-compass decoration-icon icon-9"></i>
-      <i className="fas fa-pencil decoration-icon icon-10"></i>
-    </div>
-  );
-};
-
-// Video Player with Unmute Button
-const VideoPlayer = () => {
+const Register = () => {
   const videoRef = useRef(null);
-  const [isMuted, setIsMuted] = useState(true);
-
-  const toggleMute = () => {
-    if (videoRef.current) {
-      videoRef.current.muted = !videoRef.current.muted;
-      setIsMuted(!isMuted);
-    }
-  };
+  const videoSrc = adcProgramVideo;
 
   return (
-    <div className="single-card">
-      <h3 className="card-title">Meet Your Mentor</h3>
-      <div className="video-container">
-        <video
-          ref={videoRef}
-          src={video}
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="video-main"
-        ></video>
-      </div>
-      <p className="card-text">
-        Learn more about periodontics with Dr. Chidambra Makker
-      </p>
+    <Container fluid className="register-section-container p-5">
+      <Row className="g-5 align-items-center">
+        {/* Left Column for Text */}
+        <Col md={6}>
+          <div className="mb-4">
+            <span className="adc-badge mb-2 text-uppercase fw-bold">ADC Part 1 Specialist</span>
+            <h1 className="display-4 fw-bold register-title">Master the ADC Part 1 with Expert Guidance</h1>
+            <p className="lead register-text">
+              Join our comprehensive 5-month program designed by ADC-qualified mentors. Build the foundation for your successful career as an Australian dentist.
+            </p>
+          </div>
+          {/* Feature List */}
+          <ul className="list-unstyled mb-4 register-text">
+            <li className="mb-2"><i className="bi bi-check-circle-fill text-success me-2"></i> ADC-qualified mentor guidance</li>
+            <li className="mb-2"><i className="bi bi-check-circle-fill text-success me-2"></i> Comprehensive Part 1 curriculum</li>
+            <li><i className="bi bi-check-circle-fill text-success me-2"></i> Practice tests & assessments</li>
+          </ul>
 
-      {/* Mute/Unmute Button */}
-      <button onClick={toggleMute} className="unmute-button">
-        {isMuted ? <i className="fas fa-volume-mute"></i> : <i className="fas fa-volume-up"></i>}
-      </button>
-    </div>
+          {/* Call-to-Action Buttons */}
+          <div className="d-flex">
+            <Button variant="dark" className="me-3 px-4 py-2 register-button-dark">Start Your Journey</Button>
+            <Button variant="outline-dark" className="px-4 py-2 register-button-outline">Learn More</Button>
+          </div>
+        </Col>
+
+        {/* Right Column for Video */}
+        <Col md={6} className="d-flex justify-content-center align-items-center">
+          {/* Main container for the video and badges */}
+          <div className="video-player-container">
+            {/* Top-left badge */}
+            <span className="video-overlay-badge">ADC Qualified <br /> Expert Mentors</span>
+            <video
+              ref={videoRef}
+              src={videoSrc}
+              autoPlay
+              loop
+              muted
+              playsInline
+              className="video-main"
+            >
+              Your browser does not support the video tag.
+            </video>
+            {/* Bottom-right badge */}
+            <span className="video-duration-badge">5 Months <br /> Complete Program</span>
+          </div>
+        </Col>
+      </Row>
+    </Container>
   );
 };
 
-// Main Registration Form Component
-const RegisterSection = () => {
-  return (
-    <div className="register-section">
-      <BackgroundDecorations />
-      <main className="register-container">
-        <div className="grid-layout">
-          <div className="form-column">
-            <div className="form-header">
-              <h2 className="form-title">Ace Your Dental Exam</h2>
-              <p className="form-subtitle">
-                Master dental studies with our comprehensive learning platform.
-                Join thousands of successful students today.
-              </p>
-            </div>
-            <div className="form-inputs">
-              <div className="input-wrapper">
-                <i className="fas fa-user input-icon"></i>
-                <input
-                  type="text"
-                  placeholder="Username"
-                  className="form-control"
-                />
-              </div>
-
-              <div className="input-wrapper">
-                <i className="fas fa-lock input-icon"></i>
-                <input
-                  type="password"
-                  placeholder="Password"
-                  className="form-control"
-                />
-              </div>
-
-              <div className="input-wrapper">
-                <i className="fas fa-envelope input-icon"></i>
-                <input
-                  type="email"
-                  placeholder="E-mail"
-                  className="form-control"
-                />
-              </div>
-            </div>
-
-            <button className="register-btn">
-              Register
-              <div className="register-btn-icon">
-                <i className="fas fa-arrow-right"></i>
-              </div>
-            </button>
-          </div>
-          <div className="image-column">
-            <VideoPlayer />
-          </div>
-        </div>
-      </main>
-    </div>
-  );
-};
-
-export default RegisterSection;
+export default Register;

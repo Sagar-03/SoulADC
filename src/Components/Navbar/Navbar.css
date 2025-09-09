@@ -1,7 +1,6 @@
 /* -------------------- Navbar -------------------- */
 .navbar {
   background-color: #ffffff !important;
-  box-shadow: 0 2px 10px rgba(139, 94, 60, 0.1);
   padding: 0.8rem 2rem;
   border-radius: 8px;
 }
@@ -53,19 +52,17 @@
 
 /* Enroll Now (filled brown) */
 .btn-enroll {
-  background-color: #8B5E3C;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  padding: 6px 20px;
-  font-weight: 600;
-  transition: all 0.3s ease;
+    background: linear-gradient(145deg, #A98C6A, #7B563D); /* Gradient background */
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 6px 20px;
+    font-weight: 600;
+    transition: all 0.3s ease;
 }
-
 .btn-enroll:hover {
-  background-color: #6B4228;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(139, 94, 60, 0.3);
+ color: #ffffff;
+ transform: scale(1.05);
 }
 
 /* -------------------- Toggler -------------------- */

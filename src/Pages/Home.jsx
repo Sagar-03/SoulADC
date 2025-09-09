@@ -11,6 +11,7 @@ import CourseFeatures from "../Components/HomePage/CourseFeature/CourseFeatures"
 import Highlights from "../Components/HomePage/Highlights/Highlights";
 import CourseCurriculum from "../Components/HomePage/Coursecurriulam/CourseCurriculum";
 import Board from "../Components/HomePage/Board/Board";
+import MentorCard from "../Components/HomePage/Mentor/MentorCard";
 
 // --- Logo Animation Component ---
 const LogoAnimation = () => {
@@ -260,8 +261,9 @@ const HomePage = () => {
       `}</style>
       <Navbar onSignInClick={() => setShowAuth(true)} />
       <Registration />
-      <Feature />
+      {/* <Feature /> */}
       <About />
+      <MentorCard />
       <CourseFeatures />
       <Highlights />
       <CourseCurriculum />
