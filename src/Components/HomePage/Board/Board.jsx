@@ -12,7 +12,7 @@ const Board = () => {
           </p>
           <div>
             <button className="cta-button">Enroll Now</button>
-            <button className="cta-button">Download Now</button>
+            {/* <button className="cta-button">Download Now</button> */}
           </div>
         </div>
       </div>

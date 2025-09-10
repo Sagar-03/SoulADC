@@ -31,10 +31,10 @@ const Navbar = () => {
           <div className="collapse navbar-collapse" id="navbarNav">
             {/* Center Nav links */}
             <ul className="navbar-nav mx-auto">
-              <li className="nav-item mx-3">
+              {/* <li className="nav-item mx-3">
                 <a className="nav-link" href="#home">Home</a>
-              </li>
-              <li className="nav-item mx-3">
+              </li> 
+               <li className="nav-item mx-3">
                 <a className="nav-link" href="#about">About</a>
               </li>
               <li className="nav-item mx-3">
@@ -45,7 +45,12 @@ const Navbar = () => {
               </li>
               <li className="nav-item mx-3">
                 <a className="nav-link" href="#contact">Contact</a>
-              </li>
+              </li> */}
+             <li> <button className="btn btn-enroll mx-3">Home</button></li>
+             <li> <button className="btn btn-enroll mx-3">About</button></li>
+             <li> <button className="btn btn-enroll mx-3">Courses</button></li>
+             <li> <button className="btn btn-enroll mx-3">Mentors</button></li>
+             <li> <button className="btn btn-enroll mx-3">Contact</button></li>
             </ul>
 
             {/* Buttons Right */}
