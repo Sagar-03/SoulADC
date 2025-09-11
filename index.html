@@ -10,7 +10,31 @@
     <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600;700&family=Poppins:wght@400;500&display=swap" rel="stylesheet">
     
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <!-- Theme color meta -->
+    <meta name="theme-color" content="#A98C6A" id="theme-color-meta" />
+
     <title>Vite + React</title>
+
+    <!-- Script for smooth gradient-like effect -->
+    <script>
+      const start = [169, 140, 106]; // #A98C6A
+      const end = [123, 86, 61];     // #7B563D
+      let step = 0, direction = 1;
+
+      function interpolate(start, end, factor) {
+        return start.map((s, i) => Math.round(s + factor * (end[i] - s)));
+      }
+
+      setInterval(() => {
+        step += 0.01 * direction;
+        if (step >= 1 || step <= 0) direction *= -1;
+
+        const [r, g, b] = interpolate(start, end, step);
+        const color = `rgb(${r}, ${g}, ${b})`;
+        document.getElementById("theme-color-meta").setAttribute("content", color);
+      }, 100);
+    </script>
   </head>
   <body>
     <div id="root"></div>
