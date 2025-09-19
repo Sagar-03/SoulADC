@@ -1,0 +1,62 @@
+.course-page {
+  background-color: #FAF9F6;
+  min-height: 100vh;
+}
+
+.banner {
+  background: linear-gradient(90deg, #8B5E3C, #5A3825);
+}
+
+.accordion-button {
+  background-color: #f6f2ed;
+  color: #5A3825;
+  font-weight: 600;
+}
+
+.accordion-button:not(.collapsed) {
+  background-color: #8B5E3C;
+  color: #fff;
+}
+
+/* ==== Content Boxes inside Dropdown ==== */
+.content-box {
+  background: #8B5E3C;
+  color: #fff;
+  padding: 20px;
+  border-radius: 12px;
+  text-align: center;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.content-box:hover {
+  transform: translateY(-4px);
+  box-shadow: 0px 6px 16px rgba(91, 56, 37, 0.3);
+}
+
+.content-box h6 {
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+.badge-type {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  background: #D4A373;
+  color: #5A3825;
+  font-weight: 600;
+}
+
+/* Different colors for types */
+.content-box.video {
+  background: #8B5E3C;
+}
+
+.content-box.quiz {
+  background: #5A3825;
+}
+
+.content-box.mock {
+  background: #A0522D;
+}

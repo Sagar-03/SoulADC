@@ -1,0 +1,65 @@
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 8px;
+  padding: 10px 12px;
+  gap: 15px;
+  font-size: 18px;
+  font-weight: bold;
+  border: none;
+  background: transparent;
+  color: #444;
+  text-align: left;
+  border-radius: 8px;
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+}
+
+.sidebar-item .sidebar-icon {
+  font-size: 20px;
+  transition: color 0.2s ease-in-out;
+}
+
+/* Hover Effects */
+.sidebar-item:hover {
+  background: transparent;
+}
+
+/* Brown-gold gradient */
+.sidebar-item.brown-gold:hover,
+.sidebar-item.brown-gold.active {
+  background: linear-gradient(90deg, #8B4513, #DAA520);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.sidebar-item.brown-gold:hover .sidebar-icon,
+.sidebar-item.brown-gold.active .sidebar-icon {
+  color: #DAA520;
+}
+
+/* Blue Profile */
+.sidebar-item.blue {
+  color: #444;
+}
+.sidebar-item.blue:hover,
+.sidebar-item.blue.active {
+  color: blue;
+}
+.sidebar-item.blue:hover .sidebar-icon,
+.sidebar-item.blue.active .sidebar-icon {
+  color: blue;
+}
+
+/* Red Sign Out */
+.sidebar-item.red {
+  color: #444;
+}
+.sidebar-item.red:hover,
+.sidebar-item.red.active {
+  color: red;
+}
+.sidebar-item.red:hover .sidebar-icon,
+.sidebar-item.red.active .sidebar-icon {
+  color: red;
+}

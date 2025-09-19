@@ -1,0 +1,160 @@
+/* Page */
+.course-page {
+  background: #f7f8fb;
+  min-height: 100vh;
+}
+
+/* Banner */
+.banner {
+  background: linear-gradient(145deg, #A98C6A, #7B563D);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  color: #fff;
+}
+
+/* Switch tabs */
+.switch-tabs {
+  justify-content: center;
+  gap: 12px;
+}
+.switch-tabs .nav-link {
+  border-radius: 999px;
+  background: #fff;
+  border: 1px solid #e9edf2;
+  padding: 10px 18px;
+  font-weight: 600;
+  color: #1f2330;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+  transition: all 0.25s ease;
+}
+.switch-tabs .nav-link:hover {
+  transform: translateY(-1px);
+}
+.switch-tabs .nav-link.active {
+  border-color: #A98C6A;
+  font-weight: 700;
+  background-image: linear-gradient(145deg, #A98C6A, #7B563D);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Weeks rail */
+.weeks-list .list-group-item {
+  border: 1px solid #eef1f6;
+  background: #fff;
+  color: #303548;
+  font-weight: 600;
+  border-radius: 12px;
+  margin-bottom: 10px;
+  padding: 12px 14px;
+  transition: all 0.22s ease;
+}
+.weeks-list .list-group-item:hover,
+.weeks-list .list-group-item.active {
+  background: #fff; /* keep background white */
+  border: 1px solid #A98C6A;
+  background-image: linear-gradient(145deg, #A98C6A, #7B563D);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 700;
+}
+
+/* Days list */
+.days-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.content-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #ffffff;
+  border: 1px solid #eef1f6;
+  border-radius: 16px;
+  padding: 14px 18px;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+  transition: all 0.25s ease;
+  cursor: pointer;
+}
+.content-row .title {
+  font-weight: 600;
+  color: #1f2330;
+}
+
+/* Gradient text effect only */
+.content-row:hover .title,
+.content-row.active .title,
+.content-row:hover .type-chip,
+.content-row.active .type-chip {
+  background: linear-gradient(145deg, #A98C6A, #7B563D);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 700;
+}
+
+/* Button style */
+.content-row .btn {
+  background: #fff;
+  color: #000;
+  border-color: #ddd;
+  transition: all 0.25s ease;
+}
+.content-row:hover .btn,
+.content-row.active .btn {
+  border-color: #A98C6A;
+  color: #7B563D;
+}
+
+/* Type chip */
+.type-chip {
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  background: #eef1f6;
+  color: #2b2f42;
+}
+.type-chip.video { background: #eef6ff; }
+.type-chip.quiz  { background: #f6f3ff; }
+.type-chip.mock  { background: #f6faff; }
+
+/* Documents / Mock Papers */
+.doc-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #fff;
+  border: 1px solid #eef1f6;
+  border-radius: 14px;
+  padding: 14px 16px;
+  box-shadow: 0 4px 14px rgba(15,23,42,.06);
+  transition: all 0.22s ease;
+}
+.doc-card .doc-title {
+  font-weight: 600;
+  color: #1f2330;
+}
+.doc-card .doc-tag {
+  font-size: 11px;
+  padding: 4px 8px;
+  background: #eef1f6;
+  border-radius: 999px;
+  margin-left: 6px;
+  color: #2b2f42;
+}
+
+/* Gradient text only on hover/active */
+.doc-card:hover .doc-title,
+.doc-card.active .doc-title {
+  background: linear-gradient(145deg, #A98C6A, #7B563D);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 700;
+}
+.doc-card:hover .doc-tag,
+.doc-card.active .doc-tag {
+  background: #fff;
+  border: 1px solid #A98C6A;
+  color: #7B563D;
+}
