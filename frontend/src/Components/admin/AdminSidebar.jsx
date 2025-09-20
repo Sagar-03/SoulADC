@@ -14,8 +14,8 @@ const AdminSidebar = () => {
             style={{ width: "220px", minHeight: "100%", borderRadius: "12px" }}
         >
             {/* Logo */}
-            <div className="d-flex align-items-center justify-content-center w-100 mb-4">
-                <img src={logo} alt="Logo" style={{ width: "120px" }} />
+            <div className="d-flex align-items-center justify-content-center w-100 mb-3">
+                <img src={logo} alt="Logo" style={{ width: "210px" }} />
             </div>
 
             {/* Nav */}
