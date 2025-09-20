@@ -1,0 +1,24 @@
+.course-card {
+  border-radius: 12px;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.course-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0px 6px 16px rgba(91, 56, 37, 0.2);
+}
+
+.course-card .card-title {
+  font-weight: 600;
+  color: #5A3825;
+}
+
+.btn-primary {
+  background-color: #8B5E3C;
+  border: none;
+}
+
+.btn-primary:hover {
+  background-color: #5A3825;
+}
