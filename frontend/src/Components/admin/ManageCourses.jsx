@@ -1,68 +1,55 @@
 import React, { useState, useEffect } from "react";
 import AdminLayout from "./AdminLayout";
+import { Link } from "react-router-dom";
 
 const ManageCourses = () => {
-  /** ----------------------------------------------------
-   * 1. HARDCODED DATA
-   * ---------------------------------------------------- */
-  const [courses, setCourses] = useState([
-    {
-      id: 1,
-      title: "5 Month Course",
-      duration: "20 Weeks",
-      weeks: Array.from({ length: 20 }, (_, w) => ({
-        week: w + 1,
-        days: [
-          { type: "Video", title: `Day 1: Lesson ${w + 1}.1` },
-          { type: "Video", title: `Day 2: Lesson ${w + 1}.2` },
-          { type: "Document", title: `Day 3: Notes ${w + 1}.3` },
-          { type: "Video", title: `Day 4: Lesson ${w + 1}.4` },
-          { type: "Document", title: `Day 5: Practice Material ${w + 1}` },
-        ],
-      })),
-    },
-    {
-      id: 2,
-      title: "10 Month Course",
-      duration: "40 Weeks",
-      weeks: Array.from({ length: 40 }, (_, w) => ({
-        week: w + 1,
-        days: [
-          { type: "Video", title: `Day 1: Lesson ${w + 1}.1` },
-          { type: "Document", title: `Day 2: Notes ${w + 1}.2` },
-          { type: "Video", title: `Day 3: Lesson ${w + 1}.3` },
-          { type: "Video", title: `Day 4: Lesson ${w + 1}.4` },
-          { type: "Document", title: `Day 5: Study Material ${w + 1}` },
-        ],
-      })),
-    },
-  ]);
+  const [courses, setCourses] = useState([]);
 
-  /** ----------------------------------------------------
-   * 2. BACKEND FETCH VERSION (commented for now)
-   * ---------------------------------------------------- */
+  // ========= BACKEND FETCH (commented) =========
   // useEffect(() => {
-  //   fetch("http://localhost:5000/api/courses")
+  //   fetch("http://localhost:5000/api/admin/courses")
   //     .then((res) => res.json())
   //     .then((data) => setCourses(data))
   //     .catch((err) => console.error("Error fetching courses:", err));
   // }, []);
-  //
-  // const handleAddWeek = (courseId, weekData) => {
-  //   fetch(`http://localhost:5000/api/courses/${courseId}/weeks`, {
-  //     method: "POST",
-  //     headers: { "Content-Type": "application/json" },
-  //     body: JSON.stringify(weekData),
-  //   })
-  //     .then(() => fetchCourses())
-  //     .catch((err) => console.error("Error adding week:", err));
-  // };
+
+  // TEMP HARDCODE
+  useEffect(() => {
+    setCourses([
+      {
+        id: 1,
+        title: "5 Month Course",
+        duration: "20 Weeks",
+        weeks: Array.from({ length: 3 }, (_, w) => ({
+          week: w + 1,
+          days: [
+            { type: "Video", title: `Lesson ${w + 1}.1` },
+            { type: "Document", title: `Notes ${w + 1}.2` },
+          ],
+        })),
+      },
+      {
+        id: 2,
+        title: "10 Month Course",
+        duration: "40 Weeks",
+        weeks: Array.from({ length: 2 }, (_, w) => ({
+          week: w + 1,
+          days: [
+            { type: "Video", title: `Lesson ${w + 1}.1` },
+            { type: "Video", title: `Lesson ${w + 1}.2` },
+          ],
+        })),
+      },
+    ]);
+  }, []);
 
   return (
     <AdminLayout>
       <h3 className="fw-bold mb-4" style={{ color: "#5A3825" }}>
         Manage Courses
       </h3>
+
+      <Link to="/admin/courses/add" className="btn btn-success mb-3">+ Add Course</Link>
 
       <div className="accordion" id="adminCourseAccordion">
         {courses.map((course, idx) => (
@@ -86,62 +73,9 @@ const ManageCourses = () => {
               data-bs-parent="#adminCourseAccordion"
             >
               <div className="accordion-body">
-                {/* Weeks Accordion */}
-                <div className="accordion" id={`weeksAccordion${idx}`}>
-                  {course.weeks.map((week, wIdx) => (
-                    <div className="accordion-item mb-2" key={wIdx}>
-                      <h2 className="accordion-header" id={`weekHeading${idx}-${wIdx}`}>
-                        <button
-                          className="accordion-button collapsed"
-                          type="button"
-                          data-bs-toggle="collapse"
-                          data-bs-target={`#weekCollapse${idx}-${wIdx}`}
-                          aria-expanded="false"
-                          aria-controls={`weekCollapse${idx}-${wIdx}`}
-                        >
-                          Week {week.week}
-                        </button>
-                      </h2>
-                      <div
-                        id={`weekCollapse${idx}-${wIdx}`}
-                        className="accordion-collapse collapse"
-                        aria-labelledby={`weekHeading${idx}-${wIdx}`}
-                        data-bs-parent={`#weeksAccordion${idx}`}
-                      >
-                        <div className="accordion-body">
-                          <div className="row g-3">
-                            {week.days.map((day, dIdx) => (
-                              <div className="col-md-4" key={dIdx}>
-                                <div
-                                  className="card shadow-sm p-3 text-center"
-                                  style={{
-                                    borderRadius: "12px",
-                                    background:
-                                      day.type === "Video"
-                                        ? "#8B5E3C"
-                                        : "#5A3825",
-                                    color: "white",
-                                  }}
-                                >
-                                  <span className="badge bg-light text-dark">
-                                    {day.type}
-                                  </span>
-                                  <h6 className="mt-2">{day.title}</h6>
-                                  <button className="btn btn-sm btn-outline-light mt-2">
-                                    Upload
-                                  </button>
-                                  <button className="btn btn-sm btn-danger mt-2 ms-2">
-                                    Delete
-                                  </button>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <Link to={`/admin/courses/${course.id}/manage`} className="btn btn-primary mb-3">
+                  Manage {course.title}
+                </Link>
               </div>
             </div>
           </div>

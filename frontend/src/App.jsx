@@ -13,7 +13,9 @@ import Admindashboard from "./Components/admin/Admindashboard";
 import A_Dashboard from "./Components/admin/Dashboard";
 import ManageCourses from "./Components/admin/ManageCourses";
 import ManageStudents from "./Components/admin/ManageStudents";
-import CourseUploadForm from "./Components/admin/CourseUploadForm";
+// import CourseUploadForm from "./Components/admin/CourseUploadForm";
+import AddCourse from "./Components/admin/AddCourse";
+import CourseContentManager from "./Components/admin/CourseContentManager";
 
 function App() {
   return (
@@ -27,7 +29,7 @@ function App() {
 
         {/* Student Portal - Main Route */}
         <Route path="/student-portal" element={<Studentdashboard />} />
-        
+
         {/* Student Dashboard */}
         <Route path="/studentdashboard" element={<Studentdashboard />} />
         <Route path="/Dashboard" element={<Dashboard />} />
@@ -35,13 +37,15 @@ function App() {
 
         {/* Admin Portal - Main Route */}
         <Route path="/admin" element={<Admindashboard />} />
-        
+
         {/* Admin Dashboard */}
         <Route path="/admindashboard" element={<Admindashboard />} />
         <Route path="/admin/dashboard" element={<A_Dashboard />} />
-        <Route path="/admin/courses" element={<ManageCourses />} />
         <Route path="/admin/students" element={<ManageStudents />} />
-        <Route path="/admin/upload" element={<CourseUploadForm />} />
+        <Route path="/admin/courses" element={<ManageCourses />} />
+        <Route path="/admin/courses/add" element={<AddCourse />} />
+        <Route path="/admin/courses/:id/manage" element={<CourseContentManager />} />
+
 
         {/* Optional: catch all invalid routes */}
         {/* <Route path="*" element={<Navigate to="/Home" replace />} /> */}

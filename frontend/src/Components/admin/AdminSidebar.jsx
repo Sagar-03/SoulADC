@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { RxDashboard } from "react-icons/rx";
-import { FaBook, FaUsers, FaUpload } from "react-icons/fa";
+import { FaBook, FaUsers, FaPlus } from "react-icons/fa";
 import logo from "../../assets/logo.png";
 
 const AdminSidebar = () => {
@@ -28,21 +28,21 @@ const AdminSidebar = () => {
                 />
                 <SidebarItem
                     icon={<FaBook />}
-                    text="Courses"
-                    active={location.pathname === "/admin/courses"}
+                    text="Manage Courses"
+                    active={location.pathname.startsWith("/admin/courses")}
                     onClick={() => navigate("/admin/courses")}
+                />
+                <SidebarItem
+                    icon={<FaPlus />}
+                    text="Add Course"
+                    active={location.pathname === "/admin/courses/add"}
+                    onClick={() => navigate("/admin/courses/add")}
                 />
                 <SidebarItem
                     icon={<FaUsers />}
                     text="Students"
                     active={location.pathname === "/admin/students"}
                     onClick={() => navigate("/admin/students")}
-                />
-                <SidebarItem
-                    icon={<FaUpload />}
-                    text="Upload Content"
-                    active={location.pathname === "/admin/upload"}
-                    onClick={() => navigate("/admin/upload")}
                 />
             </div>
         </div>
@@ -51,8 +51,9 @@ const AdminSidebar = () => {
 
 const SidebarItem = ({ icon, text, active, onClick }) => (
     <button
-        className={`btn text-start d-flex align-items-center mb-2 w-100 ${active ? "active-sidebar" : ""
-            }`}
+        className={`btn text-start d-flex align-items-center mb-2 w-100 ${
+            active ? "active-sidebar" : ""
+        }`}
         style={{
             gap: "10px",
             padding: "10px 12px",
