@@ -47,12 +47,22 @@ const Auth = ({ isOpen, onClose, defaultTab = "signIn" }) => {
         });
 
         const data = await res.json();
+        console.log("Login response:", data); // Debug log
 
         if (res.ok && data.token) {
           localStorage.setItem("token", data.token);
+          localStorage.setItem("user", JSON.stringify(data.user));
+          localStorage.setItem("role", data.role);
+          
           alert("Login successful!");
           onClose();
-          navigate("/videos");
+          
+          // Role-based redirection
+          if (data.role === "admin") {
+            navigate("/admin");
+          } else {
+            navigate("/student-portal");
+          }
         } else {
           alert(data.message || "Login failed");
         }

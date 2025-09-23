@@ -1,18 +1,18 @@
-const Video = require("./models/videomodel");
+// Admin controller - basic structure for future implementation
 
-const uploadVideo = async (req, res) => {
+const getAdminStats = async (req, res) => {
   try {
-    const video = new Video({
-      title: req.body.title,
-      description: req.body.description,
-      path: req.file.path,
-      uploadedBy: req.user._id
-    });
-    await video.save();
-    res.json({ message: "Video uploaded successfully", video });
+    // You can implement admin statistics here later
+    const stats = {
+      totalUsers: 0,
+      totalCourses: 0,
+      totalEnrollments: 0,
+      revenue: 0
+    };
+    res.json({ stats });
   } catch (error) {
-    res.status(500).json({ message: "Upload failed", error: error.message });
+    res.status(500).json({ message: "Failed to fetch admin stats", error: error.message });
   }
 };
 
-module.exports = { uploadVideo };
+module.exports = { getAdminStats };

@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 
-const verifyToken = (req, res, next) => {
+const protect = (req, res, next) => {
     let token;
     let authHeader = req.headers.authorization || req.headers.Authorization;
 
@@ -14,10 +14,8 @@ const verifyToken = (req, res, next) => {
         try {
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
             req.user = decoded;
-            console.log("Decoded Token:", decoded);
             next();
         } catch (err) {
-            console.error(err);
             return res.status(400).json({ message: 'Token is not valid' });
         }
     } else {
@@ -25,4 +23,12 @@ const verifyToken = (req, res, next) => {
     }
 };
 
-module.exports = verifyToken;
+const adminOnly = (req, res, next) => {
+    if (req.user && req.user.role === 'admin') {
+        next();
+    } else {
+        return res.status(403).json({ message: 'Admins only' });
+    }
+};
+
+module.exports = { protect, adminOnly };
