@@ -1,6 +1,6 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import Home from "./Pages/home";
+import Home from "./Pages/Home";
 import CoursesPage from "./Pages/course";
 
 // Student Dashboard
@@ -21,14 +21,12 @@ function App() {
   return (
     <Router>
       <Routes>
-        {/* Redirect root "/" to "/Home" */}
+        {/* Normal Route*/}
         <Route path="/" element={<Navigate to="/Home" replace />} />
-
         <Route path="/Home" element={<Home />} />
         <Route path="/courses" element={<CoursesPage />} />
 
-        {/* Student Portal - Main Route */}
-        <Route path="/student-portal" element={<Studentdashboard />} />
+        
 
         {/* Student Dashboard */}
         <Route path="/studentdashboard" element={<Studentdashboard />} />
@@ -37,8 +35,6 @@ function App() {
 
         {/* Admin Portal - Main Route */}
         <Route path="/admin" element={<Admindashboard />} />
-
-        {/* Admin Dashboard */}
         <Route path="/admindashboard" element={<Admindashboard />} />
         <Route path="/admin/dashboard" element={<A_Dashboard />} />
         <Route path="/admin/students" element={<ManageStudents />} />
@@ -47,11 +43,10 @@ function App() {
         <Route path="/admin/courses/:id/manage" element={<CourseContentManager />} />
 
 
-        {/* Optional: catch all invalid routes */}
-        {/* <Route path="*" element={<Navigate to="/Home" replace />} /> */}
       </Routes>
     </Router>
   );
 }
 
 export default App;
+  
