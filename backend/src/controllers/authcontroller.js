@@ -22,9 +22,9 @@ const register = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    const user = new User({ 
-      name, 
-      email, 
+    const user = new User({
+      name,
+      email,
       password: hashedPassword,
       phone: phone || "", // phone is optional
       role: "user" // default role
@@ -53,9 +53,9 @@ const login = async (req, res) => {
         process.env.JWT_SECRET,
         { expiresIn: "1h" }
       );
-      return res.json({ 
-        message: "Admin login successful", 
-        token, 
+      return res.json({
+        message: "Admin login successful",
+        token,
         role: "admin",
         user: { email: "admin@souladc.com", role: "admin" }
       });
@@ -71,7 +71,7 @@ const login = async (req, res) => {
     // Check password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      console.log("❌ Password mismatch for user:", email);
+      console.log("Password mismatch for user:", email);
       return res.status(400).json({ message: "Invalid email or password" });
     }
 
@@ -82,13 +82,19 @@ const login = async (req, res) => {
       { expiresIn: "1h" }
     );
 
-    console.log("✅ User login successful:", email);
-    res.json({ 
-      message: "Login successful", 
-      token, 
+    console.log("User login successful:", email);
+    res.json({
+      message: "Login successful",
+      token,
       role: user.role || "user",
-      user: { email: user.email, role: user.role || "user", name: user.name }
-    });
+      user: {
+        id: user._id,
+        email: user.email,
+        role: user.role || "user",
+        name: user.name,
+        purchasedCourses: user.purchasedCourses || []
+      }
+      });
   } catch (error) {
     console.error("❌ Login error:", error);
     res.status(500).json({ message: "Login failed", error: error.message });

@@ -36,7 +36,7 @@ const Auth = ({ isOpen, onClose, defaultTab = "signIn" }) => {
 
     try {
       if (isLogin) {
-        // Login
+        // 🟢 LOGIN
         const res = await fetch("http://localhost:7001/api/auth/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -47,27 +47,34 @@ const Auth = ({ isOpen, onClose, defaultTab = "signIn" }) => {
         });
 
         const data = await res.json();
-        console.log("Login response:", data); // Debug log
+        console.log("Login response:", data);
 
         if (res.ok && data.token) {
+          // Save auth data
           localStorage.setItem("token", data.token);
           localStorage.setItem("user", JSON.stringify(data.user));
           localStorage.setItem("role", data.role);
-          
+
           alert("Login successful!");
           onClose();
-          
-          // Role-based redirection
-          if (data.role === "admin") {
+
+          // 🔥 Redirect logic
+          const redirectUrl = localStorage.getItem("redirectAfterLogin");
+          if (redirectUrl) {
+            localStorage.removeItem("redirectAfterLogin");
+            navigate(redirectUrl);
+          } else if (data.user.purchasedCourses && data.user.purchasedCourses.length > 0) {
+            navigate("/studentdashboard"); // already purchased
+          } else if (data.role === "admin") {
             navigate("/admin");
           } else {
-            navigate("/student-portal");
+            navigate("/courses");
           }
         } else {
           alert(data.message || "Login failed");
         }
       } else {
-        // 📝 Signup
+        // 📝 SIGNUP
         if (formData.password !== formData.confirmPassword) {
           alert("Passwords do not match!");
           return;
@@ -87,7 +94,7 @@ const Auth = ({ isOpen, onClose, defaultTab = "signIn" }) => {
         const data = await res.json();
         if (res.ok) {
           alert(data.message || "Registered successfully!");
-          setIsLogin(true); 
+          setIsLogin(true); // Switch to login
         } else {
           alert(data.message || "Registration failed");
         }
@@ -107,17 +114,11 @@ const Auth = ({ isOpen, onClose, defaultTab = "signIn" }) => {
   if (!isOpen) return null;
 
   return (
-    <div
-      className="auth-overlay"
-      onClick={handleOverlayClick}
-      tabIndex={-1}
-    >
+    <div className="auth-overlay" onClick={handleOverlayClick} tabIndex={-1}>
       <div className="auth-modal">
-        <button className="auth-close" onClick={onClose}>
-          ×
-        </button>
+        <button className="auth-close" onClick={onClose}>×</button>
 
-        {/* Left Panel - Branding */}
+        {/* Left Panel */}
         <div className="auth-left-panel">
           <div className="brand-content">
             <img src={logo} alt="Logo" className="auth-logo" />
@@ -130,7 +131,7 @@ const Auth = ({ isOpen, onClose, defaultTab = "signIn" }) => {
           </div>
         </div>
 
-        {/* Right Panel - Form */}
+        {/* Right Panel */}
         <div className="auth-right-panel">
           <div className="auth-form-container">
             <div className="form-header">
@@ -166,7 +167,6 @@ const Auth = ({ isOpen, onClose, defaultTab = "signIn" }) => {
                     value={formData.name}
                     onChange={handleInputChange}
                     required
-                    placeholder="Enter your name"
                   />
                 </div>
               )}
@@ -180,7 +180,6 @@ const Auth = ({ isOpen, onClose, defaultTab = "signIn" }) => {
                   value={formData.email}
                   onChange={handleInputChange}
                   required
-                  placeholder="Enter email"
                 />
               </div>
 
@@ -194,7 +193,6 @@ const Auth = ({ isOpen, onClose, defaultTab = "signIn" }) => {
                     value={formData.phone}
                     onChange={handleInputChange}
                     required
-                    placeholder="Enter phone"
                   />
                 </div>
               )}
@@ -208,7 +206,6 @@ const Auth = ({ isOpen, onClose, defaultTab = "signIn" }) => {
                   value={formData.password}
                   onChange={handleInputChange}
                   required
-                  placeholder="Enter password"
                 />
               </div>
 
@@ -222,7 +219,6 @@ const Auth = ({ isOpen, onClose, defaultTab = "signIn" }) => {
                     value={formData.confirmPassword}
                     onChange={handleInputChange}
                     required
-                    placeholder="Confirm password"
                   />
                 </div>
               )}

@@ -2,7 +2,28 @@
 export const isAuthenticated = () => {
   const token = localStorage.getItem("token");
   const user = localStorage.getItem("user");
-  return !!(token && user);
+  
+  if (!token || !user) {
+    return false;
+  }
+  
+  try {
+    // Basic JWT validation - check if token is not expired
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    const currentTime = Date.now() / 1000;
+    
+    if (payload.exp && payload.exp < currentTime) {
+      // Token is expired, clear storage
+      logout();
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    // Invalid token format, clear storage
+    logout();
+    return false;
+  }
 };
 
 export const getAuthToken = () => {

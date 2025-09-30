@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Card, Button, Form, Spinner } from "react-bootstrap";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { getAuthToken } from "../../utils/auth";
+import { getAuthToken, isAuthenticated } from "../../utils/auth";
 
 export default function PaymentPage() {
   const [searchParams] = useSearchParams();
@@ -25,6 +25,14 @@ export default function PaymentPage() {
   const [discount, setDiscount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Check authentication on component mount
+  useEffect(() => {
+    if (!isAuthenticated()) {
+      alert("Please login first to access payment page");
+      navigate("/login");
+    }
+  }, [navigate]);
+
   const handleApplyCoupon = () => {
     // ⚠️ Frontend-only placeholder
     // Real validation should be done on the backend!
@@ -39,13 +47,14 @@ export default function PaymentPage() {
   const handleCheckout = async () => {
     setIsLoading(true);
     try {
-      const token = getAuthToken();
-      if (!token) {
+      if (!isAuthenticated()) {
         alert("Please login first");
-        navigate("/");
+        navigate("/login");
         return;
       }
 
+      const token = getAuthToken();
+      
       // Call backend to create Stripe Checkout Session
       const res = await fetch("http://localhost:7001/api/payment/create-checkout-session", {
         method: "POST",
@@ -62,13 +71,21 @@ export default function PaymentPage() {
       });
 
       const data = await res.json();
+      
+      if (res.status === 401) {
+        // Token is invalid/expired
+        alert("Your session has expired. Please login again.");
+        navigate("/login");
+        return;
+      }
+      
       if (data.url) {
         window.location.href = data.url; // Redirect to Stripe Checkout
       } else {
-        alert("Failed to start checkout: " + (data.error || "Unknown error"));
+        alert("Failed to start checkout: " + (data.error || data.message || "Unknown error"));
       }
     } catch (err) {
-      console.error(err);
+      console.error("Checkout error:", err);
       alert("Something went wrong. Please try again.");
     } finally {
       setIsLoading(false);

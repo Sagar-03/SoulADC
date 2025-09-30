@@ -3,6 +3,8 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import "./css.css";
 import CourseCard from "./CourseCard";
 import { getLiveCourses } from "../../Api/api";
+import { getAuthToken } from "../../utils/auth";
+import { useNavigate } from "react-router-dom";
 
 export default function CoursesPage() {
   const [courses, setCourses] = useState([]);
@@ -47,6 +49,8 @@ export default function CoursesPage() {
       </div>
     );
   }
+
+  
 
   return (
     <>
