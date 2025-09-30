@@ -5,20 +5,6 @@ import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import "./mycourse.css";
 import StudentLayout from "../StudentaLayout";
 
-// Static data for fallback
-const staticWeeks = Array.from({ length: 7 }, (_, w) => ({
-  week: w + 1,
-  days: [
-    { type: "Video", title: `Day 1: Lesson ${w + 1}.1` },
-    { type: "Video", title: `Day 2: Lesson ${w + 1}.2` },
-    { type: "Video", title: `Day 3: Lesson ${w + 1}.3` },
-    { type: "Video", title: `Day 4: Lesson ${w + 1}.4` },
-    { type: "Video", title: `Day 5: Lesson ${w + 1}.5` },
-    { type: "Quiz", title: `Day 6: Practice Quiz ${w + 1}` },
-    { type: "Mock", title: `Day 7: Mock Test ${w + 1}` },
-  ],
-}));
-
 const documents = [
   { title: "ADC Part-1 Mock Paper 01", tag: "PDF" },
   { title: "ADC Part-1 Mock Paper 02", tag: "PDF" },
@@ -40,23 +26,7 @@ const Mycourse = () => {
   useEffect(() => {
     const fetchCourse = async () => {
       if (!courseId) {
-        // If no courseId, use static data
-        setCourse({ 
-          title: "ADC Part 1 Course", 
-          weeks: staticWeeks.map(w => ({
-            weekNumber: w.week,
-            title: `Week ${w.week} Content`,
-            days: w.days.map((day, index) => ({
-              dayNumber: index + 1,
-              title: day.title,
-              contents: [{
-                type: day.type.toLowerCase(),
-                title: day.title,
-                s3Key: `sample-${day.type.toLowerCase()}-${w.week}-${index + 1}`
-              }]
-            }))
-          }))
-        });
+        setError("No course ID provided");
         setLoading(false);
         return;
       }
@@ -72,23 +42,6 @@ const Mycourse = () => {
       } catch (err) {
         console.error("Error fetching course:", err);
         setError(err.message);
-        // Fallback to static data
-        setCourse({ 
-          title: "ADC Part 1 Course", 
-          weeks: staticWeeks.map(w => ({
-            weekNumber: w.week,
-            title: `Week ${w.week} Content`,
-            days: w.days.map((day, index) => ({
-              dayNumber: index + 1,
-              title: day.title,
-              contents: [{
-                type: day.type.toLowerCase(),
-                title: day.title,
-                s3Key: `sample-${day.type.toLowerCase()}-${w.week}-${index + 1}`
-              }]
-            }))
-          }))
-        });
       } finally {
         setLoading(false);
       }
@@ -124,6 +77,27 @@ const Mycourse = () => {
     );
   }
 
+  if (error || !course) {
+    return (
+      <StudentLayout>
+        <div className="container">
+          <div className="text-center py-5">
+            <h3 className="text-muted mb-3">Course Not Available</h3>
+            <p className="text-muted mb-4">
+              {error || "No course data found. Please check the course ID or try again later."}
+            </p>
+            <button 
+              className="btn btn-primary"
+              onClick={() => navigate('/student/dashboard')}
+            >
+              Back to Dashboard
+            </button>
+          </div>
+        </div>
+      </StudentLayout>
+    );
+  }
+
   return (
     <StudentLayout>
       <div className="course-page">
@@ -132,11 +106,6 @@ const Mycourse = () => {
           <div className="banner text-white text-center py-5 mb-4">
             <h1 className="fw-bold mb-1">{course?.title || "Course Content"}</h1>
             <p className="mb-0">{course?.weeks?.length || 0}-Week comprehensive plan with expert guidance</p>
-            {error && (
-              <div className="alert alert-warning mt-3" role="alert">
-                <small>⚠️ Using demo data. {error}</small>
-              </div>
-            )}
           </div>
         </div>
 
