@@ -36,3 +36,142 @@
   transform: translateY(-3px);
   box-shadow: 0px 6px 16px rgba(91, 56, 37, 0.2);
 }
+
+/* Enhanced Upload Interface Styles */
+.border-left-primary {
+  border-left: 4px solid #8B5E3C;
+}
+
+.upload-progress {
+  transition: width 0.3s ease;
+}
+
+.content-preview {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.upload-zone {
+  border: 2px dashed #8B5E3C;
+  border-radius: 8px;
+  padding: 2rem;
+  transition: all 0.3s ease;
+}
+
+.upload-zone:hover {
+  border-color: #5A3825;
+  background-color: #f8f7f6;
+}
+
+.upload-zone.active {
+  border-color: #5A3825;
+  background-color: #f0ede9;
+}
+
+.file-preview {
+  background: linear-gradient(135deg, #f8f7f6 0%, #e8e3de 100%);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.week-card {
+  border: 1px solid #e0d4c7;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.week-header {
+  background: linear-gradient(135deg, #8B5E3C 0%, #5A3825 100%);
+  color: white;
+}
+
+.content-type-badge.video {
+  background-color: #007bff !important;
+}
+
+.content-type-badge.pdf {
+  background-color: #17a2b8 !important;
+}
+
+.progress-bar-custom {
+  background: linear-gradient(90deg, #8B5E3C 0%, #5A3825 100%);
+}
+
+/* Delete button styles */
+.btn-danger.btn-sm {
+  transition: all 0.2s ease;
+}
+
+.btn-danger.btn-sm:hover {
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
+}
+
+.btn-outline-danger.btn-sm {
+  border-color: #dc3545;
+  color: #dc3545;
+  transition: all 0.2s ease;
+}
+
+.btn-outline-danger.btn-sm:hover {
+  background-color: #dc3545;
+  border-color: #dc3545;
+  color: white;
+  transform: scale(1.05);
+}
+
+/* Day card enhancements */
+.card.h-100.border-2 {
+  transition: all 0.3s ease;
+  border-color: #e0d4c7 !important;
+}
+
+.card.h-100.border-2:hover {
+  border-color: #8B5E3C !important;
+  box-shadow: 0 4px 12px rgba(139, 94, 60, 0.15);
+  transform: translateY(-2px);
+}
+
+/* Week header improvements */
+.week-header .btn-danger {
+  background-color: rgba(220, 53, 69, 0.9);
+  border-color: rgba(220, 53, 69, 0.9);
+}
+
+.week-header .btn-danger:hover {
+  background-color: #dc3545;
+  border-color: #dc3545;
+}
+
+/* Alert for confirmations */
+.alert-warning {
+  background-color: #fff3cd;
+  border-color: #ffecb5;
+  color: #664d03;
+}
+
+/* Bootstrap Icon enhancements */
+.bi {
+  font-size: 1.1em;
+}
+
+.display-4.bi {
+  font-size: 2.5rem !important;
+}
+
+/* Video player enhancements */
+video {
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Animation for upload progress */
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.7; }
+  100% { opacity: 1; }
+}
+
+.uploading {
+  animation: pulse 1.5s infinite;
+}

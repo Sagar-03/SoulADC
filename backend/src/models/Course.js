@@ -8,18 +8,25 @@ const contentSchema = new mongoose.Schema({
   quizId: String,
 });
 
+const daySchema = new mongoose.Schema({
+  dayNumber: { type: Number, required: true, min: 1, max: 7 },
+  title: String,
+  contents: [contentSchema],
+});
+
 const weekSchema = new mongoose.Schema({
   weekNumber: Number,
   title: String,
-  contents: [contentSchema],
+  days: [daySchema],
 });
 
 const courseSchema = new mongoose.Schema({
   title: String,
   description: String,
   price: Number,
-  thumbnail: String,
+  thumbnail: { type: String , required: false},
   weeks: [weekSchema],
+  isLive: { type: Boolean, default: false },
 });
 
 module.exports = mongoose.model("Course", courseSchema);

@@ -9,7 +9,7 @@ const AddCourse = () => {
     durationMonths: "",
     weeks: "",
     price: "",
-    thumbnail: null, // now a file, not a string
+    thumbnail: null,
   });
 
   const [preview, setPreview] = useState(null);
@@ -21,35 +21,60 @@ const AddCourse = () => {
     if (files) {
       const file = files[0];
       setForm((f) => ({ ...f, [name]: file }));
-      setPreview(URL.createObjectURL(file)); // preview image
+      setPreview(URL.createObjectURL(file));
     } else {
       setForm((f) => ({ ...f, [name]: value }));
     }
   };
 
+ 
   // Handle submit
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const formData = new FormData();
-    formData.append("title", form.title);
-    formData.append("description", form.description);
-    formData.append("durationMonths", form.durationMonths);
-    formData.append("weeks", form.weeks);
-    formData.append("price", form.price);
-    if (form.thumbnail) formData.append("thumbnail", form.thumbnail);
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("⚠️ Please login as admin first.");
+        return;
+      }
 
-    // ========== BACKEND CALL (commented for now) ==========
-    // const res = await fetch("http://localhost:5000/api/admin/courses", {
-    //   method: "POST",
-    //   body: formData, // multipart/form-data automatically
-    // });
-    // const newCourse = await res.json();
-    // navigate(`/admin/courses/${newCourse._id}/manage`);
+      let thumbnailKey = "";
+      if (form.thumbnail) {
+        thumbnailKey = form.thumbnail.name;
+      }
 
-    alert(`✅ Course "${form.title}" created successfully!`);
-    navigate("/admin/courses");
+    
+      const res = await fetch("http://localhost:7001/api/admin/courses", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          title: form.title,
+          description: form.description,
+          durationMonths: form.durationMonths,
+          weeks: form.weeks,
+          price: form.price,
+          thumbnail: thumbnailKey,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to create course");
+      }
+
+      alert(` Course "${form.title}" created successfully!`);
+      navigate(`/admin/courses/${data._id}/manage`);
+    } catch (err) {
+      console.error("Error creating course:", err);
+      alert(err.message);
+    }
   };
+
 
   return (
     <AdminLayout>
@@ -137,7 +162,6 @@ const AddCourse = () => {
             onChange={handleChange}
           />
 
-          {/* Preview */}
           {preview && (
             <div className="mt-2">
               <img

@@ -1,14 +1,24 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, Button, Form, Spinner } from "react-bootstrap";
+import { useSearchParams, useNavigate } from "react-router-dom";
+import { getAuthToken } from "../../utils/auth";
 
 export default function PaymentPage() {
-  // Hardcoded course details for now (replace with backend data fetch later)
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  
+  // Get course details from URL params
+  const courseId = searchParams.get('courseId');
+  const courseTitle = searchParams.get('title');
+  const coursePrice = parseFloat(searchParams.get('price')) || 499;
+  
+  // Course details (dynamic from URL params)
   const course = {
-    id: 1,
-    name: "ADC Part 1 Mastery Program",
+    id: courseId,
+    name: courseTitle || "ADC Part 1 Mastery Program",
     description:
       "Comprehensive 5/10 month program designed by ADC-qualified mentors. Includes one-on-one guidance, curriculum coverage, and practice tests.",
-    price: 499, // USD
+    price: coursePrice, // USD
   };
 
   const [coupon, setCoupon] = useState("");
@@ -29,13 +39,25 @@ export default function PaymentPage() {
   const handleCheckout = async () => {
     setIsLoading(true);
     try {
+      const token = getAuthToken();
+      if (!token) {
+        alert("Please login first");
+        navigate("/");
+        return;
+      }
+
       // Call backend to create Stripe Checkout Session
-      const res = await fetch("/api/create-checkout-session", {
+      const res = await fetch("http://localhost:7001/api/payment/create-checkout-session", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
         body: JSON.stringify({
           courseId: course.id,
           coupon: coupon,
+          successUrl: `${window.location.origin}/payment-success?courseId=${course.id}`,
+          cancelUrl: `${window.location.origin}/payment-cancel`
         }),
       });
 
@@ -43,7 +65,7 @@ export default function PaymentPage() {
       if (data.url) {
         window.location.href = data.url; // Redirect to Stripe Checkout
       } else {
-        alert("Failed to start checkout");
+        alert("Failed to start checkout: " + (data.error || "Unknown error"));
       }
     } catch (err) {
       console.error(err);

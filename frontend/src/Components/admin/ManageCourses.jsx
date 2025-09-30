@@ -4,44 +4,61 @@ import { Link } from "react-router-dom";
 
 const ManageCourses = () => {
   const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // ========= BACKEND FETCH (commented) =========
-  // useEffect(() => {
-  //   fetch("http://localhost:5000/api/admin/courses")
-  //     .then((res) => res.json())
-  //     .then((data) => setCourses(data))
-  //     .catch((err) => console.error("Error fetching courses:", err));
-  // }, []);
-
-  // TEMP HARDCODE
   useEffect(() => {
-    setCourses([
-      {
-        id: 1,
-        title: "5 Month Course",
-        duration: "20 Weeks",
-        weeks: Array.from({ length: 3 }, (_, w) => ({
-          week: w + 1,
-          days: [
-            { type: "Video", title: `Lesson ${w + 1}.1` },
-            { type: "Document", title: `Notes ${w + 1}.2` },
-          ],
-        })),
-      },
-      {
-        id: 2,
-        title: "10 Month Course",
-        duration: "40 Weeks",
-        weeks: Array.from({ length: 2 }, (_, w) => ({
-          week: w + 1,
-          days: [
-            { type: "Video", title: `Lesson ${w + 1}.1` },
-            { type: "Video", title: `Lesson ${w + 1}.2` },
-          ],
-        })),
-      },
-    ]);
+    const fetchCourses = async () => {
+      try {
+        const token = localStorage.getItem("token"); // ✅ admin JWT
+        const res = await fetch("http://localhost:7001/api/admin/courses", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (!res.ok) {
+          throw new Error(`Failed to fetch courses: ${res.status}`);
+        }
+
+        const data = await res.json();
+        setCourses(data);
+      } catch (err) {
+        console.error("Error fetching courses:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCourses();
   }, []);
+
+  const toggleCourseLive = async (courseId, currentStatus) => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`http://localhost:7001/api/admin/courses/${courseId}/toggle-live`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) {
+        throw new Error(`Failed to toggle course live status: ${res.status}`);
+      }
+
+      const data = await res.json();
+      
+      // Update local state
+      setCourses(courses.map(course => 
+        course._id === courseId 
+          ? { ...course, isLive: !currentStatus }
+          : course
+      ));
+
+      alert(data.message);
+    } catch (err) {
+      console.error(" Error toggling course live status:", err);
+      alert("Failed to update course status");
+    }
+  };
+
+  if (loading) return <AdminLayout><p>Loading courses...</p></AdminLayout>;
 
   return (
     <AdminLayout>
@@ -49,38 +66,62 @@ const ManageCourses = () => {
         Manage Courses
       </h3>
 
-      <Link to="/admin/courses/add" className="btn btn-success mb-3">+ Add Course</Link>
+      <Link to="/admin/courses/add" className="btn btn-success mb-3">
+        + Add Course
+      </Link>
 
-      <div className="accordion" id="adminCourseAccordion">
-        {courses.map((course, idx) => (
-          <div className="accordion-item mb-3" key={course.id}>
-            <h2 className="accordion-header" id={`courseHeading${idx}`}>
-              <button
-                className="accordion-button collapsed fw-bold"
-                type="button"
-                data-bs-toggle="collapse"
-                data-bs-target={`#courseCollapse${idx}`}
-                aria-expanded="false"
-                aria-controls={`courseCollapse${idx}`}
+      {courses.length === 0 ? (
+        <p>No courses available. Add one!</p>
+      ) : (
+        <div className="accordion" id="adminCourseAccordion">
+          {courses.map((course, idx) => (
+            <div className="accordion-item mb-3" key={course._id}>
+              <h2 className="accordion-header" id={`courseHeading${idx}`}>
+                <button
+                  className="accordion-button collapsed fw-bold"
+                  type="button"
+                  data-bs-toggle="collapse"
+                  data-bs-target={`#courseCollapse${idx}`}
+                  aria-expanded="false"
+                  aria-controls={`courseCollapse${idx}`}
+                >
+                  {course.title} ({course.weeks?.length || 0} Weeks)
+                  <span className={`badge ms-2 ${course.isLive ? 'bg-success' : 'bg-secondary'}`}>
+                    {course.isLive ? 'LIVE' : 'DRAFT'}
+                  </span>
+                </button>
+              </h2>
+              <div
+                id={`courseCollapse${idx}`}
+                className="accordion-collapse collapse"
+                aria-labelledby={`courseHeading${idx}`}
+                data-bs-parent="#adminCourseAccordion"
               >
-                {course.title} ({course.duration})
-              </button>
-            </h2>
-            <div
-              id={`courseCollapse${idx}`}
-              className="accordion-collapse collapse"
-              aria-labelledby={`courseHeading${idx}`}
-              data-bs-parent="#adminCourseAccordion"
-            >
-              <div className="accordion-body">
-                <Link to={`/admin/courses/${course.id}/manage`} className="btn btn-primary mb-3">
-                  Manage {course.title}
-                </Link>
+                <div className="accordion-body">
+                  <p>{course.description}</p>
+                  <p><strong>Price:</strong> ₹{course.price}</p>
+                  
+                  <div className="d-flex gap-2 mb-3">
+                    <Link
+                      to={`/admin/courses/${course._id}/manage`}
+                      className="btn btn-primary"
+                    >
+                      Manage {course.title}
+                    </Link>
+                    
+                    <button
+                      className={`btn ${course.isLive ? 'btn-warning' : 'btn-success'}`}
+                      onClick={() => toggleCourseLive(course._id, course.isLive)}
+                    >
+                      {course.isLive ? 'Make Draft' : 'Make Live'}
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </AdminLayout>
   );
 };

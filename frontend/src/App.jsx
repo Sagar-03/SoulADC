@@ -7,6 +7,12 @@ import CoursesPage from "./Pages/course";
 import Studentdashboard from "./Components/student/Studentdashboard";
 import Mycourse from "./Components/student/Mycourse/mycourse";
 import Dashboard from "./Components/student/Dashboard/PurchasedDashboard";
+import EmbeddedVideoPlayer from "./Components/VideoPlayer/EmbeddedVideoPlayer";
+
+// Payment Components
+import PaymentPage from "./Components/PaymentDashboard/PaymentPage";
+import PaymentSuccess from "./Components/PaymentDashboard/PaymentSuccess";
+import PaymentCancel from "./Components/PaymentDashboard/PaymentCancel";
 
 // Admin Dashboard
 import Admindashboard from "./Components/admin/Admindashboard";
@@ -32,6 +38,14 @@ function App() {
         <Route path="/studentdashboard" element={<Studentdashboard />} />
         <Route path="/Dashboard" element={<Dashboard />} />
         <Route path="/Mycourse" element={<Mycourse />} />
+        <Route path="/mycourse/:courseId" element={<Mycourse />} />
+        <Route path="/student/course/:courseId" element={<Mycourse />} />
+        <Route path="/student/course/:courseId/video/:videoId" element={<EmbeddedVideoPlayer />} />
+        
+        {/* Payment Routes */}
+        <Route path="/payment" element={<PaymentPage />} />
+        <Route path="/payment-success" element={<PaymentSuccess />} />
+        <Route path="/payment-cancel" element={<PaymentCancel />} />
 
         {/* Admin Portal - Main Route */}
         <Route path="/admin" element={<Admindashboard />} />

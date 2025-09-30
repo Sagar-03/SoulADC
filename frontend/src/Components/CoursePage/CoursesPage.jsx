@@ -1,73 +1,53 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./css.css";
 import CourseCard from "./CourseCard";
-
-// Define COURSES here 👇
-const COURSES = [
-  {
-    id: "five",
-    title: "5-Month Sprint",
-    subtitle: "Intensive Mentor-Led Prep",
-    ribbon: "Most Popular",
-    duration: "5 months",
-    pace: "Accelerated",
-    schedule: "3–4 live sessions / week",
-    start: "New cohort every month",
-    priceNote: "Flexible installments",
-    highlights: [
-      "Personal mentor guidance",
-      "Comprehensive Part 1 coverage",
-      "Weekly practice tests & analytics",
-      "Doubt-clearing huddles (24–48h)",
-      "Final full-length mock exam",
-    ],
-    modules: [
-      "Orientation & Study System",
-      "Anatomy, Physiology, Pathology",
-      "Microbiology & Pharmacology",
-      "Dental Materials & Radiology",
-      "Occlusion & Operative Dentistry",
-      "Ethics, Law & Evidence-based Dentistry",
-      "Full Revision + Mocks",
-    ],
-    ctaPrimary: { label: "Enroll Now", href: "/enroll?plan=5m" },
-    ctaSecondary: { label: "Talk to a Mentor", href: "https://wa.me/0000000000" },
-    accent: "#a1754f",
-  },
-  {
-    id: "ten",
-    title: "10-Month Mastery",
-    subtitle: "Steady, Deep-Dive Track",
-    ribbon: "Best for Beginners",
-    duration: "10 months",
-    pace: "Measured",
-    schedule: "2–3 live sessions / week",
-    start: "Next cohort this term",
-    priceNote: "Early-bird discounts",
-    highlights: [
-      "Foundations + advanced depth",
-      "More time for spaced revision",
-      "Extra formative quizzes",
-      "Peer study circles + mentor check-ins",
-      "Full mock + viva-style review",
-    ],
-    modules: [
-      "Roadmap & Baseline Assessment",
-      "Basic Medical Sciences — fundamentals first",
-      "Clinical Sciences — systems approach",
-      "Dental Public Health & Ethics",
-      "High-yield topics & pitfalls",
-      "Revision cycles + question banks",
-      "Grand Mock + Exam Strategy",
-    ],
-    ctaPrimary: { label: "Enroll Now", href: "/enroll?plan=10m" },
-    ctaSecondary: { label: "Book a Call", href: "mailto:hello@souladc.example" },
-    accent: "#7a5b3e",
-  },
-];
+import { getLiveCourses } from "../../Api/api";
 
 export default function CoursesPage() {
+  const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchLiveCourses = async () => {
+      try {
+        const response = await getLiveCourses();
+        setCourses(response.data);
+      } catch (err) {
+        console.error("Error fetching live courses:", err);
+        setError("Failed to load courses. Please try again later.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLiveCourses();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="container py-5">
+        <div className="text-center">
+          <div className="spinner-border" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+          <p className="mt-2">Loading courses...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container py-5">
+        <div className="alert alert-danger text-center">
+          {error}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       {/* HERO */}
@@ -83,34 +63,42 @@ export default function CoursesPage() {
                 style={{ color: "var(--ink)" }}
               >
                 Master the <span style={{ color: "var(--brand)" }}>ADC Part 1</span>{" "}
-                with the Program that Fits <em>You</em>
+                with Expert-Led Programs
               </h1>
               <p className="lead text-muted mb-4">
-                Two clear paths. Same expert mentors. Choose the{" "}
-                <strong>5-Month Sprint</strong> for momentum, or the{" "}
-                <strong>10-Month Mastery</strong> for depth and calmer pacing.
+                Choose from our carefully designed courses with expert mentors. 
+                All programs include comprehensive coverage, practice tests, and personalized guidance.
               </p>
-              <div className="d-flex gap-2">
-                <a href="#five" className="btn btn-dark">
-                  See 5-Month
-                </a>
-                <a href="#ten" className="btn btn-outline-dark">
-                  See 10-Month
-                </a>
-              </div>
+              {courses.length > 0 && (
+                <div className="d-flex gap-2">
+                  <a href="#courses" className="btn btn-dark">
+                    View Courses
+                  </a>
+                  <a href="https://wa.me/0000000000" className="btn btn-outline-dark">
+                    Talk to a Mentor
+                  </a>
+                </div>
+              )}
             </div>
           </div>
         </div>
       </header>
 
       {/* COURSE CARDS */}
-      <main className="py-5">
+      <main className="py-5" id="courses">
         <div className="container">
-          <div className="row">
-            {COURSES.map((c) => (
-              <CourseCard course={c} key={c.id} />
-            ))}
-          </div>
+          {courses.length === 0 ? (
+            <div className="text-center">
+              <h3 className="text-muted">No courses available at the moment</h3>
+              <p className="text-muted">Please check back later for new course offerings.</p>
+            </div>
+          ) : (
+            <div className="row">
+              {courses.map((course) => (
+                <CourseCard course={course} key={course._id} />
+              ))}
+            </div>
+          )}
         </div>
       </main>
     </>

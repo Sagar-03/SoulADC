@@ -7,53 +7,69 @@ const PurchasedDashboard = () => {
   const navigate = useNavigate();
 
   /** ----------------------------------------------------
-   * 1. HARDCODED DATA (for now)
+   * 1. STATE FOR COURSES
    * ---------------------------------------------------- */
-  const purchasedCourses = [
-    {
-      id: 1,
-      title: "ADC Part 1 Course",
-      description: "7 Week Comprehensive Study Plan with Expert Guidance",
-      mentor: "Dr. Chidambra Marker",
-      duration: "7 Weeks",
-      thumbnail: "/assets/adc-part1.jpg",
-    },
-    {
-      id: 2,
-      title: "Periodontology Special Prep",
-      description: "Focused module on advanced Periodontology",
-      mentor: "Dr. XYZ",
-      duration: "3 Weeks",
-      thumbnail: "/assets/periodontology.jpg",
-    },
-  ];
+  const [purchasedCourses, setPurchasedCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   /** ----------------------------------------------------
-   * 2. API FETCH VERSION (Uncomment later when backend ready)
+   * 2. FETCH FROM BACKEND (port 7001)
    * ---------------------------------------------------- */
-  // const [purchasedCourses, setPurchasedCourses] = useState([]);
-  // useEffect(() => {
-  //   fetch("http://localhost:5000/api/student/courses")
-  //     .then((res) => res.json())
-  //     .then((data) => setPurchasedCourses(data))
-  //     .catch((err) => console.error("Error fetching courses:", err));
-  // }, []);
+  useEffect(() => {
+    // For now, fetch all live courses. Later this will be filtered by purchased courses only
+    fetch("http://localhost:7001/api/user/courses/live")
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("Failed to fetch courses");
+        }
+        return res.json();
+      })
+      .then((data) => {
+        setPurchasedCourses(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("Error fetching courses:", err);
+        setLoading(false);
+      });
+  }, []);
 
   return (
     <StudentLayout>
       <h2 className="mb-4 fw-bold flex-grow-1 p-4" style={{ color: "#5A3825" }}>
-        My Purchased Courses
+        Available Live Courses
+        {/* TODO: Change to "My Purchased Courses" when payment integration is complete */}
       </h2>
 
-      <div className="row g-4">
-        {purchasedCourses.length === 0 ? (
-          <p className="text-muted">No courses purchased yet.</p>
-        ) : (
-          purchasedCourses.map((course) => (
-            <div className="col-md-4" key={course.id}>
+      {/* 
+      COMMENTED CODE FOR FUTURE IMPLEMENTATION:
+      When payment is integrated, this component should:
+      1. Fetch user's purchased courses from backend
+      2. Filter courses based on user's purchases
+      3. Show only courses the user has paid for
+      
+      Example API call:
+      fetch(`http://localhost:7001/api/user/purchased-courses`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      })
+      */}
+
+      {loading ? (
+        <p className="text-muted">Loading courses...</p>
+      ) : purchasedCourses.length === 0 ? (
+        <div>
+          <p className="text-muted">No live courses available at the moment.</p>
+          {/* TODO: Change to "No courses purchased yet." when payment integration is complete */}
+        </div>
+      ) : (
+        <div className="row g-4">
+          {purchasedCourses.map((course) => (
+            <div className="col-md-4" key={course._id || course.id}>
               <div
                 className="card course-card h-100"
-                onClick={() => navigate("/mycourse")}
+                onClick={() => navigate(`/mycourse/${course._id || course.id}`)}
                 style={{ cursor: "pointer" }}
               >
                 {/* Thumbnail */}
@@ -80,9 +96,9 @@ const PurchasedDashboard = () => {
                 </div>
               </div>
             </div>
-          ))
-        )}
-      </div>
+          ))}
+        </div>
+      )}
     </StudentLayout>
   );
 };

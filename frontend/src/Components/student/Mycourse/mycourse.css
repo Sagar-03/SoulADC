@@ -4,6 +4,112 @@
   min-height: 100vh;
 }
 
+/* Video Layout Styles */
+.video-layout {
+  margin-top: 20px;
+}
+
+.video-player-container {
+  background: #fff;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+}
+
+.video-header h5 {
+  color: #1f2330;
+  font-weight: 700;
+}
+
+.video-wrapper {
+  position: relative;
+  background: #000;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.content-sidebar {
+  background: #fff;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.sidebar-title {
+  color: #1f2330;
+  font-weight: 700;
+  margin-bottom: 15px;
+}
+
+/* Accordion Styles for Video Mode */
+.accordion-item {
+  border: 1px solid #eef1f6;
+  border-radius: 8px !important;
+  background: #fff;
+  overflow: hidden;
+}
+
+.accordion-button {
+  background: #fff;
+  border: none;
+  padding: 12px 15px;
+  font-weight: 600;
+  color: #1f2330;
+  font-size: 0.9rem;
+}
+
+.accordion-button:not(.collapsed) {
+  background: linear-gradient(145deg, #A98C6A, #7B563D);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 700;
+  box-shadow: none;
+}
+
+.accordion-button:focus {
+  box-shadow: none;
+}
+
+.accordion-body {
+  padding: 10px 15px;
+  background: #f8f9fa;
+}
+
+/* Day Items in Sidebar */
+.day-item {
+  background: #fff;
+  border: 1px solid #eef1f6;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+
+.day-header .text-muted {
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.day-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1f2330;
+  margin-top: 2px;
+}
+
+.day-contents {
+  margin-top: 8px;
+}
+
+.day-contents .btn {
+  padding: 4px 8px;
+  font-size: 0.7rem;
+  border-radius: 4px;
+}
+
 /* Banner */
 .banner {
   background: linear-gradient(145deg, #A98C6A, #7B563D);
@@ -34,6 +140,7 @@
   border-color: #A98C6A;
   font-weight: 700;
   background-image: linear-gradient(145deg, #A98C6A, #7B563D);
+  background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -54,6 +161,7 @@
   background: #fff; /* keep background white */
   border: 1px solid #A98C6A;
   background-image: linear-gradient(145deg, #A98C6A, #7B563D);
+  background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   font-weight: 700;
@@ -88,6 +196,7 @@
 .content-row:hover .type-chip,
 .content-row.active .type-chip {
   background: linear-gradient(145deg, #A98C6A, #7B563D);
+  background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   font-weight: 700;
@@ -118,6 +227,7 @@
 .type-chip.video { background: #eef6ff; }
 .type-chip.quiz  { background: #f6f3ff; }
 .type-chip.mock  { background: #f6faff; }
+.type-chip.day   { background: #f0f9ff; color: #1e40af; }
 
 /* Documents / Mock Papers */
 .doc-card {
@@ -148,6 +258,7 @@
 .doc-card:hover .doc-title,
 .doc-card.active .doc-title {
   background: linear-gradient(145deg, #A98C6A, #7B563D);
+  background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   font-weight: 700;

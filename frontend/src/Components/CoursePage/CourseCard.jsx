@@ -1,72 +1,186 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "./css.css";
+import { isAuthenticated } from "../../utils/auth";
 
 export default function CourseCard({ course }) {
+    const navigate = useNavigate();
     const [open, setOpen] = useState(false);
 
+    // Format price for display
+    const formatPrice = (price) => {
+        return new Intl.NumberFormat('en-IN', {
+            style: 'currency',
+            currency: 'INR',
+            minimumFractionDigits: 0,
+        }).format(price);
+    };
+
+    // Generate a default accent color if not provided
+    const getAccentColor = (index = 0) => {
+        const colors = ["#a1754f", "#7a5b3e", "#8B4513", "#A0522D", "#CD853F"];
+        return colors[index % colors.length];
+    };
+
+    // Default values for missing fields
+    const courseData = {
+        title: course.title || "Course Title",
+        description: course.description || "Course description not available.",
+        price: course.price || 0,
+        thumbnail: course.thumbnail || "",
+        duration: `${course.weeks?.length || 0} weeks`,
+        weeks: course.weeks || [],
+        _id: course._id || course.id,
+        // Add some default styling
+        accent: getAccentColor(),
+        ribbon: course.weeks?.length > 10 ? "Comprehensive" : course.weeks?.length > 5 ? "Popular" : null,
+    };
+
+    // Handle enrollment click with authentication check
+    const handleEnrollClick = (courseId) => {
+        if (!isAuthenticated()) {
+            // Show auth modal or redirect to login
+            alert("Please login first to enroll in the course.");
+            // You can implement a more sophisticated auth modal here
+            return;
+        }
+
+        // Redirect to payment page with course details
+        navigate(`/payment?courseId=${courseId}&price=${courseData.price}&title=${encodeURIComponent(courseData.title)}`);
+    };
+
     return (
-        <section id={course.id} className="col-12 col-lg-6 mb-4">
+        <section id={courseData._id} className="col-12 col-lg-6 mb-4">
             <div className="card h-100 border-0 shadow-lg position-relative course-card">
                 {/* Ribbon */}
-                {course.ribbon && (
+                {courseData.ribbon && (
                     <div className="ribbon bg-dark text-white small fw-semibold">
-                        {course.ribbon}
+                        {courseData.ribbon}
+                    </div>
+                )}
+
+                {/* Course Thumbnail */}
+                {courseData.thumbnail && (
+                    <div className="course-thumbnail-container">
+                        <img
+                            src={courseData.thumbnail}
+                            alt={courseData.title}
+                            className="card-img-top course-thumbnail"
+                            style={{ height: "200px", objectFit: "cover" }}
+                            onError={(e) => {
+                                e.target.style.display = 'none';
+                            }}
+                        />
                     </div>
                 )}
 
                 <div className="card-body p-4 p-md-5">
                     <div className="d-flex align-items-center justify-content-between mb-2">
-                        <h3 className="h2 mb-0 fw-bold">{course.title}</h3>
+                        <h3 className="h2 mb-0 fw-bold">{courseData.title}</h3>
                         <span
                             className="badge rounded-pill"
                             style={{
-                                backgroundColor: course.accent,
+                                backgroundColor: courseData.accent,
                                 color: "white",
                             }}
                         >
-                            {course.duration}
+                            {courseData.duration}
                         </span>
                     </div>
 
-                    <p className="text-muted">{course.subtitle}</p>
+                    <p className="text-muted mb-3">{courseData.description}</p>
 
-                    {/* Highlights */}
-                    <ul className="mt-3 ps-3 small">
-                        {course.highlights.map((h, i) => (
-                            <li key={i}>{h}</li>
-                        ))}
-                    </ul>
+                    {/* Price */}
+                    <div className="mb-3">
+                        <span className="h4 fw-bold text-success">
+                            {formatPrice(courseData.price)}
+                        </span>
+                    </div>
 
-                    {/* Toggleable Curriculum */}
-                    <button
-                        className="btn btn-sm btn-outline-dark mt-3"
-                        onClick={() => setOpen(!open)}
-                    >
-                        {open ? "Hide Curriculum" : "Show Curriculum"}
-                    </button>
+                    {/* Course weeks/curriculum with days */}
+                    {courseData.weeks.length > 0 && (
+                        <>
+                            <button
+                                className="btn btn-sm btn-outline-dark mt-3"
+                                onClick={() => setOpen(!open)}
+                            >
+                                {open ? "Hide Curriculum" : "Show Curriculum"}
+                            </button>
 
-                    {open && (
-                        <ul className="mt-3 ps-3 small">
-                            {course.modules.map((m, i) => (
-                                <li key={i}>{m}</li>
-                            ))}
-                        </ul>
+                            {open && (
+                                <div className="mt-3">
+                                    <h6 className="fw-bold">Course Curriculum:</h6>
+                                    <ul className="ps-3 small">
+                                        {courseData.weeks.map((week, i) => (
+                                            <li key={week._id || i} className="mb-2">
+                                                <strong>Week {week.weekNumber || i + 1}:</strong> {week.title || `Week ${i + 1} Content`}
+                                                {week.days && week.days.length > 0 && (
+                                                    <ul className="ps-3 mt-1">
+                                                        {week.days.map((day, dayIndex) => (
+                                                            <li key={day._id || dayIndex} className="text-muted">
+                                                                Day {day.dayNumber}: {day.title}
+                                                                {day.contents && day.contents.length > 0 && (
+                                                                    <span className="badge bg-light text-dark ms-2">
+                                                                        {day.contents.length} items
+                                                                    </span>
+                                                                )}
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                )}
+                                                {/* Fallback for old structure without days */}
+                                                {week.contents && week.contents.length > 0 && !week.days && (
+                                                    <span className="text-muted"> ({week.contents.length} items)</span>
+                                                )}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
+                        </>
                     )}
 
+                    {/* Course Features/Highlights */}
+                    <div className="mt-3">
+                        <h6 className="fw-bold">What you'll get:</h6>
+                        <ul className="ps-3 small">
+                            <li>Expert mentor guidance</li>
+                            <li>Comprehensive study materials</li>
+                            <li>Practice tests & assessments</li>
+                            <li>Doubt clearing sessions</li>
+                            <li>Progress tracking</li>
+                        </ul>
+                    </div>
+
                     {/* CTA buttons */}
-                    <div className="mt-4 d-flex gap-2">
-                        <a href={course.ctaPrimary.href} className="btn btn-dark">
-                            {course.ctaPrimary.label}
-                        </a>
-                        <a
-                            href={course.ctaSecondary.href}
-                            className="btn btn-outline-dark"
+                    {/* <div className="mt-4 d-flex gap-2">
+                        <button
+                            onClick={() => handleEnrollClick(courseData._id)}
+                            className="btn btn-dark"
                         >
-                            {course.ctaSecondary.label}
+                            Enroll Now
+                        </button> */}
+
+                    <div className="mt-4 d-flex gap-2">
+                        <a
+                            href={`/studentdashboard?courseId=${courseData._id}`}
+                            className="btn btn-dark"
+                        >
+                            Enroll Now
+                        </a>
+
+
+                        <a
+                            href="https://wa.me/0000000000"
+                            className="btn btn-outline-dark"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            Talk to Mentor
                         </a>
                     </div>
                 </div>
             </div>
-        </section>
+        </section >
     );
 }

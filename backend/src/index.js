@@ -4,6 +4,7 @@ const dBConnect = require('./config/dbConnect');
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const paymentRoutes = require('./routes/paymentRoutes');
 const cors = require('cors');
 
 
@@ -37,13 +38,14 @@ app.use(cors({
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/payment', paymentRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/stream", streamRoutes);
 
 
 //start the server
-const PORT = process.env.PORT || 7000;
+const PORT = process.env.PORT || 7001;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });

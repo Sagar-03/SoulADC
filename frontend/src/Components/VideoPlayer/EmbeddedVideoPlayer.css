@@ -1,0 +1,267 @@
+/* Video Player Page */
+.video-player-page {
+  background: #f7f8fb;
+  min-height: 100vh;
+  padding: 20px 0;
+}
+
+/* Header */
+.video-header {
+  padding: 20px 0;
+}
+
+.video-header h4 {
+  color: #1f2330;
+  font-weight: 700;
+}
+
+.course-info {
+  text-align: right;
+}
+
+/* Video Container */
+.video-container {
+  background: #fff;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.video-wrapper {
+  position: relative;
+  background: #000;
+  border-radius: 12px;
+  overflow: hidden;
+  aspect-ratio: 16/9;
+}
+
+.main-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 12px;
+}
+
+.video-info h5 {
+  color: #1f2330;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.video-stats {
+  font-size: 0.9rem;
+}
+
+/* Course Sidebar */
+.course-sidebar {
+  background: #fff;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  max-height: 80vh;
+  overflow-y: auto;
+  position: sticky;
+  top: 20px;
+}
+
+.sidebar-title {
+  color: #1f2330;
+  font-weight: 700;
+  margin-bottom: 20px;
+  font-size: 1.1rem;
+}
+
+/* Progress Info */
+.progress-info {
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #eef1f6;
+}
+
+.progress {
+  height: 8px;
+  border-radius: 4px;
+  background: #eef1f6;
+}
+
+.progress-bar {
+  background: linear-gradient(145deg, #A98C6A, #7B563D);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+/* Weeks Accordion */
+.weeks-accordion {
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+.week-item {
+  border: 1px solid #eef1f6;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.week-header {
+  padding: 15px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: #f8f9fa;
+}
+
+.week-header:hover {
+  background: #f0f1f3;
+}
+
+.week-header.active {
+  background: linear-gradient(145deg, #A98C6A, #7B563D);
+  color: white;
+}
+
+.week-title {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.week-subtitle {
+  font-size: 0.8rem;
+  margin-top: 4px;
+  opacity: 0.8;
+}
+
+.week-toggle {
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+.week-content {
+  padding: 10px 15px 15px;
+  background: #fafbfc;
+}
+
+/* Day Items */
+.day-item {
+  background: #fff;
+  border: 1px solid #eef1f6;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 8px;
+}
+
+.day-header {
+  margin-bottom: 8px;
+}
+
+.day-number {
+  color: #A98C6A;
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+}
+
+.day-title {
+  color: #1f2330;
+  font-weight: 600;
+  font-size: 0.85rem;
+  margin-top: 2px;
+}
+
+.day-contents {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* Content Buttons */
+.content-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: #fff;
+  color: #666;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.content-btn:hover {
+  border-color: #A98C6A;
+  color: #7B563D;
+  background: #f9f7f4;
+}
+
+.content-btn.active {
+  background: linear-gradient(145deg, #A98C6A, #7B563D);
+  color: white;
+  border-color: #7B563D;
+}
+
+.content-btn.video {
+  border-color: #007bff;
+}
+
+.content-btn.video:hover {
+  border-color: #0056b3;
+  background: #e7f3ff;
+}
+
+.content-btn.document {
+  border-color: #28a745;
+}
+
+.content-btn.document:hover {
+  border-color: #1e7e34;
+  background: #e8f5e8;
+}
+
+.content-icon {
+  font-size: 0.9rem;
+}
+
+.content-type {
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+/* Responsive Design */
+@media (max-width: 992px) {
+  .course-sidebar {
+    margin-top: 20px;
+    position: static;
+    max-height: none;
+  }
+  
+  .video-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .course-info {
+    text-align: left;
+  }
+}
+
+@media (max-width: 768px) {
+  .video-player-page {
+    padding: 10px 0;
+  }
+  
+  .container-fluid {
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+  
+  .video-container {
+    padding: 15px;
+  }
+  
+  .course-sidebar {
+    padding: 15px;
+  }
+}
