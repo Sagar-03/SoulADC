@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Auth.css";
 import logo from "../assets/logo.png";
+import { api } from "../Api/api";
+import { setAuthData, getRedirectAfterLogin, clearRedirectAfterLogin } from "../utils/auth"; 
 
 const Login = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -29,36 +31,29 @@ const Login = () => {
     try {
       if (isLogin) {
         // 🟢 LOGIN
-        const res = await fetch("http://localhost:7001/api/auth/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email: formData.email,
-            password: formData.password,
-          }),
+        const { data } = await api.post("/auth/login", {
+          email: formData.email,
+          password: formData.password,
         });
 
-        const data = await res.json();
         console.log("Login response:", data);
 
-        if (res.ok && data.token) {
-          // Save auth data
-          localStorage.setItem("token", data.token);
-          localStorage.setItem("user", JSON.stringify(data.user));
-          localStorage.setItem("role", data.role);
+        if (data.token) {
+          // ✅ Store auth data in cookies
+          setAuthData(data.token, data.user, data.role);
 
           alert("Login successful!");
 
-          // 🔥 Handle redirect after login
-          const redirectUrl = localStorage.getItem("redirectAfterLogin");
+          // ✅ Redirect handling
+          const redirectUrl = getRedirectAfterLogin();
           if (redirectUrl) {
-            localStorage.removeItem("redirectAfterLogin");
+            clearRedirectAfterLogin();
             navigate(redirectUrl);
-          } else if (data.user.purchasedCourses && data.user.purchasedCourses.length > 0) {
-            // Purchased course → go to dashboard
+          } else if (data.user.purchasedCourses?.length > 0) {
             navigate("/studentdashboard");
+          } else if (data.role === "admin") {
+            navigate("/admin");
           } else {
-            // No purchased course → stay on site, navbar will show Logout
             navigate("/");
           }
         } else {
@@ -71,23 +66,18 @@ const Login = () => {
           return;
         }
 
-        const res = await fetch("http://localhost:7001/api/auth/register", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            name: formData.name,
-            email: formData.email,
-            password: formData.password,
-            phone: formData.phone,
-          }),
+        const { data } = await api.post("/auth/register", {
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+          phone: formData.phone,
         });
 
-        const data = await res.json();
-        if (res.ok) {
+        if (data) {
           alert(data.message || "Registered successfully!");
-          setIsLogin(true); // Switch to login tab
+          setIsLogin(true); // Switch to login
         } else {
-          alert(data.message || "Registration failed");
+          alert("Registration failed");
         }
       }
     } catch (err) {
@@ -195,6 +185,7 @@ const Login = () => {
                   onChange={handleInputChange}
                   required
                   placeholder="Enter password"
+                  autoComplete={isLogin ? "current-password" : "new-password"}
                 />
               </div>
 
@@ -208,6 +199,7 @@ const Login = () => {
                     value={formData.confirmPassword}
                     onChange={handleInputChange}
                     required
+                    autoComplete="new-password"
                     placeholder="Confirm password"
                   />
                 </div>

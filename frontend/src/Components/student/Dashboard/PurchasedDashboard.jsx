@@ -2,36 +2,28 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import StudentLayout from "../StudentaLayout";
 import "./dashboard.css";
+import { getLiveCourses } from "../../../Api/api"; // adjust path
+
 
 const PurchasedDashboard = () => {
   const navigate = useNavigate();
 
-  /** ----------------------------------------------------
-   * 1. STATE FOR COURSES
-   * ---------------------------------------------------- */
   const [purchasedCourses, setPurchasedCourses] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  /** ----------------------------------------------------
-   * 2. FETCH FROM BACKEND (port 7001)
-   * ---------------------------------------------------- */
   useEffect(() => {
-    // For now, fetch all live courses. Later this will be filtered by purchased courses only
-    fetch("http://localhost:7001/api/user/courses/live")
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error("Failed to fetch courses");
-        }
-        return res.json();
-      })
-      .then((data) => {
+    const fetchPurchasedCourses = async () => {
+      try {
+        const { data } = await getLiveCourses();
         setPurchasedCourses(data);
-        setLoading(false);
-      })
-      .catch((err) => {
+      } catch (err) {
         console.error("Error fetching courses:", err);
+      } finally {
         setLoading(false);
-      });
+      }
+    };
+
+    fetchPurchasedCourses();
   }, []);
 
   return (
@@ -86,10 +78,10 @@ const PurchasedDashboard = () => {
                   <p className="card-text flex-grow-1">
                     {course.description}
                   </p>
-                  <p className="text-muted small">
+                  {/* <p className="text-muted small">
                     <strong>Mentor:</strong> {course.mentor} <br />
                     <strong>Duration:</strong> {course.duration}
-                  </p>
+                  </p> */}
                   <button className="btn btn-primary mt-auto">
                     Go to Course
                   </button>

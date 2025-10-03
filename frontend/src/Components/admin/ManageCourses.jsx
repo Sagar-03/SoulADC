@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import AdminLayout from "./AdminLayout";
 import { Link } from "react-router-dom";
+import { getCourses, toggleCourseLiveApi } from "../../Api/api";
 
 const ManageCourses = () => {
   const [courses, setCourses] = useState([]);
@@ -9,16 +10,7 @@ const ManageCourses = () => {
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        const token = localStorage.getItem("token"); // ✅ admin JWT
-        const res = await fetch("http://localhost:7001/api/admin/courses", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        if (!res.ok) {
-          throw new Error(`Failed to fetch courses: ${res.status}`);
-        }
-
-        const data = await res.json();
+        const { data } = await getCourses(); // Axios handles JSON parsing
         setCourses(data);
       } catch (err) {
         console.error("Error fetching courses:", err);
@@ -30,33 +22,24 @@ const ManageCourses = () => {
     fetchCourses();
   }, []);
 
+
   const toggleCourseLive = async (courseId, currentStatus) => {
-    try {
-      const token = localStorage.getItem("token");
-      const res = await fetch(`http://localhost:7001/api/admin/courses/${courseId}/toggle-live`, {
-        method: "PATCH",
-        headers: { Authorization: `Bearer ${token}` },
-      });
+  try {
+    const { data } = await toggleCourseLiveApi(courseId);
 
-      if (!res.ok) {
-        throw new Error(`Failed to toggle course live status: ${res.status}`);
-      }
+    // Update local state
+    setCourses(courses.map(course =>
+      course._id === courseId
+        ? { ...course, isLive: !currentStatus }
+        : course
+    ));
 
-      const data = await res.json();
-      
-      // Update local state
-      setCourses(courses.map(course => 
-        course._id === courseId 
-          ? { ...course, isLive: !currentStatus }
-          : course
-      ));
-
-      alert(data.message);
-    } catch (err) {
-      console.error(" Error toggling course live status:", err);
-      alert("Failed to update course status");
-    }
-  };
+    alert(data.message);
+  } catch (err) {
+    console.error("Error toggling course live status:", err);
+    alert("Failed to update course status");
+  }
+};
 
   if (loading) return <AdminLayout><p>Loading courses...</p></AdminLayout>;
 
@@ -100,7 +83,7 @@ const ManageCourses = () => {
                 <div className="accordion-body">
                   <p>{course.description}</p>
                   <p><strong>Price:</strong> ₹{course.price}</p>
-                  
+
                   <div className="d-flex gap-2 mb-3">
                     <Link
                       to={`/admin/courses/${course._id}/manage`}
@@ -108,7 +91,7 @@ const ManageCourses = () => {
                     >
                       Manage {course.title}
                     </Link>
-                    
+
                     <button
                       className={`btn ${course.isLive ? 'btn-warning' : 'btn-success'}`}
                       onClick={() => toggleCourseLive(course._id, course.isLive)}

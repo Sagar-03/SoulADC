@@ -4,6 +4,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import "./EmbeddedVideoPlayer.css";
 import StudentLayout from "../student/StudentaLayout";
+import { api, getStreamUrl } from "../../Api/api";
 
 // Static data for fallback
 const staticWeeks = Array.from({ length: 7 }, (_, w) => ({
@@ -23,7 +24,7 @@ const EmbeddedVideoPlayer = () => {
   const { courseId, videoId } = useParams();
   const navigate = useNavigate();
   const videoRef = useRef(null);
-  
+
   const [course, setCourse] = useState(null);
   const [currentVideo, setCurrentVideo] = useState({
     id: videoId || null,
@@ -43,67 +44,63 @@ const EmbeddedVideoPlayer = () => {
       try {
         // Fetch course data
         if (courseId) {
-          const courseRes = await fetch(`http://localhost:7001/api/user/courses/${courseId}`);
-          if (courseRes.ok) {
-            const courseData = await courseRes.json();
-            setCourse(courseData);
-          } else {
-            throw new Error("Failed to fetch course data");
-          }
+          const { data: courseData } = await api.get(`/user/courses/${courseId}`);
+          setCourse(courseData);
         }
 
-        // Fetch video data
+        // Fetch video info
         if (videoId) {
-          const videoRes = await fetch(`http://localhost:7001/api/stream/info/${videoId}`);
-          if (videoRes.ok) {
-            const videoInfo = await videoRes.json();
+          try {
+            const { data: videoInfo } = await api.get(`/stream/info/${videoId}`);
             setCurrentVideo({
               id: videoId,
               title: videoInfo.title || "Video Lesson",
-              src: `http://localhost:7001/api/stream/${videoId}`
+              src: getStreamUrl(videoId),
             });
-          } else {
-            // Fallback to direct streaming
+          } catch {
+            // Fallback to direct streaming if info fetch fails
             setCurrentVideo({
               id: videoId,
               title: "Video Lesson",
-              src: `http://localhost:7001/api/stream/${videoId}`
+              src: getStreamUrl(videoId),
             });
           }
         }
       } catch (err) {
         console.error("Error fetching data:", err);
-        setError(err.message);
-        // Use static data as fallback
-        setCourse({ 
-          title: "ADC Part 1 Course", 
+        setError(err.response?.data?.message || err.message);
+
+        // Optional fallback static data
+        setCourse({
+          title: "ADC Part 1 Course",
           weeks: staticWeeks.map(w => ({
             weekNumber: w.week,
             title: `Week ${w.week} Content`,
-            days: w.days.map((day, index) => ({
-              dayNumber: index + 1,
+            days: w.days.map((day, idx) => ({
+              dayNumber: idx + 1,
               title: day.title,
               contents: [{
                 type: day.type.toLowerCase(),
                 title: day.title,
-                _id: `sample-${day.type.toLowerCase()}-${w.week}-${index + 1}`,
-                s3Key: `sample-${day.type.toLowerCase()}-${w.week}-${index + 1}`
+                _id: `sample-${day.type.toLowerCase()}-${w.week}-${idx + 1}`,
+                s3Key: `sample-${day.type.toLowerCase()}-${w.week}-${idx + 1}`
               }]
             }))
           }))
         });
-        
+
         if (videoId) {
           setCurrentVideo({
             id: videoId,
             title: "Sample Video Lesson",
-            src: `/video.mp4` // Fallback to public video
+            src: "/video.mp4", // fallback
           });
         }
       } finally {
         setLoading(false);
       }
     };
+
 
     fetchCourseAndVideo();
   }, [courseId, videoId]);
@@ -132,13 +129,15 @@ const EmbeddedVideoPlayer = () => {
   }, [currentVideo.src]);
 
   // Handle content opening
-  const handleOpenContent = async (content) => {
+  const handleOpenContent = (content) => {
+    const id = content._id || content.s3Key;
+
     if (content.type === "video") {
-      // Navigate to the same page with new video ID
-      navigate(`/student/course/${courseId}/video/${content._id || content.s3Key}`);
+      // Navigate to the video player page
+      navigate(`/student/course/${courseId}/video/${id}`);
     } else if (content.type === "pdf" || content.type === "document") {
       // Open document in new tab
-      window.open(`http://localhost:7001/api/stream/${content._id || content.s3Key}`, '_blank');
+      window.open(getStreamUrl(id), '_blank');
     } else {
       alert(`Opening ${content.type}: ${content.title}`);
     }
@@ -175,7 +174,7 @@ const EmbeddedVideoPlayer = () => {
           {/* Header */}
           <div className="video-header d-flex justify-content-between align-items-center mb-4">
             <div>
-              <button 
+              <button
                 className="btn btn-outline-secondary me-3"
                 onClick={handleBackToCourse}
               >
@@ -210,7 +209,7 @@ const EmbeddedVideoPlayer = () => {
                     onError={(e) => console.error('Video error:', e)}
                   />
                 </div>
-                
+
                 {/* Video Info */}
                 <div className="video-info mt-3">
                   <h5>{currentVideo.title}</h5>
@@ -227,7 +226,7 @@ const EmbeddedVideoPlayer = () => {
             <div className="col-lg-4">
               <div className="course-sidebar">
                 <h6 className="sidebar-title mb-3">Course Content</h6>
-                
+
                 {/* Course Progress */}
                 <div className="progress-info mb-4">
                   <div className="d-flex justify-content-between mb-2">
@@ -235,8 +234,8 @@ const EmbeddedVideoPlayer = () => {
                     <small>Week {selectedWeek} of {course?.weeks?.length || 7}</small>
                   </div>
                   <div className="progress">
-                    <div 
-                      className="progress-bar" 
+                    <div
+                      className="progress-bar"
                       style={{ width: `${((selectedWeek / (course?.weeks?.length || 7)) * 100)}%` }}
                     ></div>
                   </div>
@@ -246,7 +245,7 @@ const EmbeddedVideoPlayer = () => {
                 <div className="weeks-accordion">
                   {course?.weeks?.map((week, index) => (
                     <div key={week._id || index} className="week-item mb-3">
-                      <div 
+                      <div
                         className={`week-header ${selectedWeek === week.weekNumber ? 'active' : ''}`}
                         onClick={() => setSelectedWeek(week.weekNumber)}
                       >
@@ -258,7 +257,7 @@ const EmbeddedVideoPlayer = () => {
                         </div>
                         <div className="week-subtitle">{week.title || "Study Plan"}</div>
                       </div>
-                      
+
                       {selectedWeek === week.weekNumber && (
                         <div className="week-content">
                           {week.days?.map((day, dayIndex) => (
@@ -271,9 +270,8 @@ const EmbeddedVideoPlayer = () => {
                                 {day.contents?.map((content, contentIndex) => (
                                   <button
                                     key={content._id || contentIndex}
-                                    className={`content-btn ${
-                                      content._id === currentVideo.id || content.s3Key === currentVideo.id ? 'active' : ''
-                                    } ${content.type === 'video' ? 'video' : 'document'}`}
+                                    className={`content-btn ${content._id === currentVideo.id || content.s3Key === currentVideo.id ? 'active' : ''
+                                      } ${content.type === 'video' ? 'video' : 'document'}`}
                                     onClick={() => handleOpenContent(content)}
                                   >
                                     <span className="content-icon">

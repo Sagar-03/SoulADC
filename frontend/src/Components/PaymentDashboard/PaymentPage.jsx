@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { Card, Button, Form, Spinner } from "react-bootstrap";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { getAuthToken, isAuthenticated } from "../../utils/auth";
+import { createCheckoutSession } from "../../Api/api"; // adjust path
+
 
 export default function PaymentPage() {
   const [searchParams] = useSearchParams();
@@ -44,53 +46,38 @@ export default function PaymentPage() {
     }
   };
 
-  const handleCheckout = async () => {
-    setIsLoading(true);
-    try {
-      if (!isAuthenticated()) {
-        alert("Please login first");
-        navigate("/login");
-        return;
-      }
 
-      const token = getAuthToken();
-      
-      // Call backend to create Stripe Checkout Session
-      const res = await fetch("http://localhost:7001/api/payment/create-checkout-session", {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          courseId: course.id,
-          coupon: coupon,
-          successUrl: `${window.location.origin}/payment-success?courseId=${course.id}`,
-          cancelUrl: `${window.location.origin}/payment-cancel`
-        }),
-      });
-
-      const data = await res.json();
-      
-      if (res.status === 401) {
-        // Token is invalid/expired
-        alert("Your session has expired. Please login again.");
-        navigate("/login");
-        return;
-      }
-      
-      if (data.url) {
-        window.location.href = data.url; // Redirect to Stripe Checkout
-      } else {
-        alert("Failed to start checkout: " + (data.error || data.message || "Unknown error"));
-      }
-    } catch (err) {
-      console.error("Checkout error:", err);
-      alert("Something went wrong. Please try again.");
-    } finally {
-      setIsLoading(false);
+const handleCheckout = async () => {
+  setIsLoading(true);
+  try {
+    if (!isAuthenticated()) {
+      alert("Please login first");
+      navigate("/login");
+      return;
     }
-  };
+
+    const payload = {
+      courseId: course.id,
+      coupon: coupon,
+      successUrl: `${window.location.origin}/payment-success?courseId=${course.id}`,
+      cancelUrl: `${window.location.origin}/payment-cancel`
+    };
+
+    const { data } = await createCheckoutSession(payload);
+
+    if (data.url) {
+      window.location.href = data.url; // Redirect to Stripe Checkout
+    } else {
+      alert("Failed to start checkout: " + (data.error || data.message || "Unknown error"));
+    }
+  } catch (err) {
+    console.error("Checkout error:", err);
+    alert("Something went wrong. Please try again.");
+  } finally {
+    setIsLoading(false);
+  }
+};
+
 
   const finalPrice = course.price - discount;
 

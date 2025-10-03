@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import AdminLayout from "./AdminLayout";
 import { useParams } from "react-router-dom";
 import "./admin.css";
+import { getStreamUrl, addWeek, getCourses, getPresignUrl, deleteContent, deleteWeekApi, deleteDayApi } from "../../Api/api";
 
 const CourseContentManager = () => {
   const { id } = useParams();
@@ -16,15 +17,10 @@ const CourseContentManager = () => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [error, setError] = useState(null);
 
-  const token = localStorage.getItem("token");
 
   const fetchCourse = async () => {
     try {
-      const res = await fetch(`http://localhost:7001/api/admin/courses/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) throw new Error(`Failed to fetch course: ${res.status}`);
-      const data = await res.json();
+      const { data } = await getCourses(id);
       setCourse(data);
     } catch (err) {
       setError("Failed to fetch course details");
@@ -32,11 +28,12 @@ const CourseContentManager = () => {
     }
   };
 
+
   useEffect(() => {
     fetchCourse();
   }, [id]);
 
-  const addWeek = async () => {
+  const handleAddWeek = async () => {
     if (!weekNumber || !weekTitle) {
       setError("Please provide both week number and title");
       return;
@@ -44,14 +41,7 @@ const CourseContentManager = () => {
 
     try {
       setError(null);
-      const res = await fetch(`http://localhost:7001/api/admin/courses/${id}/weeks`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ weekNumber: parseInt(weekNumber), title: weekTitle }),
-      });
-      
-      if (!res.ok) throw new Error(`Failed to add week: ${res.status}`);
-      
+      await addWeek(id, weekNumber, weekTitle); // from api.js
       setWeekNumber("");
       setWeekTitle("");
       fetchCourse();
@@ -60,6 +50,7 @@ const CourseContentManager = () => {
       console.error(err);
     }
   };
+
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
@@ -70,17 +61,17 @@ const CourseContentManager = () => {
         setError(`File too large. Max size: ${activeType === "video" ? "100MB" : "10MB"}`);
         return;
       }
-      
+
       // Validate file type
-      const allowedTypes = activeType === "video" 
+      const allowedTypes = activeType === "video"
         ? ["video/mp4", "video/webm", "video/mov", "video/avi"]
         : ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
-      
+
       if (!allowedTypes.includes(selectedFile.type)) {
         setError(`Invalid file type. Allowed: ${activeType === "video" ? "MP4, WebM, MOV, AVI" : "PDF, DOC, DOCX"}`);
         return;
       }
-      
+
       setFile(selectedFile);
       setError(null);
     }
@@ -97,7 +88,7 @@ const CourseContentManager = () => {
       // Find the active week and day to get their numbers
       const activeWeek = course.weeks.find(week => week._id === activeWeekId);
       const activeDay = activeWeek?.days.find(day => day._id === activeDayId);
-      
+
       if (!activeWeek || !activeDay) {
         throw new Error("Could not find selected week or day");
       }
@@ -105,17 +96,23 @@ const CourseContentManager = () => {
       console.log(`Uploading to Week ${activeWeek.weekNumber}, Day ${activeDay.dayNumber}`);
 
       // 1. Ask backend for presign with week and day information
-      const presignRes = await fetch(
-        `http://localhost:7001/api/upload/presign?fileName=${encodeURIComponent(file.name)}&fileType=${file.type}&folder=${activeType === "video" ? "videos" : "documents"}&weekNumber=${activeWeek.weekNumber}&dayNumber=${activeDay.dayNumber}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      
-      if (!presignRes.ok) throw new Error("Failed to get upload URL");
-      const { uploadUrl, key } = await presignRes.json();
+      try {
+        const presignRes = await getPresignUrl(
+          file.name,
+          file.type,
+          activeType === "video" ? "videos" : "documents",
+          activeWeek.weekNumber,
+          activeDay.dayNumber
+        );
+
+        const { uploadUrl, key } = presignRes.data; // ✅ Axios returns data here
+      } catch (err) {
+        throw new Error("Failed to get upload URL: " + err.message);
+      }
 
       // 2. Upload file to S3 with progress tracking
       const xhr = new XMLHttpRequest();
-      
+
       await new Promise((resolve, reject) => {
         xhr.upload.addEventListener('progress', (e) => {
           if (e.lengthComputable) {
@@ -142,17 +139,19 @@ const CourseContentManager = () => {
       });
 
       // 3. Save metadata in DB
-      const saveRes = await fetch(`http://localhost:7001/api/admin/courses/${id}/weeks/${activeWeekId}/days/${activeDayId}/contents`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ 
-          type: activeType, 
-          title: file.name.split('.')[0], // Remove extension from title
-          s3Key: key 
-        }),
-      });
+      try {
+        const saveRes = await saveContent(activeCourseId, activeWeekId, activeDayId, {
+          type: activeType,
+          title: file.name.split(".")[0], // remove extension
+          s3Key: key,
+        });
 
-      if (!saveRes.ok) throw new Error("Failed to save content metadata");
+        // Axios resolves to `data` automatically
+        console.log("Content saved:", saveRes.data);
+      } catch (err) {
+        throw new Error("Failed to save content metadata: " + err.message);
+      }
+
 
       // Reset form
       setFile(null);
@@ -160,13 +159,13 @@ const CourseContentManager = () => {
       setActiveDayId(null);
       setActiveType(null);
       setUploadProgress(0);
-      
+
       // Clear file input
       const fileInputs = document.querySelectorAll('input[type="file"]');
       fileInputs.forEach(input => input.value = '');
-      
+
       fetchCourse();
-      
+
     } catch (err) {
       setError(`Upload failed: ${err.message}`);
       console.error(err);
@@ -175,16 +174,10 @@ const CourseContentManager = () => {
     }
   };
 
-  const deleteContent = async (weekId, dayId, contentId) => {
+  const handleDeleteContent = async (weekId, dayId, contentId) => {
     if (!confirm("Are you sure you want to delete this content?")) return;
-    
     try {
-      const res = await fetch(`http://localhost:7001/api/admin/courses/${id}/weeks/${weekId}/days/${dayId}/contents/${contentId}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      
-      if (!res.ok) throw new Error(`Failed to delete content: ${res.status}`);
+      await deleteContent(id, weekId, dayId, contentId); // ✅ now this refers to the API function
       fetchCourse();
     } catch (err) {
       setError("Failed to delete content");
@@ -195,20 +188,15 @@ const CourseContentManager = () => {
   const deleteWeek = async (weekId) => {
     const week = course.weeks.find(w => w._id === weekId);
     const totalContent = week?.days?.reduce((total, day) => total + (day.contents?.length || 0), 0) || 0;
-    
+
     const confirmMessage = `Are you sure you want to delete Week ${week?.weekNumber}?\n\nThis will permanently delete:\n• All 7 days in this week\n• ${totalContent} content items (videos/documents)\n• All associated files from cloud storage\n\nThis action cannot be undone.`;
-    
+
     if (!confirm(confirmMessage)) return;
-    
+
     try {
       setError(null);
-      const res = await fetch(`http://localhost:7001/api/admin/courses/${id}/weeks/${weekId}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      
-      if (!res.ok) throw new Error(`Failed to delete week: ${res.status}`);
-      
+      await deleteWeekApi(id, weekId); // use centralized API
+
       // Reset active selections if they belonged to the deleted week
       if (activeWeekId === weekId) {
         setActiveWeekId(null);
@@ -216,71 +204,66 @@ const CourseContentManager = () => {
         setActiveType(null);
         setFile(null);
       }
-      
+
       fetchCourse();
-      
+
       // Show success message
-      setError(null);
       const successDiv = document.createElement('div');
       successDiv.className = 'alert alert-success alert-dismissible fade show mt-3';
       successDiv.innerHTML = `
-        <i class="bi bi-check-circle me-2"></i>
-        Week ${week?.weekNumber} has been successfully deleted.
-        <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
-      `;
+      <i class="bi bi-check-circle me-2"></i>
+      Week ${week?.weekNumber} has been successfully deleted.
+      <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+    `;
       document.querySelector('.container-fluid').insertBefore(successDiv, document.querySelector('.container-fluid').children[2]);
       setTimeout(() => successDiv.remove(), 5000);
-      
+
     } catch (err) {
       setError("Failed to delete week");
       console.error(err);
     }
   };
 
+
   const deleteDay = async (weekId, dayId) => {
     const week = course.weeks.find(w => w._id === weekId);
     const day = week?.days.find(d => d._id === dayId);
     const contentCount = day?.contents?.length || 0;
-    
+
     const confirmMessage = `Are you sure you want to delete Day ${day?.dayNumber}?\n\nThis will permanently delete:\n• ${contentCount} content items (videos/documents)\n• All associated files from cloud storage\n\nThis action cannot be undone.`;
-    
+
     if (!confirm(confirmMessage)) return;
-    
+
     try {
       setError(null);
-      const res = await fetch(`http://localhost:7001/api/admin/courses/${id}/weeks/${weekId}/days/${dayId}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      
-      if (!res.ok) throw new Error(`Failed to delete day: ${res.status}`);
-      
+      await deleteDayApi(id, weekId, dayId); // centralized API call
+
       // Reset active selections if they belonged to the deleted day
       if (activeWeekId === weekId && activeDayId === dayId) {
         setActiveDayId(null);
         setActiveType(null);
         setFile(null);
       }
-      
+
       fetchCourse();
-      
+
       // Show success message
-      setError(null);
       const successDiv = document.createElement('div');
       successDiv.className = 'alert alert-success alert-dismissible fade show mt-3';
       successDiv.innerHTML = `
-        <i class="bi bi-check-circle me-2"></i>
-        Day ${day?.dayNumber} has been successfully deleted.
-        <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
-      `;
+      <i class="bi bi-check-circle me-2"></i>
+      Day ${day?.dayNumber} has been successfully deleted.
+      <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+    `;
       document.querySelector('.container-fluid').insertBefore(successDiv, document.querySelector('.container-fluid').children[2]);
       setTimeout(() => successDiv.remove(), 5000);
-      
+
     } catch (err) {
       setError("Failed to delete day");
       console.error(err);
     }
   };
+
 
   const cancelUpload = () => {
     setFile(null);
@@ -289,7 +272,7 @@ const CourseContentManager = () => {
     setActiveType(null);
     setUploadProgress(0);
     setError(null);
-    
+
     // Clear file inputs
     const fileInputs = document.querySelectorAll('input[type="file"]');
     fileInputs.forEach(input => input.value = '');
@@ -352,8 +335,8 @@ const CourseContentManager = () => {
                 />
               </div>
               <div className="col-md-2 d-flex align-items-end">
-                <button 
-                  onClick={addWeek} 
+                <button
+                  onClick={handleAddWeek}
                   className="btn btn-success w-100"
                   disabled={!weekNumber || !weekTitle}
                 >
@@ -419,7 +402,7 @@ const CourseContentManager = () => {
                               </div>
                               <div className="card-body p-3">
                                 <h6 className="text-muted small mb-2">{day.title}</h6>
-                                
+
                                 {/* Day Content */}
                                 {day.contents && day.contents.length > 0 ? (
                                   <div className="mb-3">
@@ -428,31 +411,31 @@ const CourseContentManager = () => {
                                         <div className="d-flex justify-content-between align-items-center mb-1">
                                           <small className="fw-semibold">
                                             <i className={`bi ${content.type === 'video' ? 'bi-play-circle text-primary' : 'bi-file-earmark-pdf text-info'} me-1`}></i>
-                                    x        {content.title}
+                                            x        {content.title}
                                           </small>
                                           <button
                                             className="btn btn-danger btn-sm p-1"
                                             style={{ fontSize: "0.7rem" }}
-                                            onClick={() => deleteContent(week._id, day._id, content._id)}
+                                            onClick={() => handleDeleteContent(week._id, day._id, content._id)}
                                           >
                                             <i className="bi bi-trash"></i>
                                           </button>
                                         </div>
-                                        
+
                                         {/* Content Preview */}
                                         {content.type === "video" && (
                                           <video
-                                            src={`http://localhost:7001/api/stream/${content.s3Key}`}
+                                            src={getStreamUrl(content.s3Key)}
                                             controls
                                             className="w-100"
                                             style={{ maxHeight: "120px", fontSize: "0.8rem" }}
                                             preload="metadata"
                                           />
                                         )}
-                                        
+
                                         {content.type === "pdf" && (
-                                          <a 
-                                            href={`http://localhost:7001/api/stream/${content.s3Key}`}
+                                          <a
+                                            href={getStreamUrl(content.s3Key)}
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             className="btn btn-outline-info btn-sm w-100"
@@ -472,13 +455,13 @@ const CourseContentManager = () => {
                                 {/* Upload Section for Each Day */}
                                 <div className="border-top pt-2">
                                   <small className="text-muted d-block mb-2">Add content:</small>
-                                  
+
                                   {/* Upload Type Buttons */}
                                   <div className="d-flex gap-1 mb-2">
                                     <button
                                       className={`btn btn-sm ${activeWeekId === week._id && activeDayId === day._id && activeType === "video" ? "btn-primary" : "btn-outline-primary"}`}
-                                      onClick={() => { 
-                                        setActiveWeekId(week._id); 
+                                      onClick={() => {
+                                        setActiveWeekId(week._id);
                                         setActiveDayId(day._id);
                                         setActiveType("video");
                                         setFile(null);
@@ -492,8 +475,8 @@ const CourseContentManager = () => {
                                     </button>
                                     <button
                                       className={`btn btn-sm ${activeWeekId === week._id && activeDayId === day._id && activeType === "pdf" ? "btn-info" : "btn-outline-info"}`}
-                                      onClick={() => { 
-                                        setActiveWeekId(week._id); 
+                                      onClick={() => {
+                                        setActiveWeekId(week._id);
                                         setActiveDayId(day._id);
                                         setActiveType("pdf");
                                         setFile(null);
@@ -510,16 +493,16 @@ const CourseContentManager = () => {
                                   {/* File Input (only show for active day) */}
                                   {activeWeekId === week._id && activeDayId === day._id && activeType && (
                                     <div className="mb-2">
-                                      <input 
-                                        type="file" 
-                                        onChange={handleFileChange} 
+                                      <input
+                                        type="file"
+                                        onChange={handleFileChange}
                                         className="form-control form-control-sm"
                                         accept={activeType === "video" ? "video/*" : ".pdf,.doc,.docx"}
                                         disabled={uploading}
                                         style={{ fontSize: "0.7rem" }}
                                       />
                                       <div className="form-text" style={{ fontSize: "0.6rem" }}>
-                                        {activeType === "video" 
+                                        {activeType === "video"
                                           ? "MP4, WebM (Max: 100MB)"
                                           : "PDF, DOC (Max: 10MB)"
                                         }
@@ -572,7 +555,7 @@ const CourseContentManager = () => {
                   <i className={`bi ${activeType === 'video' ? 'bi-camera-video' : 'bi-file-earmark-pdf'} display-4 text-muted`}></i>
                 </div>
               </div>
-              
+
               {/* Progress Bar */}
               {uploading && (
                 <div className="mb-3">
@@ -581,18 +564,18 @@ const CourseContentManager = () => {
                     <small className="text-muted">{uploadProgress}%</small>
                   </div>
                   <div className="progress">
-                    <div 
-                      className="progress-bar progress-bar-striped progress-bar-animated" 
-                      role="progressbar" 
+                    <div
+                      className="progress-bar progress-bar-striped progress-bar-animated"
+                      role="progressbar"
                       style={{ width: `${uploadProgress}%` }}
                     ></div>
                   </div>
                 </div>
               )}
-              
+
               <div className="d-flex gap-2">
-                <button 
-                  className="btn btn-success" 
+                <button
+                  className="btn btn-success"
                   onClick={uploadContent}
                   disabled={uploading}
                 >
@@ -608,8 +591,8 @@ const CourseContentManager = () => {
                     </>
                   )}
                 </button>
-                <button 
-                  className="btn btn-outline-secondary" 
+                <button
+                  className="btn btn-outline-secondary"
                   onClick={cancelUpload}
                   disabled={uploading}
                 >

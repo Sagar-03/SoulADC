@@ -116,6 +116,7 @@ router.post("/courses/:courseId/weeks/:weekId/days/:dayId/contents", protect, ad
  */
 router.delete("/courses/:courseId/weeks/:weekId/days/:dayId/contents/:contentId", protect, adminOnly, async (req, res) => {
   try {
+    console.log(" Delete request received:", req.params); // 👈 Add this
     const { courseId, weekId, dayId, contentId } = req.params;
     const course = await Course.findById(courseId);
     if (!course) return res.status(404).json({ error: "Course not found" });
@@ -133,9 +134,9 @@ router.delete("/courses/:courseId/weeks/:weekId/days/:dayId/contents/:contentId"
     try {
       const s3 = require("../config/s3");
       const { DeleteObjectCommand } = require("@aws-sdk/client-s3");
-      const deleteParams = { 
-        Bucket: process.env.AWS_S3_BUCKET, 
-        Key: content.s3Key 
+      const deleteParams = {
+        Bucket: process.env.AWS_S3_BUCKET,
+        Key: content.s3Key
       };
       await s3.send(new DeleteObjectCommand(deleteParams));
     } catch (s3Error) {
@@ -170,13 +171,13 @@ router.delete("/courses/:courseId/weeks/:weekId", protect, adminOnly, async (req
     try {
       const s3 = require("../config/s3");
       const { DeleteObjectCommand } = require("@aws-sdk/client-s3");
-      
+
       for (const day of week.days || []) {
         for (const content of day.contents || []) {
           if (content.s3Key) {
-            const deleteParams = { 
-              Bucket: process.env.AWS_S3_BUCKET, 
-              Key: content.s3Key 
+            const deleteParams = {
+              Bucket: process.env.AWS_S3_BUCKET,
+              Key: content.s3Key
             };
             await s3.send(new DeleteObjectCommand(deleteParams));
           }
@@ -217,12 +218,12 @@ router.delete("/courses/:courseId/weeks/:weekId/days/:dayId", protect, adminOnly
     try {
       const s3 = require("../config/s3");
       const { DeleteObjectCommand } = require("@aws-sdk/client-s3");
-      
+
       for (const content of day.contents || []) {
         if (content.s3Key) {
-          const deleteParams = { 
-            Bucket: process.env.AWS_S3_BUCKET, 
-            Key: content.s3Key 
+          const deleteParams = {
+            Bucket: process.env.AWS_S3_BUCKET,
+            Key: content.s3Key
           };
           await s3.send(new DeleteObjectCommand(deleteParams));
         }
@@ -253,10 +254,10 @@ router.patch("/courses/:id/toggle-live", protect, adminOnly, async (req, res) =>
 
     course.isLive = !course.isLive;
     await course.save();
-    
-    res.json({ 
+
+    res.json({
       message: `Course ${course.isLive ? 'is now live' : 'is no longer live'}`,
-      course 
+      course
     });
   } catch (err) {
     res.status(500).json({ error: err.message });

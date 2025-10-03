@@ -1,28 +1,24 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./css.css";
-import { getAuthToken, isAuthenticated } from "../../utils/auth";
+import { isAuthenticated, setRedirectAfterLogin } from "../../utils/auth";
 
 export default function CourseCard({ course }) {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
 
-  // Format price for display
-  const formatPrice = (price) => {
-    return new Intl.NumberFormat("en-IN", {
+  const formatPrice = (price) =>
+    new Intl.NumberFormat("en-IN", {
       style: "currency",
       currency: "INR",
       minimumFractionDigits: 0,
     }).format(price);
-  };
 
-  // Accent colors for cards
   const getAccentColor = (index = 0) => {
     const colors = ["#a1754f", "#7a5b3e", "#8B4513", "#A0522D", "#CD853F"];
     return colors[index % colors.length];
   };
 
-  // Prepare course data
   const courseData = {
     title: course.title || "Course Title",
     description: course.description || "Course description not available.",
@@ -40,35 +36,26 @@ export default function CourseCard({ course }) {
         : null,
   };
 
-  // ✅ Handle Enroll Now click
   const handleEnroll = () => {
+    const paymentUrl = `/payment?courseId=${courseData._id}&title=${courseData.title}&price=${courseData.price}`;
+
     if (!isAuthenticated()) {
-      // Save intended course for redirect after login
-      localStorage.setItem(
-        "redirectAfterLogin",
-        `/payment?courseId=${courseData._id}&title=${courseData.title}&price=${courseData.price}`
-      );
-      // Navigate to login page
+      setRedirectAfterLogin(paymentUrl); // ✅ save in cookie
       navigate("/login");
     } else {
-      // Already logged in → go to payment directly
-      navigate(
-        `/payment?courseId=${courseData._id}&title=${courseData.title}&price=${courseData.price}`
-      );
+      navigate(paymentUrl);
     }
   };
 
   return (
     <section id={courseData._id} className="col-12 col-lg-6 mb-4">
       <div className="card h-100 border-0 shadow-lg position-relative course-card">
-        {/* Ribbon */}
         {courseData.ribbon && (
           <div className="ribbon bg-dark text-white small fw-semibold">
             {courseData.ribbon}
           </div>
         )}
 
-        {/* Thumbnail */}
         {courseData.thumbnail && (
           <div className="course-thumbnail-container">
             <img
@@ -76,23 +63,17 @@ export default function CourseCard({ course }) {
               alt={courseData.title}
               className="card-img-top course-thumbnail"
               style={{ height: "200px", objectFit: "cover" }}
-              onError={(e) => {
-                e.target.style.display = "none";
-              }}
+              onError={(e) => (e.target.style.display = "none")}
             />
           </div>
         )}
 
         <div className="card-body p-4 p-md-5">
-          {/* Title + Duration */}
           <div className="d-flex align-items-center justify-content-between mb-2">
             <h3 className="h2 mb-0 fw-bold">{courseData.title}</h3>
             <span
               className="badge rounded-pill"
-              style={{
-                backgroundColor: courseData.accent,
-                color: "white",
-              }}
+              style={{ backgroundColor: courseData.accent, color: "white" }}
             >
               {courseData.duration}
             </span>
@@ -100,14 +81,12 @@ export default function CourseCard({ course }) {
 
           <p className="text-muted mb-3">{courseData.description}</p>
 
-          {/* Price */}
           <div className="mb-3">
             <span className="h4 fw-bold text-success">
               {formatPrice(courseData.price)}
             </span>
           </div>
 
-          {/* Curriculum toggle */}
           {courseData.weeks.length > 0 && (
             <>
               <button
@@ -128,9 +107,12 @@ export default function CourseCard({ course }) {
                         {week.days && week.days.length > 0 && (
                           <ul className="ps-3 mt-1">
                             {week.days.map((day, dayIndex) => (
-                              <li key={day._id || dayIndex} className="text-muted">
+                              <li
+                                key={day._id || dayIndex}
+                                className="text-muted"
+                              >
                                 Day {day.dayNumber}: {day.title}
-                                {day.contents && day.contents.length > 0 && (
+                                {day.contents?.length > 0 && (
                                   <span className="badge bg-light text-dark ms-2">
                                     {day.contents.length} items
                                   </span>
@@ -147,7 +129,6 @@ export default function CourseCard({ course }) {
             </>
           )}
 
-          {/* Features */}
           <div className="mt-3">
             <h6 className="fw-bold">What you'll get:</h6>
             <ul className="ps-3 small">
@@ -159,12 +140,10 @@ export default function CourseCard({ course }) {
             </ul>
           </div>
 
-          {/* CTA Buttons */}
           <div className="mt-4 d-flex gap-2">
             <button onClick={handleEnroll} className="btn btn-dark">
               Enroll Now
             </button>
-
             <a
               href="https://wa.me/0000000000"
               className="btn btn-outline-dark"

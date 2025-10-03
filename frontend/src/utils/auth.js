@@ -1,52 +1,62 @@
-// Authentication utility functions
+import { setCookie, getCookie, removeCookie } from "./cookies";
+
+// -------------------
+// Auth Utils
+// -------------------
+
 export const isAuthenticated = () => {
-  const token = localStorage.getItem("token");
-  const user = localStorage.getItem("user");
-  
-  if (!token || !user) {
-    return false;
-  }
-  
+  const token = getCookie("token");
+  const user = getCookie("user");
+  if (!token || !user) return false;
+
   try {
-    // Basic JWT validation - check if token is not expired
-    const payload = JSON.parse(atob(token.split('.')[1]));
+    const payload = JSON.parse(atob(token.split(".")[1]));
     const currentTime = Date.now() / 1000;
-    
     if (payload.exp && payload.exp < currentTime) {
-      // Token is expired, clear storage
       logout();
       return false;
     }
-    
     return true;
-  } catch (error) {
-    // Invalid token format, clear storage
+  } catch (err) {
     logout();
     return false;
   }
 };
 
-export const getAuthToken = () => {
-  return localStorage.getItem("token");
-};
+export const getAuthToken = () => getCookie("token");
 
 export const getUser = () => {
-  const user = localStorage.getItem("user");
+  const user = getCookie("user");
   return user ? JSON.parse(user) : null;
 };
 
-export const getUserRole = () => {
-  return localStorage.getItem("role") || "user";
-};
+export const getUserRole = () => getCookie("role") || "user";
 
 export const logout = () => {
-  localStorage.removeItem("token");
-  localStorage.removeItem("user");
-  localStorage.removeItem("role");
+  removeCookie("token");
+  removeCookie("user");
+  removeCookie("role");
+  removeCookie("redirectAfterLogin");
 };
 
 export const setAuthData = (token, user, role) => {
-  localStorage.setItem("token", token);
-  localStorage.setItem("user", JSON.stringify(user));
-  localStorage.setItem("role", role);
+  setCookie("token", token); // session cookie
+  setCookie("user", JSON.stringify(user));
+  setCookie("role", role);
+};
+
+// -------------------
+// Redirect Helpers
+// -------------------
+
+export const setRedirectAfterLogin = (url) => {
+  setCookie("redirectAfterLogin", url);
+};
+
+export const getRedirectAfterLogin = () => {
+  return getCookie("redirectAfterLogin");
+};
+
+export const clearRedirectAfterLogin = () => {
+  removeCookie("redirectAfterLogin");
 };

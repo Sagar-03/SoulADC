@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Card, Button, Spinner } from 'react-bootstrap';
 import { getAuthToken } from '../../utils/auth';
+import { PaymentSuccessApi } from '../../Api/api'; // adjust path as needed
 
 const PaymentSuccess = () => {
   const [searchParams] = useSearchParams();
@@ -11,35 +12,28 @@ const PaymentSuccess = () => {
   const [courseId, setCourseId] = useState(null);
 
   useEffect(() => {
-    const handlePaymentSuccess = async () => {
-      const sessionId = searchParams.get('session_id');
-      const courseIdParam = searchParams.get('course_id') || searchParams.get('courseId');
-      
-      if (!sessionId || !courseIdParam) {
-        setLoading(false);
-        return;
-      }
+const handlePaymentSuccess = async () => {
+  const sessionId = searchParams.get('session_id');
+  const courseIdParam = searchParams.get('course_id') || searchParams.get('courseId');
 
-      try {
-        const token = getAuthToken();
-        const response = await fetch(`http://localhost:7001/api/payment/success?session_id=${sessionId}&course_id=${courseIdParam}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+  if (!sessionId || !courseIdParam) {
+    setLoading(false);
+    return;
+  }
 
-        const data = await response.json();
-        if (data.success) {
-          setSuccess(true);
-          setCourseId(courseIdParam);
-        }
-      } catch (error) {
-        console.error('Error handling payment success:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  try {
+    const { data } = await PaymentSuccessApi(sessionId, courseIdParam);
 
+    if (data.success) {
+      setSuccess(true);
+      setCourseId(courseIdParam);
+    }
+  } catch (error) {
+    console.error('Error handling payment success:', error);
+  } finally {
+    setLoading(false);
+  }
+};
     handlePaymentSuccess();
   }, [searchParams]);
 

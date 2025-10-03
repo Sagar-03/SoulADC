@@ -3,6 +3,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-d
 import Home from "./Pages/Home";
 import CoursesPage from "./Pages/course";
 import Login from "./Pages/Login";
+// 🔹 Protected Route Wrapper
+import { isAuthenticated, getUser, getUserRole } from "./utils/auth";
 
 // Student Dashboard
 import Studentdashboard from "./Components/student/Studentdashboard";
@@ -25,19 +27,20 @@ import CourseContentManager from "./Components/admin/CourseContentManager";
 
 // 🔹 Protected Route Wrapper
 const ProtectedRoute = ({ children, requirePurchased = false, adminOnly = false }) => {
-  const token = localStorage.getItem("token");
-  const user = JSON.parse(localStorage.getItem("user"));
-  const role = localStorage.getItem("role");
+  const user = getUser();          // comes from cookie
+  const role = getUserRole();      // comes from cookie
+  const loggedIn = isAuthenticated();
 
-  // 🚫 If not logged in at all
-  if (!token) return <Navigate to="/login" replace />;
 
-  // 🚫 If route is admin-only but user isn’t admin
+  //  If not logged in at all
+  if (!loggedIn) return <Navigate to="/login" replace />;
+
+  //  If route is admin-only but user isn’t admin
   if (adminOnly && role !== "admin") {
     return <Navigate to="/" replace />;
   }
 
-  // 🚫 If student route requires purchased course but user has none
+  //  If student route requires purchased course but user has none
   if (requirePurchased && (!user?.purchasedCourses || user.purchasedCourses.length === 0)) {
     return <Navigate to="/courses" replace />;
   }

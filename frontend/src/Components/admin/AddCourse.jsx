@@ -27,53 +27,34 @@ const AddCourse = () => {
     }
   };
 
- 
+
   // Handle submit
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        alert("⚠️ Please login as admin first.");
-        return;
-      }
-
-      let thumbnailKey = "";
+      // Build FormData for file + text fields
+      const formData = new FormData();
+      formData.append("title", form.title);
+      formData.append("description", form.description);
+      formData.append("durationMonths", form.durationMonths);
+      formData.append("weeks", form.weeks);
+      formData.append("price", form.price);
       if (form.thumbnail) {
-        thumbnailKey = form.thumbnail.name;
+        formData.append("thumbnail", form.thumbnail);
       }
 
-    
-      const res = await fetch("http://localhost:7001/api/admin/courses", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          title: form.title,
-          description: form.description,
-          durationMonths: form.durationMonths,
-          weeks: form.weeks,
-          price: form.price,
-          thumbnail: thumbnailKey,
-        }),
-      });
+      // Call centralized API
+      const { data } = await createCourse(formData);
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to create course");
-      }
-
-      alert(` Course "${form.title}" created successfully!`);
+      alert(`✅ Course "${form.title}" created successfully!`);
       navigate(`/admin/courses/${data._id}/manage`);
     } catch (err) {
       console.error("Error creating course:", err);
-      alert(err.message);
+      alert(err.response?.data?.error || err.message);
     }
   };
+
 
 
   return (

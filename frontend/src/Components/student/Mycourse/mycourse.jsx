@@ -4,6 +4,8 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import "./mycourse.css";
 import StudentLayout from "../StudentaLayout";
+import { getStreamUrl } from "../../../Api/api";
+import { api } from "../../../Api/api";
 
 const documents = [
   { title: "ADC Part-1 Mock Paper 01", tag: "PDF" },
@@ -32,16 +34,11 @@ const Mycourse = () => {
       }
 
       try {
-        // Fetch course data with weeks and content
-        const res = await fetch(`http://localhost:7001/api/user/courses/${courseId}`);
-        if (!res.ok) {
-          throw new Error("Failed to fetch course data");
-        }
-        const courseData = await res.json();
-        setCourse(courseData);
+        const { data } = await api.get(`/user/courses/${courseId}`);
+        setCourse(data);
       } catch (err) {
         console.error("Error fetching course:", err);
-        setError(err.message);
+        setError(err.response?.data?.message || err.message);
       } finally {
         setLoading(false);
       }
@@ -51,15 +48,13 @@ const Mycourse = () => {
   }, [courseId]);
 
   // Handle content opening
-  const handleOpenContent = async (content) => {
+  const handleOpenContent = (content) => {
     if (content.type === "video") {
-      // Navigate to the dedicated video player page
       const videoId = content._id || content.s3Key;
       navigate(`/student/course/${courseId}/video/${videoId}`);
     } else if (content.type === "pdf" || content.type === "document") {
-      // Open document in new tab
       const docId = content._id || content.s3Key;
-      window.open(`http://localhost:7001/api/stream/${docId}`, '_blank');
+      window.open(getStreamUrl(docId), "_blank");
     } else {
       alert(`Opening ${content.type}: ${content.title}`);
     }
@@ -86,7 +81,7 @@ const Mycourse = () => {
             <p className="text-muted mb-4">
               {error || "No course data found. Please check the course ID or try again later."}
             </p>
-            <button 
+            <button
               className="btn btn-primary"
               onClick={() => navigate('/student/dashboard')}
             >
@@ -143,9 +138,8 @@ const Mycourse = () => {
                   {course?.weeks?.map((week, index) => (
                     <button
                       key={week._id || index}
-                      className={`list-group-item list-group-item-action ${
-                        selectedWeek === week.weekNumber ? "active" : ""
-                      }`}
+                      className={`list-group-item list-group-item-action ${selectedWeek === week.weekNumber ? "active" : ""
+                        }`}
                       onClick={() => {
                         setSelectedWeek(week.weekNumber);
                         setActiveDay(0); // reset to Day 1 when switching week
@@ -154,10 +148,10 @@ const Mycourse = () => {
                       WEEK {String(week.weekNumber).padStart(2, "0")} - {week.title || "Study Plan"}
                     </button>
                   )) || (
-                    <div className="text-center p-4">
-                      <p className="text-muted">No weeks available</p>
-                    </div>
-                  )}
+                      <div className="text-center p-4">
+                        <p className="text-muted">No weeks available</p>
+                      </div>
+                    )}
                 </div>
               </aside>
 
@@ -171,44 +165,44 @@ const Mycourse = () => {
                   {course?.weeks
                     ?.find(w => w.weekNumber === selectedWeek)
                     ?.days?.map((day, dayIndex) => (
-                    <div
-                      key={day._id || dayIndex}
-                      className={`content-row ${activeDay === dayIndex ? "active" : ""}`}
-                      onClick={() => setActiveDay(dayIndex)}
-                    >
-                      <div className="d-flex align-items-center gap-3">
-                        <span className="type-chip day">
-                          Day {day.dayNumber}
-                        </span>
-                        <span className="title">{day.title}</span>
-                        <span className="badge bg-secondary">
-                          {day.contents?.length || 0} items
-                        </span>
-                      </div>
+                      <div
+                        key={day._id || dayIndex}
+                        className={`content-row ${activeDay === dayIndex ? "active" : ""}`}
+                        onClick={() => setActiveDay(dayIndex)}
+                      >
+                        <div className="d-flex align-items-center gap-3">
+                          <span className="type-chip day">
+                            Day {day.dayNumber}
+                          </span>
+                          <span className="title">{day.title}</span>
+                          <span className="badge bg-secondary">
+                            {day.contents?.length || 0} items
+                          </span>
+                        </div>
 
-                      <div className="d-flex align-items-center gap-2">
-                        {day.contents?.map((content, contentIndex) => (
-                          <button 
-                            key={content._id || contentIndex}
-                            className={`btn btn-sm btn-outline-${content.type === 'video' ? 'primary' : 'info'}`}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleOpenContent(content);
-                            }}
-                            title={`Open ${content.title || content.type}`}
-                          >
-                            {content.type === 'video' ? '🎬' : '📄'} {content.type}
-                          </button>
-                        )) || (
-                          <span className="text-muted small">No content</span>
-                        )}
+                        <div className="d-flex align-items-center gap-2">
+                          {day.contents?.map((content, contentIndex) => (
+                            <button
+                              key={content._id || contentIndex}
+                              className={`btn btn-sm btn-outline-${content.type === 'video' ? 'primary' : 'info'}`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleOpenContent(content);
+                              }}
+                              title={`Open ${content.title || content.type}`}
+                            >
+                              {content.type === 'video' ? '🎬' : '📄'} {content.type}
+                            </button>
+                          )) || (
+                              <span className="text-muted small">No content</span>
+                            )}
+                        </div>
                       </div>
-                    </div>
-                  )) || (
-                    <div className="text-center p-4">
-                      <p className="text-muted">No content available for this week</p>
-                    </div>
-                  )}
+                    )) || (
+                      <div className="text-center p-4">
+                        <p className="text-muted">No content available for this week</p>
+                      </div>
+                    )}
                 </div>
               </main>
             </div>

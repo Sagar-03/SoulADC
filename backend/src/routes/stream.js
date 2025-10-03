@@ -8,9 +8,21 @@ const router = express.Router();
 
 // Enhanced CORS and security headers for video streaming
 router.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
+  const origin = req.headers.origin;
+  const allowedOrigins = [
+    'http://localhost:5173',
+    'http://localhost:5174',
+    'http://localhost:3000',
+    process.env.CORS_ORIGIN
+  ].filter(Boolean);
+  
+  if (allowedOrigins.includes(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+    res.header('Access-Control-Allow-Credentials', 'true');
+  }
+  
   res.header('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Range, Accept-Encoding, Content-Type');
+  res.header('Access-Control-Allow-Headers', 'Range, Accept-Encoding, Content-Type, Authorization');
   res.header('Access-Control-Expose-Headers', 'Content-Range, Accept-Ranges, Content-Length');
   
   if (req.method === 'OPTIONS') {
