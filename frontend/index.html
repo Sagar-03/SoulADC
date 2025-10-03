@@ -14,9 +14,136 @@
     <!-- Theme color meta -->
     <meta name="theme-color" content="#A98C6A" id="theme-color-meta" />
 
-    <title>Vite + React</title>
+    <title>Soul ADC - Digital Learning Platform</title>
 
-    <!-- Script for smooth gradient-like effect -->
+    <!-- Chrome Browser Detection - Runs IMMEDIATELY before page renders -->
+    <script>
+      (function() {
+        function isChrome() {
+          const ua = navigator.userAgent.toLowerCase();
+          const vendor = navigator.vendor.toLowerCase();
+          
+          // Check if it's Chrome and not Edge, Opera, or other Chromium browsers
+          const isChromeBrowser = ua.includes('chrome') && 
+                                  vendor.includes('google') && 
+                                  !ua.includes('edg') && 
+                                  !ua.includes('opr') &&
+                                  !ua.includes('brave');
+          
+          return isChromeBrowser;
+        }
+
+        if (!isChrome()) {
+          // Prevent any content from loading
+          document.addEventListener('DOMContentLoaded', function() {
+            document.body.innerHTML = '';
+          });
+          
+          // Immediately replace page content
+          document.open();
+          document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>Browser Not Supported - Soul ADC</title>
+              <style>
+                * { margin: 0; padding: 0; box-sizing: border-box; }
+                body {
+                  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                  min-height: 100vh;
+                  display: flex;
+                  justify-content: center;
+                  align-items: center;
+                  color: #fff;
+                }
+                .container {
+                  background: rgba(255, 255, 255, 0.1);
+                  backdrop-filter: blur(10px);
+                  border-radius: 20px;
+                  padding: 50px 40px;
+                  max-width: 500px;
+                  text-align: center;
+                  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+                  border: 1px solid rgba(255, 255, 255, 0.2);
+                }
+                .icon {
+                  font-size: 80px;
+                  margin-bottom: 20px;
+                }
+                h1 {
+                  font-size: 32px;
+                  margin-bottom: 15px;
+                  font-weight: 600;
+                }
+                p {
+                  font-size: 18px;
+                  margin-bottom: 30px;
+                  line-height: 1.6;
+                  opacity: 0.9;
+                }
+                .chrome-logo {
+                  width: 60px;
+                  height: 60px;
+                  margin: 20px auto;
+                }
+                .download-btn {
+                  display: inline-block;
+                  background: #fff;
+                  color: #667eea;
+                  padding: 15px 35px;
+                  text-decoration: none;
+                  border-radius: 50px;
+                  font-weight: 600;
+                  font-size: 16px;
+                  transition: transform 0.3s, box-shadow 0.3s;
+                  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+                }
+                .download-btn:hover {
+                  transform: translateY(-2px);
+                  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+                }
+                .info {
+                  margin-top: 25px;
+                  font-size: 14px;
+                  opacity: 0.8;
+                }
+              </style>
+            </head>
+            <body>
+              <div class="container">
+                <div class="icon">🚫</div>
+                <h1>Access Denied</h1>
+                <p>This platform is <strong>only accessible on Google Chrome</strong> for the best experience and compatibility.</p>
+                
+                <svg class="chrome-logo" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="128" cy="128" r="120" fill="#fff"/>
+                  <circle cx="128" cy="128" r="80" fill="#667eea"/>
+                  <circle cx="128" cy="128" r="50" fill="#fff"/>
+                </svg>
+                
+                <a href="https://www.google.com/chrome/" class="download-btn" target="_blank">
+                  Download Google Chrome
+                </a>
+                
+                <div class="info">
+                  Please install Google Chrome and try again.
+                </div>
+              </div>
+            </body>
+            </html>
+          `);
+          document.close();
+          
+          // Stop all further script execution
+          throw new Error('Chrome browser required');
+        }
+      })();
+    </script>
+
+    <!-- Script for smooth gradient-like effect - Only runs in Chrome -->
     <script>
       const start = [169, 140, 106]; // #A98C6A
       const end = [123, 86, 61];     // #7B563D
@@ -32,7 +159,8 @@
 
         const [r, g, b] = interpolate(start, end, step);
         const color = `rgb(${r}, ${g}, ${b})`;
-        document.getElementById("theme-color-meta").setAttribute("content", color);
+        const meta = document.getElementById("theme-color-meta");
+        if (meta) meta.setAttribute("content", color);
       }, 100);
     </script>
   </head>
