@@ -1,10 +1,12 @@
 import axios from "axios";
 import { getCookie } from "../utils/cookies";
 
-// Base API instance
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:7001/api";
+
 const api = axios.create({
-  baseURL: "http://localhost:7001/api",
-  withCredentials: true, // 👈 ensures cookies are sent
+  baseURL: API_BASE_URL,
+  withCredentials: true,
 });
 
 // Add request interceptor to include auth token
@@ -52,7 +54,8 @@ export const fetchcourse = () => api.patch(`/admin/courses/${courseId}/toggle-li
 export const getStudents = () => api.get("/admin/students"); // assume you add this route later
 
 // ============================
-export const getStreamUrl = (s3Key) => `http://localhost:7001/api/stream/${s3Key}`;
+// export const getStreamUrl = (s3Key) => `http://localhost:7001/api/stream/${s3Key}`;
+export const getStreamUrl = (s3Key) => `${API_BASE_URL}/stream/${s3Key}`;
 
 
 export const getPresignUrl = (fileName, fileType, folder, weekNumber, dayNumber) =>
