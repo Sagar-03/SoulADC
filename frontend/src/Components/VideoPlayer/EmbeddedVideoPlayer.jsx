@@ -110,6 +110,26 @@ const EmbeddedVideoPlayer = () => {
     const video = videoRef.current;
     if (!video) return;
 
+    // Add video protection attributes
+    video.setAttribute('controlsList', 'nodownload noremoteplayback');
+    video.setAttribute('disablePictureInPicture', 'true');
+    video.setAttribute('oncontextmenu', 'return false;');
+
+    // Prevent right-click on video
+    const preventRightClick = (e) => {
+      e.preventDefault();
+      return false;
+    };
+
+    // Prevent drag
+    const preventDrag = (e) => {
+      e.preventDefault();
+      return false;
+    };
+
+    video.addEventListener('contextmenu', preventRightClick);
+    video.addEventListener('dragstart', preventDrag);
+
     const handleTimeUpdate = () => setCurrentTime(video.currentTime);
     const handleLoadedData = () => setDuration(video.duration);
     const handlePlay = () => setIsPlaying(true);
@@ -121,6 +141,8 @@ const EmbeddedVideoPlayer = () => {
     video.addEventListener("pause", handlePause);
 
     return () => {
+      video.removeEventListener('contextmenu', preventRightClick);
+      video.removeEventListener('dragstart', preventDrag);
       video.removeEventListener("timeupdate", handleTimeUpdate);
       video.removeEventListener("loadeddata", handleLoadedData);
       video.removeEventListener("play", handlePlay);
@@ -198,16 +220,33 @@ const EmbeddedVideoPlayer = () => {
             {/* Left: Video Player */}
             <div className="col-lg-8">
               <div className="video-container">
-                <div className="video-wrapper">
+                <div className="video-wrapper" style={{ position: 'relative' }}>
                   <video
                     ref={videoRef}
                     src={currentVideo.src}
                     controls
                     className="main-video"
                     poster=""
+                    controlsList="nodownload noremoteplayback"
+                    disablePictureInPicture
+                    onContextMenu={(e) => e.preventDefault()}
                     onLoadStart={() => console.log('Video loading started')}
                     onError={(e) => console.error('Video error:', e)}
                   />
+                  {/* Security overlay watermark */}
+                  <div style={{
+                    position: 'absolute',
+                    top: '10px',
+                    right: '10px',
+                    color: 'rgba(255, 255, 255, 0.15)',
+                    fontSize: '10px',
+                    fontWeight: 'bold',
+                    pointerEvents: 'none',
+                    userSelect: 'none',
+                    zIndex: 10
+                  }}>
+                    PROTECTED CONTENT
+                  </div>
                 </div>
 
                 {/* Video Info */}

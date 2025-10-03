@@ -4,18 +4,28 @@ import ReactDOM from "react-dom/client";
 import App from "./App";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
+import screenProtection from "./utils/screenProtection";
 
 // Enhanced Chrome detection function
 function isChrome() {
   const ua = navigator.userAgent.toLowerCase();
-  const vendor = navigator.vendor.toLowerCase();
+  const vendor = (navigator.vendor || '').toLowerCase();
   
-  // More robust Chrome detection
+  // More lenient Chrome detection - allow Chrome and Chromium-based browsers
+  // Only block specific non-Chrome browsers
+  const isEdge = ua.includes('edg');
+  const isOpera = ua.includes('opr') || ua.includes('opera');
+  const isBrave = ua.includes('brave');
+  const isFirefox = ua.includes('firefox');
+  const isSafari = ua.includes('safari') && !ua.includes('chrome');
+  
+  // Allow if it's Chrome-like and not one of the blocked browsers
   const isChromeBrowser = ua.includes('chrome') && 
-                          vendor.includes('google') && 
-                          !ua.includes('edg') && 
-                          !ua.includes('opr') &&
-                          !ua.includes('brave');
+                          !isEdge && 
+                          !isOpera && 
+                          !isBrave &&
+                          !isFirefox &&
+                          !isSafari;
   
   return isChromeBrowser;
 }
@@ -36,6 +46,9 @@ if (!isChrome()) {
     </div>
   `;
 } else {
+  // Initialize screen protection BEFORE rendering the app
+  screenProtection.initialize();
+  
   ReactDOM.createRoot(document.getElementById("root")).render(
     <React.StrictMode>
       <App />
