@@ -37,18 +37,17 @@ const EmbeddedVideoPlayer = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [isBlurred, setIsBlurred] = useState(false);
 
   // Fetch course data and video info
   useEffect(() => {
     const fetchCourseAndVideo = async () => {
       try {
-        // Fetch course data
         if (courseId) {
           const { data: courseData } = await api.get(`/user/courses/${courseId}`);
           setCourse(courseData);
         }
 
-        // Fetch video info
         if (videoId) {
           try {
             const { data: videoInfo } = await api.get(`/stream/info/${videoId}`);
@@ -58,7 +57,6 @@ const EmbeddedVideoPlayer = () => {
               src: getStreamUrl(videoId),
             });
           } catch {
-            // Fallback to direct streaming if info fetch fails
             setCurrentVideo({
               id: videoId,
               title: "Video Lesson",
@@ -66,11 +64,11 @@ const EmbeddedVideoPlayer = () => {
             });
           }
         }
+
       } catch (err) {
         console.error("Error fetching data:", err);
         setError(err.response?.data?.message || err.message);
 
-        // Optional fallback static data
         setCourse({
           title: "ADC Part 1 Course",
           weeks: staticWeeks.map(w => ({
@@ -93,7 +91,7 @@ const EmbeddedVideoPlayer = () => {
           setCurrentVideo({
             id: videoId,
             title: "Sample Video Lesson",
-            src: "/video.mp4", // fallback
+            src: "/video.mp4",
           });
         }
       } finally {
@@ -101,27 +99,86 @@ const EmbeddedVideoPlayer = () => {
       }
     };
 
-
     fetchCourseAndVideo();
   }, [courseId, videoId]);
+
+  // Anti-screenshot mechanism: Blur only on non-alphanumeric key press
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Ignore letters (a-z, A-Z) and numbers (0-9)
+      if (/^[a-zA-Z0-9]$/.test(e.key)) return;
+
+      setIsBlurred(true);
+
+      api.post('/user/log-activity', {
+        type: 'suspicious_key_pressed',
+        key: e.key || e.keyCode,
+        videoId: currentVideo.id,
+        timestamp: new Date().toISOString()
+      }).catch(err => console.error('Failed to log:', err));
+    };
+
+    const handleKeyUp = (e) => {
+      if (!/^[a-zA-Z0-9]$/.test(e.key)) {
+        setIsBlurred(false);
+      }
+    };
+
+    // Blur when user switches tab/window
+    const handleWindowBlur = () => {
+      setIsBlurred(true);
+      api.post('/user/log-activity', {
+        type: 'window_blur_detected',
+        videoId: currentVideo.id,
+        timestamp: new Date().toISOString()
+      }).catch(err => console.error('Failed to log:', err));
+    };
+
+    const handleWindowFocus = () => setIsBlurred(false);
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        setIsBlurred(true);
+        api.post('/user/log-activity', {
+          type: 'tab_hidden',
+          videoId: currentVideo.id,
+          timestamp: new Date().toISOString()
+        }).catch(err => console.error('Failed to log:', err));
+      } else {
+        setIsBlurred(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('keyup', handleKeyUp);
+    window.addEventListener('blur', handleWindowBlur);
+    window.addEventListener('focus', handleWindowFocus);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('keyup', handleKeyUp);
+      window.removeEventListener('blur', handleWindowBlur);
+      window.removeEventListener('focus', handleWindowFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [currentVideo.id]);
 
   // Handle video events
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
 
-    // Add video protection attributes
     video.setAttribute('controlsList', 'nodownload noremoteplayback');
     video.setAttribute('disablePictureInPicture', 'true');
-    video.setAttribute('oncontextmenu', 'return false;');
 
-    // Prevent right-click on video
     const preventRightClick = (e) => {
       e.preventDefault();
+      setIsBlurred(true);
+      setTimeout(() => setIsBlurred(false), 2000);
       return false;
     };
 
-    // Prevent drag
     const preventDrag = (e) => {
       e.preventDefault();
       return false;
@@ -150,27 +207,22 @@ const EmbeddedVideoPlayer = () => {
     };
   }, [currentVideo.src]);
 
-  // Handle content opening
   const handleOpenContent = (content) => {
     const id = content._id || content.s3Key;
 
     if (content.type === "video") {
-      // Navigate to the video player page
       navigate(`/student/course/${courseId}/video/${id}`);
     } else if (content.type === "pdf" || content.type === "document") {
-      // Open document in new tab
       window.open(getStreamUrl(id), '_blank');
     } else {
       alert(`Opening ${content.type}: ${content.title}`);
     }
   };
 
-  // Go back to course
   const handleBackToCourse = () => {
     navigate(`/student/course/${courseId}`);
   };
 
-  // Format time
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
@@ -191,9 +243,8 @@ const EmbeddedVideoPlayer = () => {
 
   return (
     <StudentLayout>
-      <div className="video-player-page">
+      <div className="video-player-page" style={{ userSelect: 'none' }}>
         <div className="container-fluid px-4">
-          {/* Header */}
           <div className="video-header d-flex justify-content-between align-items-center mb-4">
             <div>
               <button
@@ -215,12 +266,17 @@ const EmbeddedVideoPlayer = () => {
             </div>
           )}
 
-          {/* Main Content */}
           <div className="row g-4">
-            {/* Left: Video Player */}
             <div className="col-lg-8">
               <div className="video-container">
-                <div className="video-wrapper" style={{ position: 'relative' }}>
+                <div 
+                  className="video-wrapper" 
+                  style={{ 
+                    position: 'relative',
+                    transition: 'filter 0.3s ease',
+                    filter: isBlurred ? 'blur(20px)' : 'blur(0px)'
+                  }}
+                >
                   <video
                     ref={videoRef}
                     src={currentVideo.src}
@@ -230,26 +286,41 @@ const EmbeddedVideoPlayer = () => {
                     controlsList="nodownload noremoteplayback"
                     disablePictureInPicture
                     onContextMenu={(e) => e.preventDefault()}
-                    onLoadStart={() => console.log('Video loading started')}
-                    onError={(e) => console.error('Video error:', e)}
+                    style={{ 
+                      width: '100%',
+                      pointerEvents: 'auto'
+                    }}
                   />
-                  {/* Security overlay watermark */}
-                  <div style={{
-                    position: 'absolute',
-                    top: '10px',
-                    right: '10px',
-                    color: 'rgba(255, 255, 255, 0.15)',
-                    fontSize: '10px',
-                    fontWeight: 'bold',
-                    pointerEvents: 'none',
-                    userSelect: 'none',
-                    zIndex: 10
-                  }}>
-                    PROTECTED CONTENT
-                  </div>
+                  
+                  {/* Blur overlay when suspicious activity detected */}
+                  {isBlurred && (
+                    <div style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      zIndex: 100,
+                      pointerEvents: 'none'
+                    }}>
+                      <div style={{ 
+                        color: 'white', 
+                        fontSize: '24px', 
+                        fontWeight: 'bold',
+                        textAlign: 'center',
+                        padding: '20px'
+                      }}>
+                        🔒 Content Protected<br/>
+                        <small style={{ fontSize: '14px' }}>Activity detected and logged</small>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
-                {/* Video Info */}
                 <div className="video-info mt-3">
                   <h5>{currentVideo.title}</h5>
                   <div className="video-stats d-flex gap-4 text-muted">
@@ -257,16 +328,19 @@ const EmbeddedVideoPlayer = () => {
                     <span>Current: {formatTime(currentTime)}</span>
                     <span>Status: {isPlaying ? 'Playing' : 'Paused'}</span>
                   </div>
+                  <div className="mt-2">
+                    <small className="text-warning">
+                      ⚠️ This content is protected. Screenshots are monitored and logged.
+                    </small>
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Right: Course Content */}
             <div className="col-lg-4">
               <div className="course-sidebar">
                 <h6 className="sidebar-title mb-3">Course Content</h6>
 
-                {/* Course Progress */}
                 <div className="progress-info mb-4">
                   <div className="d-flex justify-content-between mb-2">
                     <small>Progress</small>
@@ -280,7 +354,6 @@ const EmbeddedVideoPlayer = () => {
                   </div>
                 </div>
 
-                {/* Weeks Accordion */}
                 <div className="weeks-accordion">
                   {course?.weeks?.map((week, index) => (
                     <div key={week._id || index} className="week-item mb-3">
