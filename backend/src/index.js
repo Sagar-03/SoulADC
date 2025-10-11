@@ -9,15 +9,15 @@ const cors = require('cors');
 const uploadRoutes = require('./routes/upload.js');
 const streamRoutes = require('./routes/stream.js');
 
-// Database connection
+// ✅ Database connection
 dBConnect();
 
 const app = express();
 
-// ✅ Log to verify on Render
-console.log('CORS Origin allowed:', process.env.CORS_ORIGIN);
+// ✅ Log to verify CORS on Render
+// console.log('CORS Origin allowed:', process.env.CORS_ORIGIN);
 
-// ✅ Express middleware
+// ✅ Middleware
 app.use(express.json());
 
 // ✅ CORS configuration
@@ -28,8 +28,8 @@ app.use(cors({
   credentials: true,
 }));
 
-// ✅ Handle preflight OPTIONS requests globally
-app.options('*', cors({
+// ❌ FIX: Replace '*' with '/*' to avoid path-to-regexp crash
+app.options('/*', cors({
   origin: allowedOrigin,
   credentials: true,
 }));
@@ -42,8 +42,13 @@ app.use('/api/payment', paymentRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/stream", streamRoutes);
 
+// ✅ Catch-all route (optional, for unknown paths)
+app.use('/*', (req, res) => {
+  res.status(404).json({ message: "Route not found" });
+});
+
 // ✅ Start server
 const PORT = process.env.PORT || 7001;
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {    // ← 👈 Important for Render
   console.log(`🚀 Server running on port ${PORT}`);
 });
