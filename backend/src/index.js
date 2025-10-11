@@ -15,22 +15,24 @@ dBConnect();
 const app = express();
 
 // ✅ Log to verify CORS on Render
-// console.log('CORS Origin allowed:', process.env.CORS_ORIGIN);
+console.log('CORS Origin allowed:', process.env.CORS_ORIGIN);
 
 // ✅ Middleware
 app.use(express.json());
 
 // ✅ CORS configuration
-const allowedOrigin = process.env.CORS_ORIGIN || 'https://souladc.com';
+const allowedOrigins = process.env.CORS_ORIGIN 
+  ? process.env.CORS_ORIGIN.split(',').map(origin => origin.trim())
+  : ['https://souladc.com'];
 
 app.use(cors({
-  origin: allowedOrigin,
+  origin: allowedOrigins,
   credentials: true,
 }));
 
-// ❌ FIX: Replace '*' with '/*' to avoid path-to-regexp crash
-app.options('/*', cors({
-  origin: allowedOrigin,
+// ✅ FIXED: Use '*' instead of '/*' to avoid path-to-regexp crash
+app.options('*', cors({
+  origin: allowedOrigins,
   credentials: true,
 }));
 
@@ -43,7 +45,7 @@ app.use("/api/upload", uploadRoutes);
 app.use("/api/stream", streamRoutes);
 
 // ✅ Catch-all route (optional, for unknown paths)
-app.use('/*', (req, res) => {
+app.use('*', (req, res) => {
   res.status(404).json({ message: "Route not found" });
 });
 
@@ -51,4 +53,5 @@ app.use('/*', (req, res) => {
 const PORT = process.env.PORT || 7001;
 app.listen(PORT, '0.0.0.0', () => {    // ← 👈 Important for Render
   console.log(`🚀 Server running on port ${PORT}`);
+  console.log('CORS Origins:', allowedOrigins);
 });
