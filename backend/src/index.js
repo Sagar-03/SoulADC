@@ -6,46 +6,44 @@ const userRoutes = require('./routes/userRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const cors = require('cors');
-
-
 const uploadRoutes = require('./routes/upload.js');
-const adminnewRoutes = require("./routes/adminRoutes");
 const streamRoutes = require('./routes/stream.js');
 
-
-
-
-//database connection
+// Database connection
 dBConnect();
 
 const app = express();
 
-//express middleware
+// ✅ Log to verify on Render
+console.log('CORS Origin allowed:', process.env.CORS_ORIGIN);
+
+// ✅ Express middleware
 app.use(express.json());
 
-//cors
+// ✅ CORS configuration
+const allowedOrigin = process.env.CORS_ORIGIN || 'https://souladc.com';
+
 app.use(cors({
-  origin: [
-    'http://localhost:5173',
-    'http://localhost:5174',
-    'http://localhost:3000',
-    process.env.CORS_ORIGIN
-  ].filter(Boolean), // Remove any undefined values
-  credentials: true, // enable cookies/headers if needed
+  origin: allowedOrigin,
+  credentials: true,
 }));
 
-//Routes
+// ✅ Handle preflight OPTIONS requests globally
+app.options('*', cors({
+  origin: allowedOrigin,
+  credentials: true,
+}));
+
+// ✅ Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/payment', paymentRoutes);
 app.use("/api/upload", uploadRoutes);
-app.use("/api/admin", adminRoutes);
 app.use("/api/stream", streamRoutes);
 
-
-//start the server
+// ✅ Start server
 const PORT = process.env.PORT || 7001;
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });

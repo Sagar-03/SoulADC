@@ -43,7 +43,7 @@ import screenProtection from "./utils/screenProtection";
 //   // Initialize screen protection BEFORE rendering the app
 //   screenProtection.initialize();
   
-  ReactDOM.createRoot(document.getElementById("root")).render(
+  ReactDOM.createRoot(document.getElementById("root")).render(  
     <React.StrictMode>
       <App />
     </React.StrictMode>
