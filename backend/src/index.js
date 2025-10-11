@@ -30,12 +30,6 @@ app.use(cors({
   credentials: true,
 }));
 
-// ✅ FIXED: Use '*' instead of '/*' to avoid path-to-regexp crash
-app.options('*', cors({
-  origin: allowedOrigins,
-  credentials: true,
-}));
-
 // ✅ Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
@@ -43,11 +37,6 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/payment', paymentRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/stream", streamRoutes);
-
-// ✅ Catch-all route (optional, for unknown paths)
-app.use('*', (req, res) => {
-  res.status(404).json({ message: "Route not found" });
-});
 
 // ✅ Start server
 const PORT = process.env.PORT || 7001;
