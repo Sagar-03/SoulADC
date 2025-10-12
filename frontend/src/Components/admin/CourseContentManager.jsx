@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import AdminLayout from "./AdminLayout";
 import { useParams } from "react-router-dom";
 import "./admin.css";
-import { getStreamUrl, addWeek, getCourses, getPresignUrl, deleteContent, deleteWeekApi, deleteDayApi } from "../../Api/api";
+import { getStreamUrl, addWeek, getCourses, getPresignUrl, deleteContent, deleteWeekApi, deleteDayApi, saveContent } from "../../Api/api";
 
 const CourseContentManager = () => {
   const { id } = useParams();
@@ -90,12 +90,13 @@ const CourseContentManager = () => {
       const activeDay = activeWeek?.days.find(day => day._id === activeDayId);
 
       if (!activeWeek || !activeDay) {
-        throw new Error("Could not find selected week or ");
+        throw new Error("Could not find selected week or day");
       }
 
       console.log(`Uploading to Week ${activeWeek.weekNumber}, Day ${activeDay.dayNumber}`);
 
       // 1. Ask backend for presign with week and day information
+      let uploadUrl, key;
       try {
         const presignRes = await getPresignUrl(
           file.name,
@@ -105,7 +106,9 @@ const CourseContentManager = () => {
           activeDay.dayNumber
         );
 
-        const { uploadUrl, key } = presignRes.data; // ✅ Axios returns data here
+        uploadUrl = presignRes.data.uploadUrl;
+        key = presignRes.data.key;
+        console.log("Got presigned URL and key:", { uploadUrl, key });
       } catch (err) {
         throw new Error("Failed to get upload URL: " + err.message);
       }
@@ -140,7 +143,7 @@ const CourseContentManager = () => {
 
       // 3. Save metadata in DB
       try {
-        const saveRes = await saveContent(activeCourseId, activeWeekId, activeDayId, {
+        const saveRes = await saveContent(id, activeWeekId, activeDayId, {
           type: activeType,
           title: file.name.split(".")[0], // remove extension
           s3Key: key,
