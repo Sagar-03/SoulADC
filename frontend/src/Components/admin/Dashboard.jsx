@@ -20,7 +20,7 @@ const Dashboard = () => {
     { label: "Total Courses", value: 12 },
     { label: "Total Students", value: 250 },
     { label: "Active Enrollments", value: 180 },
-    { label: "Revenue (₹)", value: "1,20,000" },
+    { label: "Revenue ($)", value: "120,000" },
   ]);
 
   const enrollmentTrend = [
@@ -110,7 +110,7 @@ const Dashboard = () => {
         <div className="col-md-6">
           <div className="card shadow-sm p-3 h-100">
             <h5 className="fw-bold mb-3" style={{ color: "#5A3825" }}>
-              Revenue Trend (₹)
+              Revenue Trend ($)
             </h5>
             <ResponsiveContainer width="100%" height={250}>
               <BarChart data={revenueTrend}>

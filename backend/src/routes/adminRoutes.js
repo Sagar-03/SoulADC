@@ -1,12 +1,16 @@
 const express = require("express");
-const router = express.Router();
 const { protect, adminOnly } = require("../middleware/authMiddleware");
 const Course = require("../models/Course.js");
+const router = express.Router();
 
 /**
  * POST /api/admin/courses
  * Create a new course
+ *
  */
+
+
+
 router.post("/courses", protect, adminOnly, async (req, res) => {
   try {
     const { title, description, durationMonths, weeks, price, thumbnail } = req.body;
@@ -239,6 +243,80 @@ router.delete("/courses/:courseId/weeks/:weekId/days/:dayId", protect, adminOnly
     res.json({ success: true, message: "Day deleted successfully" });
   } catch (err) {
     console.error("delete-day error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * PUT /api/admin/courses/:id
+ * Update course details (title, description, price, thumbnail)
+ */
+router.put("/courses/:id", protect, adminOnly, async (req, res) => {
+  try {
+    const { title, description, price, thumbnail } = req.body;
+    const course = await Course.findById(req.params.id);
+    
+    if (!course) return res.status(404).json({ error: "Course not found" });
+
+    // Update fields
+    if (title !== undefined) course.title = title;
+    if (description !== undefined) course.description = description;
+    if (price !== undefined) course.price = price;
+    if (thumbnail !== undefined) course.thumbnail = thumbnail;
+
+    await course.save();
+    res.json({ message: "Course updated successfully", course });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * DELETE /api/admin/courses/:id
+ * Delete entire course
+ */
+router.delete("/courses/:id", protect, adminOnly, async (req, res) => {
+  try {
+    const course = await Course.findById(req.params.id);
+    if (!course) return res.status(404).json({ error: "Course not found" });
+
+    // Delete all course content from S3
+    try {
+      const s3 = require("../config/s3");
+      const { DeleteObjectCommand } = require("@aws-sdk/client-s3");
+
+      for (const week of course.weeks || []) {
+        for (const day of week.days || []) {
+          for (const content of day.contents || []) {
+            if (content.s3Key) {
+              const deleteParams = {
+                Bucket: process.env.AWS_S3_BUCKET,
+                Key: content.s3Key
+              };
+              await s3.send(new DeleteObjectCommand(deleteParams));
+            }
+          }
+        }
+      }
+
+      // Delete thumbnail if exists
+      if (course.thumbnail) {
+        const deleteParams = {
+          Bucket: process.env.AWS_S3_BUCKET,
+          Key: course.thumbnail
+        };
+        await s3.send(new DeleteObjectCommand(deleteParams));
+      }
+    } catch (s3Error) {
+      console.warn("Failed to delete some S3 content:", s3Error.message);
+    }
+
+    // Delete course from database
+    await Course.findByIdAndDelete(req.params.id);
+
+    res.json({ success: true, message: "Course deleted successfully" });
+  } catch (err) {
+    console.error("delete-course error:", err);
     res.status(500).json({ error: err.message });
   }
 });

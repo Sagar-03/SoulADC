@@ -4,27 +4,27 @@ import "./CourseCurriculum.css";  // Import the external CSS file
 const CourseCurriculum = () => {
   const curriculumData = [
     {
-      weeks: 'Weeks 1-4',
+      weeks: 'Modules 1-4',
       title: 'Foundation & Basic Sciences',
       subjects: ['Anatomy', 'Physiology', 'Biochemistry', 'Pathology']
     },
     {
-      weeks: 'Weeks 5-8',
+      weeks: 'Modules 5-8',
       title: 'Clinical Dentistry Fundamentals',
       subjects: ['Oral Medicine', 'Periodontics', 'Endodontics', 'Oral Surgery']
     },
     {
-      weeks: 'Weeks 9-12',
+      weeks: 'Modules 9-12',
       title: 'Restorative & Prosthetics',
       subjects: ['Operative Dentistry', 'Prosthodontics', 'Dental Materials', 'Occlusion']
     },
     {
-      weeks: 'Weeks 13-16',
+      weeks: 'Modules 13-16',
       title: 'Specialized Areas',
       subjects: ['Pediatric Dentistry', 'Orthodontics', 'Oral Radiology', 'Ethics']
     },
     {
-      weeks: 'Weeks 17-20',
+      weeks: 'Modules 17-20',
       title: 'Exam Preparation & Review',
       subjects: ['Mock Tests', 'Case Studies', 'Final Review', 'Exam Strategy']
     }

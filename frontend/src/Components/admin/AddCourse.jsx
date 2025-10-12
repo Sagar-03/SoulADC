@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import AdminLayout from "./AdminLayout";
 import { useNavigate } from "react-router-dom";
+import { createCourse, getPresignUrl } from "../../Api/api";
 
 const AddCourse = () => {
   const [form, setForm] = useState({
@@ -13,6 +14,7 @@ const AddCourse = () => {
   });
 
   const [preview, setPreview] = useState(null);
+  const [uploading, setUploading] = useState(false);
   const navigate = useNavigate();
 
   // Handle input change
@@ -28,30 +30,71 @@ const AddCourse = () => {
   };
 
 
+  // Upload thumbnail to S3 and get the key
+  const uploadThumbnail = async (file) => {
+    try {
+      // Get presigned URL
+      const { data: presignData } = await getPresignUrl(
+        file.name,
+        file.type,
+        "thumbnails",
+        null,
+        null
+      );
+
+      // Upload to S3
+      const response = await fetch(presignData.uploadUrl, {
+        method: "PUT",
+        headers: {
+          "Content-Type": file.type,
+        },
+        body: file,
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to upload thumbnail");
+      }
+
+      return presignData.s3Key;
+    } catch (error) {
+      console.error("Error uploading thumbnail:", error);
+      throw error;
+    }
+  };
+
   // Handle submit
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setUploading(true);
 
     try {
-      // Build FormData for file + text fields
-      const formData = new FormData();
-      formData.append("title", form.title);
-      formData.append("description", form.description);
-      formData.append("durationMonths", form.durationMonths);
-      formData.append("weeks", form.weeks);
-      formData.append("price", form.price);
+      let thumbnailKey = "";
+
+      // Upload thumbnail to S3 if provided
       if (form.thumbnail) {
-        formData.append("thumbnail", form.thumbnail);
+        thumbnailKey = await uploadThumbnail(form.thumbnail);
       }
 
-      // Call centralized API
-      const { data } = await createCourse(formData);
+      // Prepare course data
+      const courseData = {
+        title: form.title,
+        description: form.description,
+        durationMonths: parseInt(form.durationMonths),
+        weeks: parseInt(form.weeks),
+        price: parseFloat(form.price),
+        thumbnail: thumbnailKey,
+      };
+
+      // Call API to create course
+      const { data } = await createCourse(courseData);
 
       alert(`✅ Course "${form.title}" created successfully!`);
       navigate(`/admin/courses/${data._id}/manage`);
     } catch (err) {
       console.error("Error creating course:", err);
-      alert(err.response?.data?.error || err.message);
+      alert("Failed to create course: " + (err.response?.data?.error || err.message));
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -78,6 +121,7 @@ const AddCourse = () => {
             onChange={handleChange}
             className="form-control"
             required
+            disabled={uploading}
           />
         </div>
 
@@ -90,6 +134,7 @@ const AddCourse = () => {
             onChange={handleChange}
             className="form-control"
             rows="3"
+            disabled={uploading}
           ></textarea>
         </div>
 
@@ -104,10 +149,11 @@ const AddCourse = () => {
               onChange={handleChange}
               className="form-control"
               required
+              disabled={uploading}
             />
           </div>
           <div className="col-md-6 mb-3">
-            <label className="form-label">Total Weeks</label>
+            <label className="form-label">Total Modules</label>
             <input
               type="number"
               name="weeks"
@@ -115,13 +161,14 @@ const AddCourse = () => {
               onChange={handleChange}
               className="form-control"
               required
+              disabled={uploading}
             />
           </div>
         </div>
 
         {/* Price */}
         <div className="mb-3">
-          <label className="form-label">Price</label>
+          <label className="form-label">Price ($)</label>
           <input
             type="number"
             name="price"
@@ -129,6 +176,7 @@ const AddCourse = () => {
             onChange={handleChange}
             className="form-control"
             required
+            disabled={uploading}
           />
         </div>
 
@@ -141,6 +189,7 @@ const AddCourse = () => {
             accept="image/*"
             className="form-control"
             onChange={handleChange}
+            disabled={uploading}
           />
 
           {preview && (
@@ -154,8 +203,19 @@ const AddCourse = () => {
           )}
         </div>
 
-        <button type="submit" className="btn btn-success">
-          Create Course
+        <button 
+          type="submit" 
+          className="btn btn-success"
+          disabled={uploading}
+        >
+          {uploading ? (
+            <>
+              <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+              Creating Course...
+            </>
+          ) : (
+            "Create Course"
+          )}
         </button>
       </form>
     </AdminLayout>

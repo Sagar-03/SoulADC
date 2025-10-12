@@ -100,7 +100,7 @@ const Mycourse = () => {
         <div className="container">
           <div className="banner text-white text-center py-5 mb-4">
             <h1 className="fw-bold mb-1">{course?.title || "Course Content"}</h1>
-            <p className="mb-0">{course?.weeks?.length || 0}-Week comprehensive plan with expert guidance</p>
+            <p className="mb-0">{course?.weeks?.length || 0}-Modules comprehensive plan with expert guidance</p>
           </div>
         </div>
 
@@ -145,11 +145,11 @@ const Mycourse = () => {
                         setActiveDay(0); // reset to Day 1 when switching week
                       }}
                     >
-                      WEEK {String(week.weekNumber).padStart(2, "0")} - {week.title || "Study Plan"}
+                      MODULE {String(week.weekNumber).padStart(2, "0")} - {week.title || "Study Plan"}
                     </button>
                   )) || (
                       <div className="text-center p-4">
-                        <p className="text-muted">No weeks available</p>
+                        <p className="text-muted">No Modules available</p>
                       </div>
                     )}
                 </div>
@@ -158,7 +158,7 @@ const Mycourse = () => {
               {/* Center: Days list */}
               <main className="col-lg-9">
                 <h5 className="section-heading mb-3">
-                  Week {selectedWeek} — Study Plan
+                  Module {selectedWeek} — Study Plan
                 </h5>
 
                 <div className="days-list">
@@ -172,9 +172,8 @@ const Mycourse = () => {
                       >
                         <div className="d-flex align-items-center gap-3">
                           <span className="type-chip day">
-                            Day {day.dayNumber}
+                            {selectedWeek}.{day.dayNumber}
                           </span>
-                          <span className="title">{day.title}</span>
                           <span className="badge bg-secondary">
                             {day.contents?.length || 0} items
                           </span>
@@ -200,7 +199,7 @@ const Mycourse = () => {
                       </div>
                     )) || (
                       <div className="text-center p-4">
-                        <p className="text-muted">No content available for this week</p>
+                        <p className="text-muted">No content available for this Module</p>
                       </div>
                     )}
                 </div>

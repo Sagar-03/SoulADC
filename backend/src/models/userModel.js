@@ -8,11 +8,12 @@ const userSchema = new mongoose.Schema(
     password: { type: String, required: true },
     phone: { type: String, required: false },
     role: { type: String, enum: ["user", "admin"], default: "user" },
-
+    resetToken: String,
+    resetTokenExpire: Date,
     // ✅ Purchased courses
-    purchasedCourses: [{ 
-      type: mongoose.Schema.Types.ObjectId, 
-      ref: 'Course' 
+    purchasedCourses: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Course'
     }],
 
     // ✅ One active session per user

@@ -84,7 +84,7 @@
 .auth-left-panel {
   flex: 0.8; /* narrower */
   padding: 40px 32px;
-  background: linear-gradient(135deg, #d97706 0%, #92400e 50%, #451a03 100%);
+  background: #8B5E3C !important;
   color: white;
   display: flex;
   flex-direction: column;
@@ -256,7 +256,7 @@
 }
 
 .tab-btn.active {
-  background: linear-gradient(135deg, #d97706 0%, #92400e 100%);
+  background: #8B5E3C !important;
   color: white;
 }
 
@@ -303,7 +303,7 @@
 
 /* Submit Button */
 .submit-btn {
-  background: linear-gradient(135deg, #d97706 0%, #92400e 100%);
+  background: #8B5E3C !important;
   color: white;
   border: none;
   padding: 14px 20px;

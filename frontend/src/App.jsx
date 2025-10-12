@@ -1,10 +1,15 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Home from "./Pages/Home";
+import About from "./Pages/AboutPage/About";
 import CoursesPage from "./Pages/course";
 import Login from "./Pages/Login";
 // 🔹 Protected Route Wrapper
 import { isAuthenticated, getUser, getUserRole } from "./utils/auth";
+import ForgotPassword from "./Components/student/ForgotPassword/ForgotPassword";
+import ResetPassword from "./Components/student/ForgotPassword/ForgotPassword";
+
+
 
 // Student Dashboard
 import Studentdashboard from "./Components/student/Studentdashboard";
@@ -23,6 +28,7 @@ import A_Dashboard from "./Components/admin/Dashboard";
 import ManageCourses from "./Components/admin/ManageCourses";
 import ManageStudents from "./Components/admin/ManageStudents";
 import AddCourse from "./Components/admin/AddCourse";
+import EditCourse from "./Components/admin/EditCourse";
 import CourseContentManager from "./Components/admin/CourseContentManager";
 
 // 🔹 Protected Route Wrapper
@@ -58,6 +64,9 @@ function App() {
         <Route path="/Home" element={<Home />} />
         <Route path="/courses" element={<CoursesPage />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/About" element={<About />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+  <Route path="/reset-password/:token" element={<ResetPassword />} />
 
         {/* Student Dashboard (Protected: must have purchased course) */}
         <Route
@@ -167,6 +176,14 @@ function App() {
           element={
             <ProtectedRoute adminOnly={true}>
               <AddCourse />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/courses/:courseId/edit"
+          element={
+            <ProtectedRoute adminOnly={true}>
+              <EditCourse />
             </ProtectedRoute>
           }
         />

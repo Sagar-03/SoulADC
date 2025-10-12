@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import "./Auth.css";
 import logo from "../assets/logo.png";
 import { api } from "../Api/api";
-import { setAuthData, getRedirectAfterLogin, clearRedirectAfterLogin } from "../utils/auth"; 
+import { setAuthData, getRedirectAfterLogin, clearRedirectAfterLogin } from "../utils/auth";
 
 const Login = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -98,10 +98,10 @@ const Login = () => {
           <div className="brand-content">
             <img src={logo} alt="Logo" className="auth-logo" />
             <h1 className="brand-title">
-              Become the <span className="highlight">Dentist</span> you dream to be
+              Become the Registered <span className="highlight">Austrailian Dentist</span> with Soul ADC
             </h1>
             <p className="brand-subtitle">
-              Unlock your potential through excellence in dental education.
+              Ignite your dental future with us
             </p>
           </div>
         </div>
@@ -187,6 +187,17 @@ const Login = () => {
                   placeholder="Enter password"
                   autoComplete={isLogin ? "current-password" : "new-password"}
                 />
+                {isLogin && (
+                  <div className="forgot-password-link">
+                    <button
+                      type="button"
+                      className="link-btn"
+                      onClick={() => navigate("/forgot-password")}
+                    >
+                      Forgot Password?
+                    </button>
+                  </div>
+                )}
               </div>
 
               {!isLogin && (

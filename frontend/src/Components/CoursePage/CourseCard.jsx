@@ -10,7 +10,7 @@ export default function CourseCard({ course }) {
   const formatPrice = (price) =>
     new Intl.NumberFormat("en-IN", {
       style: "currency",
-      currency: "INR",
+      currency: "USD",
       minimumFractionDigits: 0,
     }).format(price);
 
@@ -24,7 +24,7 @@ export default function CourseCard({ course }) {
     description: course.description || "Course description not available.",
     price: course.price || 0,
     thumbnail: course.thumbnail || "",
-    duration: `${course.weeks?.length || 0} weeks`,
+    duration: `${course.weeks?.length || 0} Modules`,
     weeks: course.weeks || [],
     _id: course._id || course.id,
     accent: getAccentColor(),
@@ -47,6 +47,9 @@ export default function CourseCard({ course }) {
     }
   };
 
+  // 10% increase for cut price
+  const cutPrice = courseData.price * 1.1;
+
   return (
     <section id={courseData._id} className="col-12 col-lg-6 mb-4">
       <div className="card h-100 border-0 shadow-lg position-relative course-card">
@@ -59,7 +62,7 @@ export default function CourseCard({ course }) {
         {courseData.thumbnail && (
           <div className="course-thumbnail-container">
             <img
-              src={courseData.thumbnail}
+              src={`${import.meta.env.VITE_API_URL || "http://localhost:7001/api"}/stream/${courseData.thumbnail}`}
               alt={courseData.title}
               className="card-img-top course-thumbnail"
               style={{ height: "200px", objectFit: "cover" }}
@@ -71,17 +74,18 @@ export default function CourseCard({ course }) {
         <div className="card-body p-4 p-md-5">
           <div className="d-flex align-items-center justify-content-between mb-2">
             <h3 className="h2 mb-0 fw-bold">{courseData.title}</h3>
-            <span
-              className="badge rounded-pill"
-              style={{ backgroundColor: courseData.accent, color: "white" }}
-            >
-              {courseData.duration}
-            </span>
           </div>
 
           <p className="text-muted mb-3">{courseData.description}</p>
 
-          <div className="mb-3">
+          {/* Price Section */}
+          <div className="mb-3 d-flex align-items-center gap-3">
+            {/* Cut price with strikethrough */}
+            <span className="cut-price">
+              {formatPrice(cutPrice)}
+            </span>
+
+            {/* Actual backend price */}
             <span className="h4 fw-bold text-success">
               {formatPrice(courseData.price)}
             </span>
@@ -132,10 +136,13 @@ export default function CourseCard({ course }) {
           <div className="mt-3">
             <h6 className="fw-bold">What you'll get:</h6>
             <ul className="ps-3 small">
-              <li>Expert mentor guidance</li>
-              <li>Comprehensive study materials</li>
-              <li>Practice tests & assessments</li>
-              <li>Doubt clearing sessions</li>
+              <li>Subject-wise modules with clear concept explanations via recorded session</li>
+              <li>Visual, auditory, and reading-based learning for better understanding</li>
+              <li>Access to ADC-aligned materials- including recent research articles, books and ADC questionnaires.</li>
+              <li>Complete structured explanation of Therapeutic guidelines and Odell case</li>
+              <li>Weekly past paper live discussions</li>
+              <li>Free mock exams to test your preparation</li>
+              <li>Personalized mentor support and study group access for guidance and motivation</li>
               <li>Progress tracking</li>
             </ul>
           </div>

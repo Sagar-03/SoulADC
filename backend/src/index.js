@@ -14,20 +14,38 @@ dBConnect();
 
 const app = express();
 
-// ✅ Log to verify CORS on Render
-console.log('CORS Origin allowed:', process.env.CORS_ORIGIN);
 
 // ✅ Middleware
 app.use(express.json());
 
+// app.get('/', (req, res) => {
+//   res.send('API is running...');
+// }); 
+
 // ✅ CORS configuration
 const allowedOrigins = process.env.CORS_ORIGIN 
   ? process.env.CORS_ORIGIN.split(',').map(origin => origin.trim())
-  : ['https://souladc.com'];
+  : ['https://souladc.com', 'http://localhost:5173'];
+
+
+console.log('CORS Origin allowed:', allowedOrigins);
 
 app.use(cors({
-  origin: allowedOrigins,
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      console.log('CORS blocked origin:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  optionsSuccessStatus: 200
 }));
 
 // ✅ Routes
@@ -41,6 +59,4 @@ app.use("/api/stream", streamRoutes);
 // ✅ Start server
 const PORT = process.env.PORT || 7001;
 app.listen(PORT, '0.0.0.0', () => {    // ← 👈 Important for Render
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log('CORS Origins:', allowedOrigins);
 });

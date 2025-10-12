@@ -362,7 +362,7 @@ const EmbeddedVideoPlayer = () => {
                         onClick={() => setSelectedWeek(week.weekNumber)}
                       >
                         <div className="d-flex justify-content-between align-items-center">
-                          <span className="week-title">Week {week.weekNumber}</span>
+                          <span className="week-title">Module {week.weekNumber}</span>
                           <span className="week-toggle">
                             {selectedWeek === week.weekNumber ? '−' : '+'}
                           </span>

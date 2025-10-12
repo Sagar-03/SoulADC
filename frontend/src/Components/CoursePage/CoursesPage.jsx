@@ -59,9 +59,9 @@ export default function CoursesPage() {
         <div className="container">
           <div className="row align-items-center g-4">
             <div className="col-12 col-lg-7">
-              <span className="hero-kicker mb-3">
-                <span>✅</span> ADC Part 1 Specialists
-              </span>
+                {/* <span className="hero-kicker mb-3">
+                  <span>✅</span> ADC Part 1 Specialists
+                </span> */}
               <h1
                 className="display-5 fw-bold mb-3"
                 style={{ color: "var(--ink)" }}

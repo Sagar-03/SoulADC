@@ -22,7 +22,7 @@ const StudentCoursePage = () => {
       {/* ===== Top Banner ===== */}
       <div className="banner text-center text-white py-5">
         <h1 className="fw-bold">ADC Part 1 Course</h1>
-        <p>7 Week Comprehensive Study Plan with Expert Guidance</p>
+        <p>7 Module Comprehensive Study Plan with Expert Guidance</p>
       </div>
 
       {/* ===== Course Content ===== */}

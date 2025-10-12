@@ -1,4 +1,6 @@
 import { setCookie, getCookie, removeCookie } from "./cookies";
+import { emitAuthChange } from "./authEvents";
+
 
 // -------------------
 // Auth Utils
@@ -37,12 +39,14 @@ export const logout = () => {
   removeCookie("user");
   removeCookie("role");
   removeCookie("redirectAfterLogin");
+  emitAuthChange(); // 🔔 Notify all components
 };
 
 export const setAuthData = (token, user, role) => {
-  setCookie("token", token); // session cookie
+  setCookie("token", token);
   setCookie("user", JSON.stringify(user));
   setCookie("role", role);
+  emitAuthChange(); // 🔔 Notify all components
 };
 
 // -------------------

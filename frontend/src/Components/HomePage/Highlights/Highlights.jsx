@@ -30,7 +30,7 @@ const Highlights = () => {
   ];
 
   const highlights = [
-    "Weekly live Q&A sessions",
+    "Modules live Q&A sessions",
     "Personalized study plans",
     "Progress tracking dashboard",
     "Mobile-friendly platform",
@@ -119,14 +119,14 @@ const Highlights = () => {
               <div className="row g-3">
                 <div className="col-6">
                   <div className="price-card text-center d-flex flex-column justify-content-center">
-                    <div className="price-value">$5</div>
-                    <div className="price-label">Monthly Plan</div>
+                    {/* <div className="price-value">$</div> */}
+                    <div className="price-label">5 Month Course</div>
                   </div>
                 </div>
                 <div className="col-6">
                   <div className="price-card text-center d-flex flex-column justify-content-center">
-                    <div className="price-value">$10</div>
-                    <div className="price-label">One-time Payment</div>
+                    {/* <div className="price-value">$10</div> */}
+                    <div className="price-label">10 month course</div>
                   </div>
                 </div>
               </div>

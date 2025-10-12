@@ -90,7 +90,7 @@ const CourseContentManager = () => {
       const activeDay = activeWeek?.days.find(day => day._id === activeDayId);
 
       if (!activeWeek || !activeDay) {
-        throw new Error("Could not find selected week or day");
+        throw new Error("Could not find selected week or ");
       }
 
       console.log(`Uploading to Week ${activeWeek.weekNumber}, Day ${activeDay.dayNumber}`);
@@ -189,7 +189,7 @@ const CourseContentManager = () => {
     const week = course.weeks.find(w => w._id === weekId);
     const totalContent = week?.days?.reduce((total, day) => total + (day.contents?.length || 0), 0) || 0;
 
-    const confirmMessage = `Are you sure you want to delete Week ${week?.weekNumber}?\n\nThis will permanently delete:\n• All 7 days in this week\n• ${totalContent} content items (videos/documents)\n• All associated files from cloud storage\n\nThis action cannot be undone.`;
+    const confirmMessage = `Are you sure you want to delete Module ${week?.weekNumber}?\n\nThis will permanently delete:\n• All 7 days in this week\n• ${totalContent} content items (videos/documents)\n• All associated files from cloud storage\n\nThis action cannot be undone.`;
 
     if (!confirm(confirmMessage)) return;
 
@@ -308,13 +308,13 @@ const CourseContentManager = () => {
           <div className="card-header bg-primary text-white">
             <h5 className="mb-0">
               <i className="bi bi-plus-circle me-2"></i>
-              Add New Week (7 Days Auto-Created)
+              Add New Module (7 Days Auto-Created)
             </h5>
           </div>
           <div className="card-body">
             <div className="row">
               <div className="col-md-4">
-                <label className="form-label">Week Number</label>
+                <label className="form-label">Module Number</label>
                 <input
                   type="number"
                   placeholder="e.g., 1"
@@ -325,7 +325,7 @@ const CourseContentManager = () => {
                 />
               </div>
               <div className="col-md-6">
-                <label className="form-label">Week Title</label>
+                <label className="form-label">Module Title</label>
                 <input
                   type="text"
                   placeholder="e.g., Introduction to Anatomy"
@@ -340,7 +340,7 @@ const CourseContentManager = () => {
                   className="btn btn-success w-100"
                   disabled={!weekNumber || !weekTitle}
                 >
-                  <i className="bi bi-plus"></i> Add Week
+                  <i className="bi bi-plus"></i> Add Module
                 </button>
               </div>
             </div>
@@ -370,7 +370,7 @@ const CourseContentManager = () => {
                         onClick={() => deleteWeek(week._id)}
                         title="Delete Entire Week"
                       >
-                        <i className="bi bi-trash"></i> Delete Week
+                        <i className="bi bi-trash"></i> Delete Module
                       </button>
                     </div>
                   </div>
@@ -518,7 +518,7 @@ const CourseContentManager = () => {
                     ) : (
                       <div className="text-center py-3">
                         <i className="bi bi-calendar-x display-6 text-muted"></i>
-                        <p className="text-muted mt-2">No days configured for this week</p>
+                        <p className="text-muted mt-2">No day configured for this Module</p>
                       </div>
                     )}
                   </div>
@@ -529,8 +529,8 @@ const CourseContentManager = () => {
         ) : (
           <div className="text-center py-5">
             <i className="bi bi-calendar-x display-1 text-muted"></i>
-            <h5 className="text-muted mt-3">No weeks added yet</h5>
-            <p className="text-muted">Start by adding your first week above.</p>
+            <h5 className="text-muted mt-3">No Modules added yet</h5>
+            <p className="text-muted">Start by adding your first Module above.</p>
           </div>
         )}
 
@@ -540,7 +540,7 @@ const CourseContentManager = () => {
             <div className="card-header bg-success text-white">
               <h6 className="mb-0">
                 <i className="bi bi-cloud-upload me-2"></i>
-                Ready to Upload to Day {course.weeks.find(w => w._id === activeWeekId)?.days.find(d => d._id === activeDayId)?.dayNumber}
+                Ready to Upload to Module {course.weeks.find(w => w._id === activeWeekId)?.days.find(d => d._id === activeDayId)?.dayNumber}
               </h6>
             </div>
             <div className="card-body">
@@ -549,7 +549,7 @@ const CourseContentManager = () => {
                   <strong>File:</strong> {file.name}<br />
                   <strong>Type:</strong> <span className="text-capitalize">{activeType}</span><br />
                   <strong>Size:</strong> {(file.size / (1024 * 1024)).toFixed(2)} MB<br />
-                  <strong>Week:</strong> {course.weeks.find(w => w._id === activeWeekId)?.weekNumber} - Day {course.weeks.find(w => w._id === activeWeekId)?.days.find(d => d._id === activeDayId)?.dayNumber}
+                  <strong>Module:</strong> {course.weeks.find(w => w._id === activeWeekId)?.weekNumber} - Module {course.weeks.find(w => w._id === activeWeekId)?.days.find(d => d._id === activeDayId)?.dayNumber}
                 </div>
                 <div>
                   <i className={`bi ${activeType === 'video' ? 'bi-camera-video' : 'bi-file-earmark-pdf'} display-4 text-muted`}></i>

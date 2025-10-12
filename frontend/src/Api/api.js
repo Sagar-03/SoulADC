@@ -35,6 +35,8 @@ export const loginAdmin = (credentials) => api.post("/auth/login", credentials);
 export const getCourses = (courseId) => courseId ? api.get(`/admin/courses/${courseId}`) : api.get("/admin/courses");
 export const getLiveCourses = () => api.get("/user/courses/live");
 export const createCourse = (data) => api.post("/admin/courses", data);
+export const updateCourse = (courseId, data) => api.put(`/admin/courses/${courseId}`, data);
+export const deleteCourse = (courseId) => api.delete(`/admin/courses/${courseId}`);
 export const toggleCourseLiveApi = (courseId) => api.patch(`/admin/courses/${courseId}/toggle-live`);
 export const addWeek = (courseId, weekNumber, weekTitle) =>
   api.post(`/admin/courses/${courseId}/weeks`, {

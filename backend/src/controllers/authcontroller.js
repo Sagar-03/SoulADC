@@ -1,6 +1,8 @@
 const User = require("../models/userModel");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
+const nodemailer = require("nodemailer");
 
 // REGISTER controller
 const register = async (req, res) => {
@@ -38,8 +40,6 @@ const register = async (req, res) => {
     res.status(500).json({ message: "Registration failed", error: error.message });
   }
 };
-
-
 // LOGIN controller
 const login = async (req, res) => {
   try {
@@ -64,7 +64,7 @@ const login = async (req, res) => {
     // Find user in database
     const user = await User.findOne({ email });
     if (!user) {
-      console.log("❌ User not found:", email);
+      console.log(" User not found:", email);
       return res.status(400).json({ message: "Invalid email or password" });
     }
 
@@ -100,5 +100,63 @@ const login = async (req, res) => {
     res.status(500).json({ message: "Login failed", error: error.message });
   }
 };
+// ✅ Forgot Password - Send Reset Link
+const forgotPassword = async (req, res) => {
+  try {
+    const user = await User.findOne({ email: req.body.email });
+    if (!user) return res.status(404).json({ message: "User not found" });
 
-module.exports = { register, login };
+    // Generate token
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    user.resetToken = resetToken;
+    user.resetTokenExpire = Date.now() + 15 * 60 * 1000; // 15 min expiry
+    await user.save();
+
+    const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
+
+    const html = `
+      <h2>Password Reset Request</h2>
+      <p>Hello ${user.name || "User"},</p>
+      <p>Click below to reset your password. This link will expire in 15 minutes:</p>
+      <a href="${resetUrl}" target="_blank">${resetUrl}</a>
+      <p>If you didn't request this, you can ignore it.</p>
+    `;
+
+    await sendEmail(user.email, "Reset your SoulADC LMS password", html);
+
+    res.json({ message: "Password reset link sent to your email." });
+  } catch (error) {
+    console.error("Error sending reset email:", error);
+    res.status(500).json({ message: "Error sending reset email" });
+  }
+};
+
+// 2️⃣ Reset Password - Update user password
+const resetPassword = async (req, res) => {
+  try {
+    const { token } = req.params;
+    const { password } = req.body;
+
+    const user = await User.findOne({
+      resetToken: token,
+      resetTokenExpire: { $gt: Date.now() },
+    });
+
+    if (!user)
+      return res.status(400).json({ message: "Invalid or expired token." });
+
+    // Hash and update new password
+    const hashed = await bcrypt.hash(password, 10);
+    user.password = hashed;
+    user.resetToken = undefined;
+    user.resetTokenExpire = undefined;
+    await user.save();
+
+    res.json({ message: "Password reset successful. You can now log in." });
+  } catch (error) {
+    console.error("Reset password error:", error);
+    res.status(500).json({ message: "Failed to reset password" });
+  }
+};
+
+module.exports = { register, login, forgotPassword, resetPassword };

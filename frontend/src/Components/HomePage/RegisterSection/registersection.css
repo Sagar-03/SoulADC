@@ -8,7 +8,8 @@
 /* Specific text colors */
 .register-title {
     color: #333;
-    font-size: 2.5rem; /* Further reduced font size */
+    font-size: 2.5rem;
+    /* Further reduced font size */
     line-height: 1.2;
     font-weight: 700;
 }
@@ -24,8 +25,10 @@
 
 .register-text {
     color: #7B563D;
-     font-size: 1rem; /* Decreased font size */
-    line-height: 1.5; /* Adjusted for better readability */
+    font-size: 1rem;
+    /* Decreased font size */
+    line-height: 1.5;
+    /* Adjusted for better readability */
 }
 
 .register-text-muted {
@@ -34,21 +37,31 @@
 
 /* NEW: Badge styling for "ADC Part 1 Specialists" with icon */
 .adc-badge-new {
-    display: inline-flex; /* Use flex to align icon and text */
+    display: inline-flex;
+    /* Use flex to align icon and text */
     align-items: center;
-    background-color: #f7f3ed; /* Light beige background */
-    color: #7B563D; /* Darker brown text */
-    padding: 0.5em 1.2em; /* Increased padding */
-    border-radius: 2rem; /* More rounded, pill-like shape */
-    font-size: 0.6em; /* Slightly larger font than previous .adc-badge */
+    background-color: #f7f3ed;
+    /* Light beige background */
+    color: #7B563D;
+    /* Darker brown text */
+    padding: 0.5em 1.2em;
+    /* Increased padding */
+    border-radius: 2rem;
+    /* More rounded, pill-like shape */
+    font-size: 0.6em;
+    /* Slightly larger font than previous .adc-badge */
     font-weight: 600;
-    border: 1px solid #e0d9cd; /* Subtle border */
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05); /* Very subtle shadow */
+    border: 1px solid #e0d9cd;
+    /* Subtle border */
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    /* Very subtle shadow */
 }
 
 .adc-badge-new i {
-    color: #e07b5a; /* A vibrant pink/red for the bullseye icon */
-    font-size: 1.1em; /* Slightly larger icon */
+    color: #e07b5a;
+    /* A vibrant pink/red for the bullseye icon */
+    font-size: 1.1em;
+    /* Slightly larger icon */
     margin-right: 0.5em;
 }
 
@@ -98,27 +111,34 @@
 
 /* Video Section Refined Styling */
 
-
 .video-player-container {
     position: relative;
     width: 100%;
-    max-width: 520px;
-    aspect-ratio: 16 / 9;
+    max-width: 500px;
+    aspect-ratio: 9 / 12;
+    /* portrait ratio */
     border-radius: 1rem;
-    
-    overflow: hidden; /* Important: Hides anything outside the rounded corners */
-    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15), /* Larger, more diffused shadow */
-                0 0px 0px 3px rgba(255, 255, 255, 0.8); /* Faint white "inner" border with shadow */
-    background-color: #f0f0f0; /* Fallback for video load, visible background */
+    overflow: hidden;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+    background-color: #000;
+    padding: 0 !important; 
+    /* ensure no padding */
+    margin: 0;
+    /* ensure no extra space around */
 }
 
-.video-main {
+.video-player-container video {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    border: none;
+    padding: 0;
+    margin: 0;
     display: block;
-    border-radius: 1rem;
+    /* removes inline gap */
 }
+
+
 
 
 /* Base Badge Style (for the ADC Qualified Expert Mentors badge) */
@@ -164,8 +184,10 @@
 /* Positioning for the badge over the video */
 .badge-over-video-top-left {
     position: absolute;
-    top: -2.5rem; /* Adjust this value to move it up/down */
-    left: 1rem; /* Adjust this value to move it left/right */
+    top: -2.5rem;
+    /* Adjust this value to move it up/down */
+    left: 1rem;
+    /* Adjust this value to move it left/right */
     z-index: 11;
 }
 
@@ -177,7 +199,8 @@
     }
 
     .register-title {
-        font-size: 2.0rem; /* Even smaller on mobile */
+        font-size: 2.0rem;
+        /* Even smaller on mobile */
     }
 
     .video-player-container {

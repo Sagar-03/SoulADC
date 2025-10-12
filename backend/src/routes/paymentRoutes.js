@@ -11,6 +11,7 @@ const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
  * POST /api/payment/create-checkout-session
  * Create Stripe checkout session for course purchase
  */
+
 router.post("/create-checkout-session", protect, async (req, res) => {
   try {
     const { courseId, coupon, successUrl, cancelUrl } = req.body;
@@ -35,7 +36,7 @@ router.post("/create-checkout-session", protect, async (req, res) => {
       line_items: [
         {
           price_data: {
-            currency: "aud", // 🇦🇺 change currency if needed
+            currency: "usd", // 🇸 US dollars
             product_data: {
               name: course.title,
               description: course.description,
