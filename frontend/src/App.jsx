@@ -30,6 +30,7 @@ import ManageStudents from "./Components/admin/ManageStudents";
 import AddCourse from "./Components/admin/AddCourse";
 import EditCourse from "./Components/admin/EditCourse";
 import CourseContentManager from "./Components/admin/CourseContentManager";
+import BulkPdfUpload from "./Components/admin/BulkPdfUpload";
 
 // 🔹 Protected Route Wrapper
 const ProtectedRoute = ({ children, requirePurchased = false, adminOnly = false }) => {
@@ -192,6 +193,14 @@ function App() {
           element={
             <ProtectedRoute adminOnly={true}>
               <CourseContentManager />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/bulk-pdf-upload"
+          element={
+            <ProtectedRoute adminOnly={true}>
+              <BulkPdfUpload />
             </ProtectedRoute>
           }
         />

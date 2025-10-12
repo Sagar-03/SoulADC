@@ -54,27 +54,27 @@ const CourseContentManager = () => {
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
-    if (selectedFile) {
-      // Validate file size (max 100MB for videos, 10MB for documents)
-      const maxSize = activeType === "video" ? 100 * 1024 * 1024 : 10 * 1024 * 1024;
-      if (selectedFile.size > maxSize) {
-        setError(`File too large. Max size: ${activeType === "video" ? "100MB" : "10MB"}`);
-        return;
-      }
+    // if (selectedFile) {
+    //   // Validate file size (max 100MB for videos, 10MB for documents)
+    //   const maxSize = activeType === "video" ? 100 * 1024 * 1024 : 10 * 1024 * 1024;
+    //   if (selectedFile.size > maxSize) {
+    //     setError(`File too large. Max size: ${activeType === "video" ? "100MB" : "10MB"}`);
+    //     return;
+    //   }
 
-      // Validate file type
-      const allowedTypes = activeType === "video"
-        ? ["video/mp4", "video/webm", "video/mov", "video/avi"]
-        : ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
+    //   // Validate file type
+    //   const allowedTypes = activeType === "video"
+    //     ? ["video/mp4", "video/webm", "video/mov", "video/avi"]
+    //     : ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
 
-      if (!allowedTypes.includes(selectedFile.type)) {
-        setError(`Invalid file type. Allowed: ${activeType === "video" ? "MP4, WebM, MOV, AVI" : "PDF, DOC, DOCX"}`);
-        return;
-      }
+    //   if (!allowedTypes.includes(selectedFile.type)) {
+    //     setError(`Invalid file type. Allowed: ${activeType === "video" ? "MP4, WebM, MOV, AVI" : "PDF, DOC, DOCX"}`);
+    //     return;
+    //   }
 
-      setFile(selectedFile);
-      setError(null);
-    }
+    //   setFile(selectedFile);
+    //   setError(null);
+    // }
   };
 
   const uploadContent = async () => {

@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { RxDashboard } from "react-icons/rx";
-import { FaBook, FaUsers, FaPlus } from "react-icons/fa";
+import { FaBook, FaUsers, FaPlus, FaFilePdf } from "react-icons/fa";
 import logo from "../../assets/logo.png";
 
 const AdminSidebar = () => {
@@ -37,6 +37,12 @@ const AdminSidebar = () => {
                     text="Add Course"
                     active={location.pathname === "/admin/courses/add"}
                     onClick={() => navigate("/admin/courses/add")}
+                />
+                <SidebarItem
+                    icon={<FaFilePdf />}
+                    text="Bulk PDF Upload"
+                    active={location.pathname === "/admin/bulk-pdf-upload"}
+                    onClick={() => navigate("/admin/bulk-pdf-upload")}
                 />
                 <SidebarItem
                     icon={<FaUsers />}

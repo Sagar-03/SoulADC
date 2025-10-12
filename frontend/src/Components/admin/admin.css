@@ -175,3 +175,120 @@ video {
 .uploading {
   animation: pulse 1.5s infinite;
 }
+
+/* Bulk Upload Specific Styles */
+.bulk-upload-container {
+  background: linear-gradient(135deg, #f8f7f6 0%, #f0ede9 100%);
+  border-radius: 12px;
+  padding: 2rem;
+}
+
+.file-drop-zone {
+  border: 3px dashed #8B5E3C;
+  border-radius: 12px;
+  padding: 3rem 2rem;
+  text-align: center;
+  background: linear-gradient(135deg, #fff 0%, #f8f7f6 100%);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.file-drop-zone:hover {
+  border-color: #5A3825;
+  background: linear-gradient(135deg, #f8f7f6 0%, #f0ede9 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(139, 94, 60, 0.2);
+}
+
+.file-drop-zone.dragover {
+  border-color: #5A3825;
+  background: linear-gradient(135deg, #f0ede9 0%, #e8e3de 100%);
+  transform: scale(1.02);
+}
+
+.file-list-item {
+  background: white;
+  border: 1px solid #e0d4c7;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.file-list-item:hover {
+  border-color: #8B5E3C;
+  box-shadow: 0 2px 8px rgba(139, 94, 60, 0.1);
+}
+
+.upload-summary-card {
+  background: linear-gradient(135deg, #e8f5e8 0%, #d4f4d4 100%);
+  border: 1px solid #98d982;
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+.progress-file {
+  height: 4px;
+  border-radius: 2px;
+  background-color: #e9ecef;
+  overflow: hidden;
+}
+
+.progress-file .progress-bar {
+  background: linear-gradient(90deg, #28a745 0%, #20c997 100%);
+  transition: width 0.3s ease;
+}
+
+.bulk-upload-header {
+  background: linear-gradient(135deg, #8B5E3C 0%, #5A3825 100%);
+  color: white;
+  border-radius: 8px 8px 0 0;
+}
+
+.destination-card {
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  border: 1px solid #90caf9;
+}
+
+.result-item-success {
+  background: linear-gradient(135deg, #e8f5e8 0%, #d4f4d4 100%);
+  border-color: #98d982 !important;
+}
+
+.result-item-error {
+  background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+  border-color: #f48fb1 !important;
+}
+
+/* Enhanced form controls */
+.form-select:focus {
+  border-color: #8B5E3C;
+  box-shadow: 0 0 0 0.2rem rgba(139, 94, 60, 0.25);
+}
+
+.form-control:focus {
+  border-color: #8B5E3C;
+  box-shadow: 0 0 0 0.2rem rgba(139, 94, 60, 0.25);
+}
+
+.btn-success {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  border: none;
+  box-shadow: 0 2px 4px rgba(40, 167, 69, 0.3);
+  transition: all 0.3s ease;
+}
+
+.btn-success:hover {
+  background: linear-gradient(135deg, #218838 0%, #1e7e34 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(40, 167, 69, 0.4);
+}
+
+.btn-info {
+  background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.btn-info:hover {
+  background: linear-gradient(135deg, #138496 0%, #117a8b 100%);
+  transform: translateY(-1px);
+}
