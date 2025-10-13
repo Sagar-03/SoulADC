@@ -7,26 +7,6 @@ const s3 = require("../config/s3.js");
 const router = express.Router();
 
 // Enhanced CORS and security headers for video streaming
-router.use((req, res, next) => {
-  const origin = req.headers.origin;
-  const allowedOrigins = [
-    process.env.CORS_ORIGIN
-  ].filter(Boolean);
-
-  if (allowedOrigins.includes(origin)) {
-    res.header('Access-Control-Allow-Origin', origin);
-    res.header('Access-Control-Allow-Credentials', 'true');
-  }
-
-  res.header('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Range, Accept-Encoding, Content-Type, Authorization');
-  res.header('Access-Control-Expose-Headers', 'Content-Range, Accept-Ranges, Content-Length');
-
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(200);
-  }
-  next();
-});
 
 // Get video metadata endpoint
 router.get("/info/:identifier", async (req, res) => {
