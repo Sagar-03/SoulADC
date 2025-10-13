@@ -8,9 +8,9 @@
 
 /* ===== HERO SECTION ===== */
 .premium-hero {
-  background: linear-gradient(135deg, 
-    rgba(139, 94, 60, 0.95) 0%, 
-    rgba(123, 86, 61, 0.95) 100%),
+  background: linear-gradient(135deg,
+      rgba(139, 94, 60, 0.95) 0%,
+      rgba(123, 86, 61, 0.95) 100%),
     radial-gradient(circle at 20% 80%, rgba(169, 140, 106, 0.3) 0%, transparent 50%),
     radial-gradient(circle at 80% 20%, rgba(123, 86, 61, 0.3) 0%, transparent 50%);
   min-height: 85vh;
@@ -133,25 +133,37 @@
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
   color: #8B5E3C;
   text-align: center;
-  animation: float 6s ease-in-out infinite;
+  /* animation: float 6s ease-in-out infinite; */
 }
 
 .floating-card.card-1 {
-  top: 50px;
+  top: 0px;
   left: 50px;
   animation-delay: 0s;
 }
 
 .floating-card.card-2 {
-  top: 200px;
+  top: 130px;
   right: 80px;
   animation-delay: 2s;
 }
 
 .floating-card.card-3 {
-  bottom: 80px;
+  bottom: 150px;
   left: 100px;
   animation-delay: 4s;
+}
+
+.floating-card.card-4 {
+  top: 450px;
+  right: 500px;
+  animation-delay: 4s;
+}
+
+.floating-card.card-5 {
+  top: 400px;
+  right: 50px;
+  animation-delay: 2s;
 }
 
 .card-icon {
@@ -168,8 +180,15 @@
 }
 
 @keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-20px); }
+
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-20px);
+  }
 }
 
 /* ===== CONTENT SECTION ===== */
@@ -365,7 +384,7 @@
 /* ===== MENTOR SECTION ===== */
 .mentor-section {
   padding: 120px 0;
-  background: white;
+  background: #faf9f6;
 }
 
 .mentor-image-wrapper {
@@ -511,26 +530,26 @@
   .hero-title {
     font-size: 3rem;
   }
-  
+
   .hero-stats {
     gap: 24px;
     flex-wrap: wrap;
   }
-  
+
   .section-title {
     font-size: 2.5rem;
   }
-  
+
   .mentor-content {
     padding-left: 0;
     margin-top: 40px;
   }
-  
+
   .floating-card {
     position: relative;
     margin: 16px;
   }
-  
+
   .hero-visual {
     height: auto;
     flex-direction: column;
@@ -541,15 +560,15 @@
   .hero-title {
     font-size: 2.5rem;
   }
-  
+
   .promise-title {
     font-size: 2.5rem;
   }
-  
+
   .section-title {
     font-size: 2rem;
   }
-  
+
   .hero-stats {
     justify-content: center;
   }
@@ -582,6 +601,7 @@
     opacity: 0;
     transform: translateY(30px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -592,3 +612,131 @@
 .min-vh-75 {
   min-height: 75vh;
 }
+
+/* ===== ADC PROCESS SECTION ===== */
+.adc-process-section {
+  background: #ffffff;
+  position: relative;
+  padding: 100px 0 120px;
+}
+
+.adc-description {
+  max-width: 800px;
+  color: #6b6b6b;
+  line-height: 1.7;
+  font-size: 1.1rem;
+}
+
+.adc-steps-wrapper {
+  position: relative;
+}
+
+.adc-steps {
+  gap: 60px;
+  margin-top: 40px;
+}
+
+.adc-step {
+  text-align: center;
+  position: relative;
+  max-width: 280px;
+}
+
+.adc-icon-circle {
+  width: 110px;
+  height: 110px;
+  background-color: #f6f2ef;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px auto;
+  box-shadow: 0 10px 25px rgba(139, 94, 60, 0.15);
+  transition: all 0.3s ease;
+}
+
+.adc-icon-circle:hover {
+  transform: translateY(-5px);
+  background-color: #fff5f0;
+}
+
+.adc-icon-circle i {
+  font-size: 48px;
+  color: #8B5E3C;
+}
+
+.adc-step h5 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #2b2b2b;
+  margin-top: 10px;
+}
+
+.adc-step-text {
+  font-size: 0.95rem;
+  color: #6b6b6b;
+  line-height: 1.6;
+  margin-top: 8px;
+}
+
+.adc-arrow {
+  font-size: 3rem;
+  color: #8B5E3C;
+  margin: 0 20px;
+  opacity: 0.8;
+}
+
+.adc-arrows-top,
+.adc-arrows-bottom {
+  gap: 100px;
+}
+
+.adc-download-wrapper {
+  position: relative;
+  margin-top: 60px; /* add spacing below the steps */
+  display: flex;
+  justify-content: flex-end;
+  padding-right: 60px;
+}
+
+.adc-download-btn {
+  background: linear-gradient(135deg, #8B5E3C, #7B563D);
+  color: #fff;
+  padding: 14px 26px;
+  border-radius: 50px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  box-shadow: 0 8px 20px rgba(139, 94, 60, 0.3);
+}
+
+.adc-download-btn:hover {
+  background: linear-gradient(135deg, #A98C6A, #8B5E3C);
+  transform: translateY(-3px);
+  color: #fff;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+  .adc-steps {
+    flex-direction: column;
+    gap: 40px;
+  }
+
+  .adc-arrow {
+    transform: rotate(90deg);
+  }
+
+  .adc-download-wrapper {
+    position: static;
+    margin-top: 50px;
+  }
+
+  .adc-arrows-top,
+  .adc-arrows-bottom {
+    display: none !important;
+  }
+}
+

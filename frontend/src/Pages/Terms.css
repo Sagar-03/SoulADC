@@ -1,0 +1,184 @@
+/* SoulADC Terms & Conditions Styling */
+
+.terms-container {
+  background: linear-gradient(135deg, #fafafa 0%, #f0f0f0 100%);
+  color: #2c3e50;
+  min-height: 100vh;
+  padding: 60px 20px;
+  line-height: 1.8;
+  font-family: 'Inter', 'Segoe UI', Roboto, sans-serif;
+}
+
+.terms-wrapper {
+  max-width: 900px;
+  margin: 0 auto;
+  background: #ffffff;
+  padding: 50px 45px;
+  border-radius: 20px;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(107, 66, 40, 0.1);
+}
+
+.terms-heading {
+  font-size: 2.8rem;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 50px;
+  color: #6B4228;
+  position: relative;
+  letter-spacing: -0.8px;
+  line-height: 1.2;
+}
+
+.terms-heading::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -15px;
+  transform: translateX(-50%);
+  width: 100px;
+  height: 4px;
+  background: linear-gradient(90deg, #6B4228, #8B5A3C);
+  border-radius: 4px;
+}
+
+.terms-section {
+  margin-bottom: 50px;
+  padding: 0;
+}
+
+.terms-intro {
+  font-size: 1.15rem;
+  color: #34495e;
+  text-align: justify;
+  margin-bottom: 20px;
+  padding: 25px;
+  background: rgba(107, 66, 40, 0.05);
+  border-left: 4px solid #6B4228;
+  border-radius: 8px;
+}
+
+.terms-note {
+  font-size: 0.95rem;
+  color: #7f8c8d;
+  font-style: italic;
+  text-align: justify;
+  margin-top: 15px;
+  padding-left: 20px;
+}
+
+.section-heading {
+  font-size: 1.6rem;
+  font-weight: 600;
+  text-align: center;
+  margin-bottom: 30px;
+  color: #6B4228;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  position: relative;
+  padding-bottom: 15px;
+}
+
+.section-heading::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  width: 70px;
+  height: 3px;
+  background: linear-gradient(90deg, #6B4228, #8B5A3C);
+  border-radius: 3px;
+}
+.terms-section p {
+  font-size: 1.1rem;
+  margin-bottom: 20px;
+  color: #34495e;
+  text-align: justify;
+  line-height: 1.7;
+}
+
+.terms-list {
+  list-style: none;
+  padding-left: 0;
+  margin: 25px 0;
+}
+
+.terms-list li {
+  position: relative;
+  padding-left: 30px;
+  margin-bottom: 15px;
+  font-size: 1.05rem;
+  color: #34495e;
+  text-align: justify;
+  line-height: 1.6;
+}
+
+.terms-list li::before {
+  content: "▶";
+  position: absolute;
+  left: 0;
+  color: #6B4228;
+  font-size: 0.8rem;
+  top: 3px;
+}
+
+strong {
+  color: #6B4228;
+  font-weight: 600;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .terms-container {
+    padding: 40px 15px;
+  }
+
+  .terms-wrapper {
+    padding: 35px 25px;
+    border-radius: 15px;
+  }
+
+  .terms-heading {
+    font-size: 2.2rem;
+    margin-bottom: 35px;
+    letter-spacing: -0.5px;
+  }
+
+  .section-heading {
+    font-size: 1.4rem;
+    margin-bottom: 25px;
+  }
+
+  .terms-intro {
+    font-size: 1.05rem;
+    padding: 20px;
+  }
+
+  .terms-section p {
+    font-size: 1rem;
+  }
+
+  .terms-list li {
+    font-size: 0.95rem;
+    padding-left: 25px;
+  }
+}
+
+@media (max-width: 480px) {
+  .terms-container {
+    padding: 30px 10px;
+  }
+
+  .terms-wrapper {
+    padding: 25px 20px;
+  }
+
+  .terms-heading {
+    font-size: 1.8rem;
+  }
+
+  .section-heading {
+    font-size: 1.2rem;
+  }
+}

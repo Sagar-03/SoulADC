@@ -3,14 +3,14 @@ import { Container, Row, Col, Card, Button } from "react-bootstrap";
 import { FaGraduationCap, FaUserMd, FaChartLine, FaUsers, FaPlay, FaBookOpen, FaAward, FaTrophy } from "react-icons/fa";
 import Navbar from "../../Components/Navbar/Navbar";
 import Footer from "../../Components/Footer/footer";
-import "./About-Premium.css";
+import "./About.css";
 
 const About = () => {
   return (
     <div className="premium-about-page">
       {/* Navbar */}
       <Navbar />
-      
+
       {/* Hero Section */}
       <section className="premium-hero">
         <Container>
@@ -24,10 +24,10 @@ const About = () => {
                 About <span className="brand-highlight">Soul ADC</span>
               </h1>
               <p className="hero-subtitle">
-                Igniting your dental future with concept-driven, structured learning 
+                Igniting your dental future with concept-driven, structured learning
                 that transforms complex concepts into clear understanding.
               </p>
-              <div className="hero-stats">
+              {/* <div className="hero-stats">
                 <div className="stat-item">
                   <FaTrophy className="stat-icon" />
                   <div>
@@ -49,7 +49,7 @@ const About = () => {
                     <p>Years Experience</p>
                   </div>
                 </div>
-              </div>
+              </div> */}
             </Col>
             <Col lg={6}>
               <div className="hero-visual">
@@ -64,6 +64,14 @@ const About = () => {
                 <div className="floating-card card-3">
                   <FaChartLine className="card-icon" />
                   <h6>Progress Tracking</h6>
+                </div>
+                <div className="floating-card card-4">
+                  <FaChartLine className="card-icon" />
+                  <h6>Mock Papers</h6>
+                </div>
+                <div className="floating-card card-5">
+                  <FaChartLine className="card-icon" />
+                  <h6>Past Paper Discussion</h6>
                 </div>
               </div>
             </Col>
@@ -121,6 +129,76 @@ const About = () => {
         </p>
       </section>
 
+      {/* ADC Assessment Process */}
+      <section className="adc-process-section py-5">
+        <div className="container text-center">
+          <h2 className="section-title">
+            ADC <span className="highlight">Assessment Process</span>
+          </h2>
+
+          <p className="adc-description mx-auto">
+            The <strong>Australian Dental Council (ADC)</strong> assessment process ensures that
+            overseas-qualified dental practitioners have the competence, knowledge, and practical
+            ability to safely practise in Australia. It involves a <strong>three-step journey</strong>
+            from qualification verification to clinical assessment.
+          </p>
+
+          <div className="adc-steps d-flex flex-column flex-md-row justify-content-center align-items-center mt-5">
+            {/* Step 1 */}
+            <div className="adc-step">
+              <div className="adc-icon-circle">
+                <i className="bi bi-clipboard-check"></i>
+              </div>
+              <h5>Initial Assessment</h5>
+              <p className="adc-step-text">
+                Verification of your academic credentials and professional background to confirm eligibility.
+              </p>
+            </div>
+
+            <i className="bi bi-arrow-right adc-arrow"></i>
+
+            {/* Step 2 */}
+            <div className="adc-step">
+              <div className="adc-icon-circle">
+                <i className="bi bi-journal-text"></i>
+              </div>
+              <h5>Written Examination</h5>
+              <p className="adc-step-text">
+                A comprehensive test of theoretical and clinical dental science knowledge.
+              </p>
+            </div>
+
+            <i className="bi bi-arrow-right adc-arrow"></i>
+
+            {/* Step 3 */}
+            <div className="adc-step">
+              <div className="adc-icon-circle">
+                <i className="bi bi-person-lines-fill"></i>
+              </div>
+              <h5>Practical Examination</h5>
+              <p className="adc-step-text">
+                Evaluation of hands-on clinical and technical skills in simulated dental practice settings.
+              </p>
+            </div>
+          </div>
+
+          {/* Download Button */}
+          <div className="adc-download-wrapper">
+            <a
+              href="https://www.adc.org.au/files/assessment/handbooks/ADC_Assessment_Process_New.pdf"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="adc-download-btn"
+            >
+              <i className="bi bi-download me-2"></i> View Process PDF
+            </a>
+
+          </div>
+        </div>
+      </section>
+
+
+
       {/* Our Promise */}
       <section className="promise-section py-5">
         <div className="container">
@@ -171,6 +249,8 @@ const About = () => {
           Australia and New Zealand.
         </p>
       </section>
+
+      <Footer />
     </div>
   );
 };

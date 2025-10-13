@@ -8,8 +8,8 @@ import Login from "./Pages/Login";
 import { isAuthenticated, getUser, getUserRole } from "./utils/auth";
 import ForgotPassword from "./Components/student/ForgotPassword/ForgotPassword";
 import ResetPassword from "./Components/student/ForgotPassword/ForgotPassword";
-
-
+import Tnc from "./Pages/SoulADCTerms";
+import ContactUs from "./Components/ContactUs/ContactUs";
 
 // Student Dashboard
 import Studentdashboard from "./Components/student/Studentdashboard";
@@ -66,8 +66,12 @@ function App() {
         <Route path="/courses" element={<CoursesPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/About" element={<About />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-  <Route path="/reset-password/:token" element={<ResetPassword />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
+        <Route path="/Tnc" element={<Tnc />} />
+        <Route path="/ContactUs" element={<ContactUs />} />
+
+
 
         {/* Student Dashboard (Protected: must have purchased course) */}
         <Route

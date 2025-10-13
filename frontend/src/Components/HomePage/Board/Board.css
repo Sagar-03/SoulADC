@@ -1,30 +1,69 @@
 .cta-body {
   font-family: 'Inter', sans-serif;
-  background-color: #ffffff; /* Cleaner white background */
-  padding: 0;
+  background-color: #ffffff;
   padding-bottom: 10px;
 }
 
 .cta-container {
-  background: linear-gradient(145deg, #977045, #825334); /* refined gradient */
+  background: linear-gradient(145deg, #977045, #825334);
   border-radius: 20px;
-  padding: 4rem 2rem;
-  text-align: center;
+  padding: 3rem 2rem;
   color: white;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.cta-content {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 2rem;
+}
+
+.cta-text {
+  flex: 1 1 45%;
+  text-align: left;
 }
 
 .cta-title {
   font-weight: 700;
   font-size: 2.5rem;
-  margin-bottom: 1rem;
+  margin-top: 6rem;
 }
 
 .cta-subtitle {
   font-size: 1.1rem;
   max-width: 600px;
-  margin: 0 auto 2rem auto;
   opacity: 0.9;
+}
+
+.cta-form {
+  flex: 1 1 45%;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 1.5rem;
+  border-radius: 12px;
+  backdrop-filter: blur(6px);
+}
+
+.form-row {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.cta-form input,
+.cta-form textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  outline: none;
+}
+
+.cta-form input::placeholder,
+.cta-form textarea::placeholder {
+  color: #7e6754;
 }
 
 .cta-button {
@@ -35,11 +74,17 @@
   padding: 0.8rem 2rem;
   font-weight: 600;
   font-size: 1rem;
-  margin: 0.5rem; /* spacing for small screens */
+  margin-top: 0.5rem;
   transition: transform 0.2s ease, background-color 0.2s ease;
 }
 
 .cta-button:hover {
   background-color: #ffffff;
   transform: translateY(-3px);
+}
+
+.form-status {
+  margin-top: 10px;
+  font-weight: 600;
+  color: #fff;
 }

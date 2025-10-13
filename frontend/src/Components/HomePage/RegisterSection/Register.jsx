@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 import { Container, Row, Col, Button } from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './registersection.css';
+import { Link } from "react-router-dom";
 
 const Register = () => {
   const videoRef = useRef(null);
@@ -85,7 +86,12 @@ const Register = () => {
             <li className="mb-2"><CheckIcon />Mock papers and question banks to help you master exam-style scenarios</li>
           </ul>
 
-          <Button variant="dark" className="me-3 px-4 py-2 register-button-dark">
+          <Button
+            as={Link}
+            to="/courses"   // your target route
+            variant="dark"
+            className="me-3 px-4 py-2 register-button-dark"
+          >
             Start Your Journey
           </Button>
         </Col>

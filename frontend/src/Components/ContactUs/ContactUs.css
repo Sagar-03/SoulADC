@@ -1,0 +1,118 @@
+.contact-page {
+  font-family: 'Inter', sans-serif;
+  min-height: 80vh;
+  background: #ffffff; /* White background */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  color: #3e2723; /* Dark text for contrast */
+}
+
+.contact-container {
+  max-width: 1100px;
+  width: 100%;
+  background: rgba(104, 69, 4, 0.2); /* subtle warm tint */
+  border-radius: 20px;
+  padding: 3rem 2rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(200, 200, 200, 0.3);
+}
+
+.contact-content {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 3rem;
+}
+
+.contact-text {
+  flex: 1 1 45%;
+  text-align: left;
+}
+
+.contact-title {
+  font-weight: 700;
+  font-size: 2.8rem;
+  margin-top: 6rem;
+  color: #5d4037;
+}
+
+.contact-subtitle {
+  font-size: 1.2rem;
+  opacity: 0.9;
+  max-width: 550px;
+  color: #6d4c41;
+}
+
+.contact-form {
+  flex: 1 1 45%;
+}
+
+.form-row {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.contact-form input,
+.contact-form textarea {
+  width: 100%;
+  padding: 0.9rem;
+  border: 1px solid #c9a87c;
+  border-radius: 8px;
+  font-size: 1rem;
+  outline: none;
+  background: rgba(255, 255, 255, 0.9);
+  color: #3e2723;
+}
+
+.contact-form input::placeholder,
+.contact-form textarea::placeholder {
+  color: #7e6754;
+}
+
+.contact-button {
+  background-color: #977045;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.8rem 2rem;
+  font-weight: 600;
+  font-size: 1rem;
+  margin-top: 0.8rem;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.contact-button:hover {
+  background-color: #7b5835;
+  transform: translateY(-3px);
+}
+
+.form-status {
+  margin-top: 12px;
+  font-weight: 600;
+  color: #5d4037;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .contact-content {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .contact-text {
+    text-align: center;
+  }
+
+  .contact-title {
+    font-size: 2.2rem;
+  }
+
+  .contact-container {
+    padding: 2rem 1.5rem;
+  }
+}

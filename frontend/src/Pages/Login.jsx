@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import "./Auth.css";
 import logo from "../assets/logo.png";
 import { api } from "../Api/api";
@@ -82,7 +82,17 @@ const Login = () => {
       }
     } catch (err) {
       console.error("Auth error:", err);
-      alert("Something went wrong, please try again.");
+      
+      // Extract error message from server response
+      let errorMessage = "Something went wrong, please try again.";
+      
+      if (err.response && err.response.data && err.response.data.message) {
+        errorMessage = err.response.data.message;
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      alert(errorMessage);
     }
   };
 
@@ -227,7 +237,8 @@ const Login = () => {
                       required
                     />
                     <span className="checkmark"></span>
-                    I agree to <a href="#">Terms & Conditions</a>
+                     I agree to <Link to="/tnc">Terms & Conditions</Link>
+
                   </label>
                 </div>
               )}
