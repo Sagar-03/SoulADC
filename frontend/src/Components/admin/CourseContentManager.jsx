@@ -83,11 +83,6 @@ const CourseContentManager = () => {
     const selectedFile = e.target.files[0];
     if (selectedFile) {
       // Validate file size (max 100MB for videos, 10MB for documents)
-      const maxSize = activeType === "video" ? 100 * 1024 * 1024 : 10 * 1024 * 1024;
-      if (selectedFile.size > maxSize) {
-        setError(`File too large. Max size: ${activeType === "video" ? "100MB" : "10MB"}`);
-        return;
-      }
 
       // Validate file type
       const allowedTypes = activeType === "video"

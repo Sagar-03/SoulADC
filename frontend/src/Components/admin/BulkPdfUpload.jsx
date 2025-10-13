@@ -45,13 +45,13 @@ const BulkPdfUpload = () => {
     }
 
     // Validate file sizes (max 10MB per file)
-    const validFiles = pdfFiles.filter(file => {
-      if (file.size > 10 * 1024 * 1024) {
-        setError(`File "${file.name}" is too large. Max size: 10MB`);
-        return false;
-      }
-      return true;
-    });
+    // const validFiles = pdfFiles.filter(file => {
+    //   if (file.size > 10 * 1024 * 1024) {
+    //     setError(`File "${file.name}" is too large. Max size: 10MB`);
+    //     return false;
+    //   }
+    //   return true;
+    // });
 
     setFiles(validFiles);
   };

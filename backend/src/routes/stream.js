@@ -10,21 +10,18 @@ const router = express.Router();
 router.use((req, res, next) => {
   const origin = req.headers.origin;
   const allowedOrigins = [
-    'http://localhost:5173',
-    'http://localhost:5174',
-    'http://localhost:3000',
     process.env.CORS_ORIGIN
   ].filter(Boolean);
-  
+
   if (allowedOrigins.includes(origin)) {
     res.header('Access-Control-Allow-Origin', origin);
     res.header('Access-Control-Allow-Credentials', 'true');
   }
-  
+
   res.header('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Range, Accept-Encoding, Content-Type, Authorization');
   res.header('Access-Control-Expose-Headers', 'Content-Range, Accept-Ranges, Content-Length');
-  
+
   if (req.method === 'OPTIONS') {
     return res.sendStatus(200);
   }
@@ -45,7 +42,7 @@ router.get("/info/:identifier", async (req, res) => {
           { "weeks.days.contents._id": identifier }
         ]
       }).lean();
-      
+
       if (!course) return res.status(404).json({ error: "Content not found" });
 
       // Find the content info
@@ -65,7 +62,7 @@ router.get("/info/:identifier", async (req, res) => {
             }
           }
         }
-        
+
         if (w.days) {
           for (const d of w.days) {
             if (d.contents) {
@@ -109,7 +106,7 @@ router.get("/info/:identifier", async (req, res) => {
       }));
     } catch (s3Error) {
       console.error(`S3 file not found for info: ${s3Key}`, s3Error.message);
-      return res.status(404).json({ 
+      return res.status(404).json({
         error: "File not found in storage",
         s3Key: s3Key,
         details: "The requested file does not exist in our storage system"
@@ -135,7 +132,7 @@ router.get("/:identifier", async (req, res) => {
   try {
     const { identifier } = req.params;
     const range = req.headers.range;
-    
+
     let s3Key, mime = "application/octet-stream";
 
     // Check if identifier is a MongoDB ObjectId
@@ -146,7 +143,7 @@ router.get("/:identifier", async (req, res) => {
           { "weeks.days.contents._id": identifier } // New day-based structure
         ]
       }).lean();
-      
+
       if (!course) return res.status(404).send("Content not found");
 
       // Check old structure first (weeks.contents)
@@ -160,7 +157,7 @@ router.get("/:identifier", async (req, res) => {
             }
           }
         }
-        
+
         // Check new day-based structure (weeks.days.contents)
         if (w.days) {
           for (const d of w.days) {
@@ -193,7 +190,7 @@ router.get("/:identifier", async (req, res) => {
       fileSize = head.ContentLength;
     } catch (s3Error) {
       console.error(`S3 file not found: ${s3Key}`, s3Error.message);
-      return res.status(404).json({ 
+      return res.status(404).json({
         error: "File not found in storage",
         s3Key: s3Key,
         details: "The requested file does not exist in our storage system"
@@ -207,7 +204,7 @@ router.get("/:identifier", async (req, res) => {
       const parts = range.replace(/bytes=/, "").split("-");
       const start = parseInt(parts[0], 10);
       const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
-      
+
       // Validate range
       if (start >= fileSize || end >= fileSize || start > end) {
         res.status(416).set({
@@ -277,7 +274,7 @@ router.get("/debug/s3-objects", async (req, res) => {
     }
 
     const { prefix = '', maxKeys = 100 } = req.query;
-    
+
     const command = new ListObjectsV2Command({
       Bucket: process.env.AWS_S3_BUCKET,
       Prefix: prefix,
@@ -285,7 +282,7 @@ router.get("/debug/s3-objects", async (req, res) => {
     });
 
     const response = await s3.send(command);
-    
+
     const objects = response.Contents?.map(obj => ({
       key: obj.Key,
       size: obj.Size,
@@ -363,4 +360,3 @@ router.get("/debug/db-keys", async (req, res) => {
 });
 
 module.exports = router;
-  
