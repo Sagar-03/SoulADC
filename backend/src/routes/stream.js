@@ -6,8 +6,6 @@ const s3 = require("../config/s3.js");
 
 const router = express.Router();
 
-// Enhanced CORS and security headers for video streaming
-
 // Get video metadata endpoint
 router.get("/info/:identifier", async (req, res) => {
   try {

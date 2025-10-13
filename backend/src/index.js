@@ -23,30 +23,30 @@ app.use(express.json());
 // }); 
 
 // ✅ CORS configuration
-const allowedOrigins = process.env.CORS_ORIGIN 
+// ✅ CORS configuration (fixed version)
+const allowedOrigins = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(',').map(origin => origin.trim())
-  : ['https://souladc.com', 'http://localhost:5173'];
+  : ['https://souladc.com', 'https://www.souladc.com', 'http://localhost:5173'];
 
-
-console.log('CORS Origin allowed:', allowedOrigins);
+console.log('CORS allowed:', allowedOrigins);
 
 app.use(cors({
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    
-    if (allowedOrigins.indexOf(origin) !== -1) {
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      console.log('CORS blocked origin:', origin);
-      callback(new Error('Not allowed by CORS'));
+      console.log('🚫 Blocked by CORS:', origin);
+      callback(null, false); // ← don’t throw an error — just block silently
     }
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
   optionsSuccessStatus: 200
 }));
+
+
+
 
 // ✅ Routes
 app.use('/api/auth', authRoutes);
