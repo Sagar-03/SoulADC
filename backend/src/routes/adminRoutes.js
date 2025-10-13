@@ -91,6 +91,41 @@ router.post("/courses/:id/weeks", protect, adminOnly, async (req, res) => {
 });
 
 /**
+ * POST /api/admin/courses/:courseId/weeks/:weekId/days
+ * Add a day to an existing week
+ */
+router.post("/courses/:courseId/weeks/:weekId/days", protect, adminOnly, async (req, res) => {
+  try {
+    const { courseId, weekId } = req.params;
+    const { dayTitle } = req.body;
+    
+    const course = await Course.findById(courseId);
+    if (!course) return res.status(404).json({ error: "Course not found" });
+
+    const week = course.weeks.id(weekId);
+    if (!week) return res.status(404).json({ error: "Week not found" });
+
+    // Find the next day number for this week
+    const maxDayNumber = week.days.length > 0 
+      ? Math.max(...week.days.map(day => day.dayNumber))
+      : 0;
+    const nextDayNumber = maxDayNumber + 1;
+
+    // Add the new day
+    week.days.push({
+      dayNumber: nextDayNumber,
+      title: dayTitle || `Day ${nextDayNumber}`,
+      contents: []
+    });
+
+    await course.save();
+    res.json(course);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
  * POST /api/admin/courses/:courseId/weeks/:weekId/days/:dayId/contents
  * Add video/document to a specific day
  */

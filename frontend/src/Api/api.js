@@ -43,6 +43,10 @@ export const addWeek = (courseId, weekNumber, weekTitle) =>
     weekNumber: parseInt(weekNumber),
     title: weekTitle,
   });
+export const addDay = (courseId, weekId, dayTitle) =>
+  api.post(`/admin/courses/${courseId}/weeks/${weekId}/days`, {
+    dayTitle: dayTitle || "",
+  });
 export const deleteWeek = (courseId, weekId) => api.delete(`/admin/courses/${courseId}/weeks/${weekId}`);
 export const deleteDay = (courseId, weekId, dayId) => api.delete(`/admin/courses/${courseId}/weeks/${weekId}/days/${dayId}`);
 export const addContent = (courseId, weekNumber, formData) =>

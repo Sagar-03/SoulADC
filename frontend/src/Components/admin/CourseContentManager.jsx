@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import AdminLayout from "./AdminLayout";
 import { useParams } from "react-router-dom";
 import "./admin.css";
-import { getStreamUrl, addWeek, getCourses, getPresignUrl, deleteContent, deleteWeekApi, deleteDayApi, saveContent } from "../../Api/api";
+import { getStreamUrl, addWeek, addDay, getCourses, getPresignUrl, deleteContent, deleteWeekApi, deleteDayApi, saveContent } from "../../Api/api";
 
 const CourseContentManager = () => {
   const { id } = useParams();
@@ -52,6 +52,28 @@ const CourseContentManager = () => {
       fetchCourse();
     } catch (err) {
       setError("Failed to add week");
+      console.error(err);
+    }
+  };
+
+  const handleAddDay = async (weekId) => {
+    try {
+      setError(null);
+      await addDay(id, weekId); // from api.js
+      fetchCourse();
+      
+      // Show success message
+      const successDiv = document.createElement('div');
+      successDiv.className = 'alert alert-success alert-dismissible fade show mt-3';
+      successDiv.innerHTML = `
+        <i class="bi bi-check-circle me-2"></i>
+        New day has been successfully added to the week.
+        <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+      `;
+      document.querySelector('.container-fluid').insertBefore(successDiv, document.querySelector('.container-fluid').children[2]);
+      setTimeout(() => successDiv.remove(), 5000);
+    } catch (err) {
+      setError("Failed to add day");
       console.error(err);
     }
   };
@@ -651,6 +673,13 @@ const CourseContentManager = () => {
                       <span className="badge bg-info text-white">
                         {week.days?.reduce((total, day) => total + (day.contents?.length || 0), 0) || 0} items
                       </span>
+                      <button
+                        className="btn btn-success btn-sm"
+                        onClick={() => handleAddDay(week._id)}
+                        title="Add New Day to this Week"
+                      >
+                        <i className="bi bi-plus-circle"></i> Add Day
+                      </button>
                       <button
                         className="btn btn-danger btn-sm"
                         onClick={() => deleteWeek(week._id)}

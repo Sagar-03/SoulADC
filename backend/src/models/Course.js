@@ -9,7 +9,7 @@ const contentSchema = new mongoose.Schema({
 });
 
 const daySchema = new mongoose.Schema({
-  dayNumber: { type: Number, required: true, min: 1, max: 7 },
+  dayNumber: { type: Number, required: true, min: 1 },
   title: String,
   contents: [contentSchema],
 });
