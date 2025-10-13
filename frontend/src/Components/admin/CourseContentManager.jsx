@@ -16,6 +16,11 @@ const CourseContentManager = () => {
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [error, setError] = useState(null);
+  
+  // State for bulk operations
+  const [uploadedFiles, setUploadedFiles] = useState([]);
+  const [bulkSaving, setBulkSaving] = useState(false);
+  const [bulkSaveProgress, setBulkSaveProgress] = useState(0);
 
 
   const fetchCourse = async () => {
@@ -54,27 +59,27 @@ const CourseContentManager = () => {
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
-    // if (selectedFile) {
-    //   // Validate file size (max 100MB for videos, 10MB for documents)
-    //   const maxSize = activeType === "video" ? 100 * 1024 * 1024 : 10 * 1024 * 1024;
-    //   if (selectedFile.size > maxSize) {
-    //     setError(`File too large. Max size: ${activeType === "video" ? "100MB" : "10MB"}`);
-    //     return;
-    //   }
+    if (selectedFile) {
+      // Validate file size (max 100MB for videos, 10MB for documents)
+      const maxSize = activeType === "video" ? 100 * 1024 * 1024 : 10 * 1024 * 1024;
+      if (selectedFile.size > maxSize) {
+        setError(`File too large. Max size: ${activeType === "video" ? "100MB" : "10MB"}`);
+        return;
+      }
 
-    //   // Validate file type
-    //   const allowedTypes = activeType === "video"
-    //     ? ["video/mp4", "video/webm", "video/mov", "video/avi"]
-    //     : ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
+      // Validate file type
+      const allowedTypes = activeType === "video"
+        ? ["video/mp4", "video/webm", "video/mov", "video/avi"]
+        : ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
 
-    //   if (!allowedTypes.includes(selectedFile.type)) {
-    //     setError(`Invalid file type. Allowed: ${activeType === "video" ? "MP4, WebM, MOV, AVI" : "PDF, DOC, DOCX"}`);
-    //     return;
-    //   }
+      if (!allowedTypes.includes(selectedFile.type)) {
+        setError(`Invalid file type. Allowed: ${activeType === "video" ? "MP4, WebM, MOV, AVI" : "PDF, DOC, DOCX"}`);
+        return;
+      }
 
-    //   setFile(selectedFile);
-    //   setError(null);
-    // }
+      setFile(selectedFile);
+      setError(null);
+    }
   };
 
   const uploadContent = async () => {
@@ -267,6 +272,180 @@ const CourseContentManager = () => {
     }
   };
 
+  // Add file to upload queue instead of uploading immediately
+  const addToUploadQueue = async () => {
+    if (!file || !activeWeekId || !activeDayId || !activeType) return;
+
+    setUploading(true);
+    setUploadProgress(0);
+    setError(null);
+
+    try {
+      // Find the active week and day to get their numbers
+      const activeWeek = course.weeks.find(week => week._id === activeWeekId);
+      const activeDay = activeWeek?.days.find(day => day._id === activeDayId);
+
+      if (!activeWeek || !activeDay) {
+        throw new Error("Could not find selected week or day");
+      }
+
+      console.log(`Uploading to Week ${activeWeek.weekNumber}, Day ${activeDay.dayNumber}`);
+
+      // 1. Get presigned URL
+      let uploadUrl, key;
+      try {
+        const presignRes = await getPresignUrl(
+          file.name,
+          file.type,
+          activeType === "video" ? "videos" : "documents",
+          activeWeek.weekNumber,
+          activeDay.dayNumber
+        );
+
+        uploadUrl = presignRes.data.uploadUrl;
+        key = presignRes.data.key;
+        console.log("Got presigned URL and key:", { uploadUrl, key });
+      } catch (err) {
+        throw new Error("Failed to get upload URL: " + err.message);
+      }
+
+      // 2. Upload file to S3 with progress tracking
+      const xhr = new XMLHttpRequest();
+
+      await new Promise((resolve, reject) => {
+        xhr.upload.addEventListener('progress', (e) => {
+          if (e.lengthComputable) {
+            const progress = Math.round((e.loaded / e.total) * 100);
+            setUploadProgress(progress);
+          }
+        });
+
+        xhr.addEventListener('load', () => {
+          if (xhr.status === 200) {
+            resolve();
+          } else {
+            reject(new Error(`Upload failed with status: ${xhr.status}`));
+          }
+        });
+
+        xhr.addEventListener('error', () => {
+          reject(new Error('Upload failed'));
+        });
+
+        xhr.open('PUT', uploadUrl);
+        xhr.setRequestHeader('Content-Type', file.type);
+        xhr.send(file);
+      });
+
+      // 3. Add to uploaded files queue instead of saving immediately
+      const uploadedFile = {
+        id: Date.now() + Math.random(), // Temporary ID
+        file: file,
+        weekId: activeWeekId,
+        dayId: activeDayId,
+        weekNumber: activeWeek.weekNumber,
+        dayNumber: activeDay.dayNumber,
+        type: activeType,
+        s3Key: key,
+        uploaded: true,
+        saved: false
+      };
+
+      setUploadedFiles(prev => [...prev, uploadedFile]);
+
+      // Reset current file selection
+      setFile(null);
+      setActiveWeekId(null);
+      setActiveDayId(null);
+      setActiveType(null);
+      setUploadProgress(0);
+
+      // Clear file input
+      const fileInputs = document.querySelectorAll('input[type="file"]');
+      fileInputs.forEach(input => input.value = '');
+
+    } catch (err) {
+      setError(`Upload failed: ${err.message}`);
+      console.error(err);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // Bulk save all uploaded files
+  const bulkSaveFiles = async () => {
+    if (uploadedFiles.length === 0) return;
+
+    setBulkSaving(true);
+    setBulkSaveProgress(0);
+    setError(null);
+
+    try {
+      const unsavedFiles = uploadedFiles.filter(file => !file.saved);
+      
+      for (let i = 0; i < unsavedFiles.length; i++) {
+        const fileData = unsavedFiles[i];
+        
+        try {
+          await saveContent(id, fileData.weekId, fileData.dayId, {
+            type: fileData.type,
+            title: fileData.file.name.split(".")[0], // remove extension
+            s3Key: fileData.s3Key,
+          });
+
+          // Mark file as saved
+          setUploadedFiles(prev => 
+            prev.map(file => 
+              file.id === fileData.id 
+                ? { ...file, saved: true }
+                : file
+            )
+          );
+
+          // Update progress
+          setBulkSaveProgress(Math.round(((i + 1) / unsavedFiles.length) * 100));
+
+        } catch (err) {
+          console.error(`Failed to save ${fileData.file.name}:`, err);
+          // Continue with other files even if one fails
+        }
+      }
+
+      // Refresh course data to show saved content
+      fetchCourse();
+
+      // Show success message
+      const successDiv = document.createElement('div');
+      successDiv.className = 'alert alert-success alert-dismissible fade show mt-3';
+      successDiv.innerHTML = `
+        <i class="bi bi-check-circle me-2"></i>
+        Successfully saved ${unsavedFiles.length} file(s) to the course.
+        <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+      `;
+      document.querySelector('.container-fluid').insertBefore(successDiv, document.querySelector('.container-fluid').children[2]);
+      setTimeout(() => successDiv.remove(), 5000);
+
+    } catch (err) {
+      setError(`Bulk save failed: ${err.message}`);
+      console.error(err);
+    } finally {
+      setBulkSaving(false);
+      setBulkSaveProgress(0);
+    }
+  };
+
+  // Remove file from upload queue
+  const removeFromQueue = (fileId) => {
+    setUploadedFiles(prev => prev.filter(file => file.id !== fileId));
+  };
+
+  // Clear all uploaded files
+  const clearUploadQueue = () => {
+    if (confirm("Are you sure you want to clear all uploaded files? Files that haven't been saved will be lost.")) {
+      setUploadedFiles([]);
+    }
+  };
+
 
   const cancelUpload = () => {
     setFile(null);
@@ -303,6 +482,110 @@ const CourseContentManager = () => {
           <div className="alert alert-danger alert-dismissible fade show" role="alert">
             {error}
             <button type="button" className="btn-close" onClick={() => setError(null)}></button>
+          </div>
+        )}
+
+        {/* Bulk Upload Queue */}
+        {uploadedFiles.length > 0 && (
+          <div className="card mb-4 border-info">
+            <div className="card-header bg-info text-white">
+              <div className="d-flex justify-content-between align-items-center">
+                <h5 className="mb-0">
+                  <i className="bi bi-files me-2"></i>
+                  Upload Queue ({uploadedFiles.length} files)
+                </h5>
+                <div className="d-flex gap-2">
+                  {uploadedFiles.some(file => !file.saved) && (
+                    <button
+                      className="btn btn-success btn-sm"
+                      onClick={bulkSaveFiles}
+                      disabled={bulkSaving}
+                    >
+                      {bulkSaving ? (
+                        <>
+                          <span className="spinner-border spinner-border-sm me-2" role="status"></span>
+                          Saving... {bulkSaveProgress}%
+                        </>
+                      ) : (
+                        <>
+                          <i className="bi bi-save me-2"></i>
+                          Save All ({uploadedFiles.filter(file => !file.saved).length})
+                        </>
+                      )}
+                    </button>
+                  )}
+                  <button
+                    className="btn btn-outline-light btn-sm"
+                    onClick={clearUploadQueue}
+                    disabled={bulkSaving}
+                  >
+                    <i className="bi bi-trash me-1"></i>
+                    Clear All
+                  </button>
+                </div>
+              </div>
+              {bulkSaving && (
+                <div className="mt-2">
+                  <div className="progress">
+                    <div
+                      className="progress-bar progress-bar-striped progress-bar-animated"
+                      role="progressbar"
+                      style={{ width: `${bulkSaveProgress}%` }}
+                    ></div>
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="card-body">
+              <div className="row">
+                {uploadedFiles.map((fileData) => (
+                  <div key={fileData.id} className="col-md-6 col-lg-4 mb-3">
+                    <div className={`card border ${fileData.saved ? 'border-success' : 'border-warning'}`}>
+                      <div className="card-body p-3">
+                        <div className="d-flex justify-content-between align-items-start mb-2">
+                          <div className="flex-grow-1">
+                            <h6 className="card-title mb-1 text-truncate" title={fileData.file.name}>
+                              <i className={`bi ${fileData.type === 'video' ? 'bi-camera-video text-primary' : 'bi-file-earmark-pdf text-danger'} me-2`}></i>
+                              {fileData.file.name}
+                            </h6>
+                            <small className="text-muted">
+                              Week {fileData.weekNumber}, Day {fileData.dayNumber} • {(fileData.file.size / (1024 * 1024)).toFixed(2)} MB
+                            </small>
+                          </div>
+                          {!bulkSaving && (
+                            <button
+                              className="btn btn-outline-danger btn-sm"
+                              onClick={() => removeFromQueue(fileData.id)}
+                              title="Remove from queue"
+                            >
+                              <i className="bi bi-x"></i>
+                            </button>
+                          )}
+                        </div>
+                        <div className="d-flex justify-content-between align-items-center">
+                          <span className={`badge ${fileData.saved ? 'bg-success' : 'bg-warning'}`}>
+                            {fileData.saved ? (
+                              <>
+                                <i className="bi bi-check-circle me-1"></i>
+                                Saved
+                              </>
+                            ) : (
+                              <>
+                                <i className="bi bi-clock me-1"></i>
+                                Pending
+                              </>
+                            )}
+                          </span>
+                          <small className="text-muted text-capitalize">
+                            {fileData.type}
+                          </small>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         )}
 
@@ -579,6 +862,23 @@ const CourseContentManager = () => {
               <div className="d-flex gap-2">
                 <button
                   className="btn btn-success"
+                  onClick={addToUploadQueue}
+                  disabled={uploading}
+                >
+                  {uploading ? (
+                    <>
+                      <span className="spinner-border spinner-border-sm me-2" role="status"></span>
+                      Uploading...
+                    </>
+                  ) : (
+                    <>
+                      <i className="bi bi-plus-circle me-1"></i>
+                      Add to Queue
+                    </>
+                  )}
+                </button>
+                <button
+                  className="btn btn-primary"
                   onClick={uploadContent}
                   disabled={uploading}
                 >
@@ -590,7 +890,7 @@ const CourseContentManager = () => {
                   ) : (
                     <>
                       <i className="bi bi-upload me-1"></i>
-                      Confirm Upload
+                      Upload & Save Now
                     </>
                   )}
                 </button>
