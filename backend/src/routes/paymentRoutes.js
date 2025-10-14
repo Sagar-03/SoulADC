@@ -36,7 +36,7 @@ router.post("/create-checkout-session", protect, async (req, res) => {
       line_items: [
         {
           price_data: {
-            currency: "usd", // 🇸 US dollars
+            currency: "aud", // Australian dollars
             product_data: {
               name: course.title,
               description: course.description,

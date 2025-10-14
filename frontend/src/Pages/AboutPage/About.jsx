@@ -21,7 +21,7 @@ const About = () => {
                 Excellence in ADC Preparation
               </div>
               <h1 className="hero-title">
-                About <span className="brand-highlight">Soul ADC</span>
+                <span className="brand-highlight">Soul ADC</span>
               </h1>
               <p className="hero-subtitle">
                 Igniting your dental future with concept-driven, structured learning
@@ -130,7 +130,7 @@ const About = () => {
       </section>
 
       {/* ADC Assessment Process */}
-      <section className="adc-process-section py-5">
+      <section id="adc-process" className="adc-process-section py-5">
         <div className="container text-center">
           <h2 className="section-title">
             ADC <span className="highlight">Assessment Process</span>
@@ -143,6 +143,7 @@ const About = () => {
             from qualification verification to clinical assessment.
           </p>
 
+          {/* Steps Section */}
           <div className="adc-steps d-flex flex-column flex-md-row justify-content-center align-items-center mt-5">
             {/* Step 1 */}
             <div className="adc-step">
@@ -182,8 +183,12 @@ const About = () => {
             </div>
           </div>
 
+          <p className="adc-description mx-auto mt-4">
+            We at <strong>Soul ADC</strong> assist you in your written examination; however, we can help you throughout your ADC journey.
+          </p>
+
           {/* Download Button */}
-          <div className="adc-download-wrapper">
+          <div className="adc-download-wrapper mt-4">
             <a
               href="https://www.adc.org.au/files/assessment/handbooks/ADC_Assessment_Process_New.pdf"
               target="_blank"
@@ -192,12 +197,9 @@ const About = () => {
             >
               <i className="bi bi-download me-2"></i> View Process PDF
             </a>
-
           </div>
         </div>
       </section>
-
-
 
       {/* Our Promise */}
       <section className="promise-section py-5">
@@ -233,7 +235,7 @@ const About = () => {
           About <span className="highlight">Mentor</span>
         </h2>
         <p>
-          <strong>Dr. Chidambra Makker (Dr. Chi)</strong> — With a Bachelor of Dental Surgery and an MBA in Hospital
+          <strong>Dr. Chidambra Makker (Dr. Chi)</strong> — with a Bachelor of Dental Surgery and an MBA in Hospital
           Management, Dr. Chidambra cleared her ADC Part 1 on her first attempt. In Australia, she has worked as a
           Practice Manager, Case Manager in Workers’ Compensation, Dental Assistant, and Receptionist — gaining a
           thorough understanding of the healthcare system, particularly in dentistry.

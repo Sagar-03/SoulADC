@@ -67,7 +67,7 @@ export default function CoursesPage() {
                 style={{ color: "var(--ink)" }}
               >
                 Master the <span style={{ color: "var(--brand)" }}>ADC Part 1</span>{" "}
-                with Expert-Led Programs
+                with Expert-Led Course
               </h1>
               <p className="lead text-muted mb-4">
                 Choose from our carefully designed courses with expert mentors. 

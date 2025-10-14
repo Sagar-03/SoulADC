@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import "./Auth.css";
-import logo from "../assets/logo.png";
+import logo from "../assets/loginlogo.png";
 import { api } from "../Api/api";
 import { setAuthData, getRedirectAfterLogin, clearRedirectAfterLogin } from "../utils/auth";
 
@@ -108,7 +108,7 @@ const Login = () => {
           <div className="brand-content">
             <img src={logo} alt="Logo" className="auth-logo" />
             <h1 className="brand-title">
-              Become the Registered <span className="highlight">Austrailian Dentist</span> with Soul ADC
+              Crack your<span className="highlight"> ADC Part 1</span> with Soul ADC
             </h1>
             <p className="brand-subtitle">
               Ignite your dental future with us

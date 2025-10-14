@@ -138,25 +138,25 @@
 
 .floating-card.card-1 {
   top: 0px;
-  left: 50px;
+  left: 200px;
   animation-delay: 0s;
 }
 
 .floating-card.card-2 {
-  top: 130px;
-  right: 80px;
+  top: 170px;
+  right: 0px;
   animation-delay: 2s;
 }
 
 .floating-card.card-3 {
-  bottom: 150px;
-  left: 100px;
+  bottom: 216px;
+  left: 0px;
   animation-delay: 4s;
 }
 
 .floating-card.card-4 {
-  top: 450px;
-  right: 500px;
+  top: 400px;
+  right: 400px;
   animation-delay: 4s;
 }
 

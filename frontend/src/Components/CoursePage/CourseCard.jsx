@@ -8,9 +8,9 @@ export default function CourseCard({ course }) {
   const [open, setOpen] = useState(false);
 
   const formatPrice = (price) =>
-    new Intl.NumberFormat("en-IN", {
+    new Intl.NumberFormat("en-AU", {
       style: "currency",
-      currency: "USD",
+      currency: "AUD",
       minimumFractionDigits: 0,
     }).format(price);
 

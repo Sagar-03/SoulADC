@@ -20,7 +20,7 @@ export default function PaymentPage() {
     name: courseTitle || "ADC Part 1 Mastery Program",
     description:
       "Comprehensive 5/10 month program designed by ADC-qualified mentors. Includes one-on-one guidance, curriculum coverage, and practice tests.",
-    price: coursePrice, // USD
+    price: coursePrice, // AUD
   };
 
   const [coupon, setCoupon] = useState("");
@@ -95,7 +95,7 @@ const handleCheckout = async () => {
           <div className="bg-light rounded-3 p-4 mb-4 border">
             <h4 className="fw-semibold text-dark mb-2">{course.name}</h4>
             <p className="text-muted small mb-3">{course.description}</p>
-            <p className="fw-bold text-primary mb-0">Price: ${course.price}</p>
+            <p className="fw-bold text-primary mb-0">Price: AUD ${course.price}</p>
           </div>
 
           {/* Coupon Section */}
@@ -114,7 +114,7 @@ const handleCheckout = async () => {
             </div>
             {discount > 0 && (
               <p className="text-success mt-2">
-                Coupon applied! You saved ${discount.toFixed(2)}
+                Coupon applied! You saved AUD ${discount.toFixed(2)}
               </p>
             )}
           </Form>
@@ -122,7 +122,7 @@ const handleCheckout = async () => {
           {/* Final Price */}
           <div className="d-flex justify-content-between align-items-center border-top pt-3">
             <span className="fw-bold fs-5">Total</span>
-            <span className="fw-bold fs-4 text-primary">${finalPrice.toFixed(2)}</span>
+            <span className="fw-bold fs-4 text-primary">AUD ${finalPrice.toFixed(2)}</span>
           </div>
 
           {/* Payment Button */}

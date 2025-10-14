@@ -45,9 +45,10 @@ const Footer = () => {
               <Nav.Link href="/about" className="text-secondary p-0 mb-1 small">
                 About Us
               </Nav.Link>
-              <Nav.Link href="/courses" className="text-secondary p-0 mb-1 small">
-                Courses
+              <Nav.Link href="/about#adc-process" className="text-secondary p-0 mb-1 small">
+                ADC Roadmap
               </Nav.Link>
+
               <Nav.Link href="/ContactUs" className="text-secondary p-0 mb-1 small">
                 Contact
               </Nav.Link>
@@ -59,7 +60,7 @@ const Footer = () => {
           <Col md={3} className="mb-4">
             <h6 className="fw-bold mb-3">Course Info</h6>
             <Nav className="flex-column">
-              {['5 Month Sprint', '10 Month Sprint'].map((item, idx) => (
+              {['Comprehensive 5 Month Sprint', 'Comprehensive 10 Month Sprint'].map((item, idx) => (
                 <Nav.Link key={idx} href="./courses" className="text-secondary p-0 mb-1 small">
                   {item}
                 </Nav.Link>
@@ -74,9 +75,9 @@ const Footer = () => {
               <Nav.Link href="mailto:info.souladc@gmail.com" className="text-secondary p-0 mb-2 d-flex align-items-center">
                 <FaEnvelope className="me-2" /> info.souladc@gmail.com
               </Nav.Link>
-              <Nav.Link href="tel:+61400123456" className="text-secondary p-0 mb-2 d-flex align-items-center">
+              {/* <Nav.Link href="tel:+61400123456" className="text-secondary p-0 mb-2 d-flex align-items-center">
                 <FaPhone className="me-2" /> +61 400 123 456
-              </Nav.Link>
+              </Nav.Link> */}
               <Nav.Link href="#" className="text-secondary p-0 mb-2 d-flex align-items-center">
                 <FaMapMarkerAlt className="me-2" /> Canberra, Australia
               </Nav.Link>

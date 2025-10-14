@@ -50,6 +50,13 @@
   height: 100%;
 }
 
+.cut-price {
+  text-decoration: line-through;
+  font-size: 0.9rem;
+  color: #888;
+}
+
+
 /* Course thumbnail styles */
 .course-thumbnail-container {
   position: relative;

@@ -16,7 +16,8 @@ export default function SoulADCTerms() {
               The services provided by <strong>SoulADC</strong> are subject to the following Terms of Use ("TOU"). SoulADC reserves the right to modify or update the TOU at any time without notice to you. Any such modifications, additions, or deletions shall be effective immediately without notice thereof.
             </p>
             <p className="terms-note">
-              * For applicants that register less than two (2) weeks prior to the course start date, please note that SoulADC may not have the course materials available for the first day of class.
+              * For applicants that register in the middle of the course or in less than 2 weeks prior to the course start date, please note that SoulADC may not have the course materials available for the first day of class.
+                You will be responsible for your own pace of completing your content
             </p>
           </section>
 
@@ -33,7 +34,7 @@ export default function SoulADCTerms() {
               <li>Resell or reproduce in any way any of the materials provided to you by SoulADC.</li>
             </ul>
             <p>
-              I hereby declare that the information provided in this form is accurate to the best of my knowledge. I confirm that by signing this form, I am financially committed to the entire amount indicated above, in section (2), whether the full amount is paid on the registration date or not. If the course is canceled by SoulADC, I understand that a replacement course will be offered, or will be reimbursed as a prorated refund. I further acknowledge that I have read and agree with the terms and conditions associated with this enrollment as well as the terms and conditions listed below.
+              I hereby declare that the information provided in this form is accurate to the best of my knowledge. I confirm that by signing this form, I am financially committed to the entire amount indicated above, in section (2), whether the full amount is paid on the registration date or not. If the course is canceled by SoulADC, I understand that a replacement course will be offered, or will be reimbursed as a prorated refund. I further acknowledge that I have read and agreed with the terms and conditions associated with this enrollment as well as the terms and conditions listed below.
             </p>
           </section>
 
@@ -65,7 +66,7 @@ export default function SoulADCTerms() {
           <section className="terms-section">
             <h2 className="section-heading">ELECTRONIC COMMUNICATIONS</h2>
             <p>
-              Email is the primary form of communication for SoulADC services, and you are responsible to check your email address consistently to not miss course updates. By enrolling in SoulADC’s services, you subscribe and agree to receive email communication, announcements, and/or updates pertaining to the course, other relevant courses, SoulADC’s service offerings, and/or exam process communications.
+              Email is the primary form of communication for SoulADC services, and you are responsible to check your email address consistently to not miss course updates or answer to your queries. By enrolling in SoulADC’s services, you subscribe and agree to receive email communication, announcements, and/or updates pertaining to the course, other relevant courses, SoulADC’s service offerings, and/or exam process communications.
             </p>
             <p>
               You may choose to opt out of receiving non-course related email communications at any time by using the unsubscribe button in the email or contacting our office directly.
@@ -75,8 +76,7 @@ export default function SoulADCTerms() {
           <section className="terms-section">
             <h2 className="section-heading">USE OF SERVICES</h2>
             <p>
-              Upon registration and complete payment of course fees, you are entitled to attendance of all offered sessions of the course, as indicated in both the registration agreement and the course outline. You are also entitled to access the laboratory or practice sessions as designated by the course and/or course instructor for the duration of the registered course(s).
-            </p>
+              Upon registration and complete payment of course fees, you are entitled to attendance of all offered sessions of the course. </p>
           </section>
 
           <section className="terms-section">
@@ -89,7 +89,7 @@ export default function SoulADCTerms() {
           <section className="terms-section">
             <h2 className="section-heading">FINAL DECLARATION</h2>
             <p>
-              By registering in SoulADC ADC exams-training courses, I declare that I am an Australian dental equivalency candidate registered/registering with the ADC as an equivalency applicant and am registering in these courses for the sole purpose of training in order to pass the ADC equivalency exams.
+              By registering in SoulADC ADC exams-training courses, I declare that I am an Australian dental equivalency candidate registered/registering with the ADC as an equivalency applicant and am registering in these courses for the sole purpose of training in order to pass the ADC exams.
             </p>
           </section>
         </div>
