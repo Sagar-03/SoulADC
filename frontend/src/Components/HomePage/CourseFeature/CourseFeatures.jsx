@@ -32,7 +32,7 @@ const CourseFeatures = () => {
     <>
       <div className="feature-section text-center">
         <div className="container">
-          <div className="program-badge">Our Comprehensive Program</div>
+          <div className="program-badge">Our Program</div>
           <h1 className="section-title">
             5-Month <span className="gradient-text">ADC Part 1</span> Preparation Course
           </h1>
@@ -58,7 +58,7 @@ const CourseFeatures = () => {
                 <div className="icon-wrapper">
                   <BookIcon />
                 </div>
-                <h3 className="card-title">20+ Modules</h3>
+                <h3 className="card-title">Structured Modules</h3>
                 <p className="card-text">Comprehensive curriculum coverage</p>
               </div>
             </div>

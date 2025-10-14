@@ -59,7 +59,7 @@ export default function CourseCard({ course }) {
           </div>
         )}
 
-        {courseData.thumbnail && (
+        {courseData.thumbnail && courseData.thumbnail.trim() !== "" && (
           <div className="course-thumbnail-container">
             <img
               src={`${import.meta.env.VITE_API_URL || "http://localhost:7001/api"}/stream/${courseData.thumbnail}`}

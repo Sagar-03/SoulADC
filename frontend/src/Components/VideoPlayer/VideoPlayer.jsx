@@ -250,15 +250,17 @@ const VideoPlayer = ({ show, onHide, videoId, videoTitle, videoSrc }) => {
             </div>
           )}
 
-          <video
-            ref={videoRef}
-            className="video-element"
-            src={videoSrc}
-            preload="metadata"
-            onPlay={() => setIsPlaying(true)}
-            onPause={() => setIsPlaying(false)}
-            onClick={togglePlayPause}
-          />
+          {videoSrc && (
+            <video
+              ref={videoRef}
+              className="video-element"
+              src={videoSrc}
+              preload="metadata"
+              onPlay={() => setIsPlaying(true)}
+              onPause={() => setIsPlaying(false)}
+              onClick={togglePlayPause}
+            />
+          )}
 
           {/* Video Controls */}
           <div className={`video-controls ${showControls ? 'show' : ''}`}>

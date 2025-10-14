@@ -73,18 +73,15 @@ const Register = () => {
           </h1>
           <p className="lead register-text fw-4">
             Prepare with a structured 5- or 10-month program designed to help you build a strong foundation for success in the ADC Part 1 exam and your future dental career in Australia.          </p>
-
           <ul className="list-unstyled mb-4 register-text">
-            <li className="mb-2"><CheckIcon /> Personalised one-on-one mentor support</li>
-            <li className="mb-2"><CheckIcon /> Comprehensive, structured, and easy-to-follow curriculum</li>
-            <li><CheckIcon /> Daily progress tracking
-            </li>
-            <li className="mb-2"><CheckIcon />Subject-specific, topic-wise detailed video sessions with clear explanations
-            </li>
-            <li className="mb-2"><CheckIcon />Access to recent research articles and reference books aligned with ADC requirements
-            </li>
-            <li className="mb-2"><CheckIcon />Mock papers and question banks to help you master exam-style scenarios</li>
+            <li className="mb-1"><CheckIcon /> Personalised one-on-one mentor support</li>
+            <li className="mb-1"><CheckIcon /> Comprehensive, structured, and easy-to-follow curriculum</li>
+            <li className="mb-1"><CheckIcon /> Daily progress tracking</li>
+            <li className="mb-1"><CheckIcon /> Subject-specific, topic-wise detailed video sessions with clear explanations</li>
+            <li className="mb-1"><CheckIcon /> Access to recent research articles and reference books </li>
+            <li className="mb-1"><CheckIcon /> Mock papers and question banks to help you master exam-style scenarios</li>
           </ul>
+
 
           <Button
             as={Link}

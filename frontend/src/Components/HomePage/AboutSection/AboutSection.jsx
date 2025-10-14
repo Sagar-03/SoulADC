@@ -17,7 +17,7 @@ const About = () => {
     {
       icon: 'fa-solid fa-bullseye',
       title: 'Focused Approach',
-      description: 'Exclusively designed for Part 1 ADC with targeted 5-month intensive program',
+      description: 'Exclusively designed for Part 1 ADC with targeted 5 or 10 month intensive program',
     },
     {
       icon: 'fa-solid fa-users',
@@ -35,7 +35,7 @@ const About = () => {
           Empowering Future <span className="highlight">Australian Dentists</span>
         </h1>
         <p className="sub-heading">
-          Discover expert guidance via our mentor/founder who have successfully cleared the Australian Dental Council (ADC) Examination. Gain a clear understanding of the concepts required by the ADC and master the knowledge you need to succeed in the exam.
+          Discover expert guidance via our mentor/founder who have successfully cleared her Australian Dental Council (ADC) Part-1 Examination. Gain a clear understanding of the concepts required by the ADC and master the knowledge you need to succeed in the exam.
         </p>
 
         {/* Bottom Section: Feature Cards Grid */}

@@ -77,7 +77,6 @@ router.get("/info/:identifier", async (req, res) => {
     // Get metadata from S3 with proper error handling
     let head;
     try {
-      console.log(`Attempting to access S3 file info: ${s3Key}`);
       head = await s3.send(new HeadObjectCommand({
         Bucket: process.env.AWS_S3_BUCKET,
         Key: s3Key,
@@ -160,7 +159,6 @@ router.get("/:identifier", async (req, res) => {
     // Get metadata from S3 with proper error handling
     let head, fileSize;
     try {
-      console.log(`Attempting to access S3 file: ${s3Key}`);
       head = await s3.send(new HeadObjectCommand({
         Bucket: process.env.AWS_S3_BUCKET,
         Key: s3Key,

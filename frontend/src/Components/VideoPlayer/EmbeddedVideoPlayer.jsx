@@ -109,13 +109,6 @@ const EmbeddedVideoPlayer = () => {
       if (/^[a-zA-Z0-9]$/.test(e.key)) return;
 
       setIsBlurred(true);
-
-      api.post('/user/log-activity', {
-        type: 'suspicious_key_pressed',
-        key: e.key || e.keyCode,
-        videoId: currentVideo.id,
-        timestamp: new Date().toISOString()
-      }).catch(err => console.error('Failed to log:', err));
     };
 
     const handleKeyUp = (e) => {
@@ -127,11 +120,6 @@ const EmbeddedVideoPlayer = () => {
     // Blur when user switches tab/window
     const handleWindowBlur = () => {
       setIsBlurred(true);
-      api.post('/user/log-activity', {
-        type: 'window_blur_detected',
-        videoId: currentVideo.id,
-        timestamp: new Date().toISOString()
-      }).catch(err => console.error('Failed to log:', err));
     };
 
     const handleWindowFocus = () => setIsBlurred(false);
@@ -139,11 +127,6 @@ const EmbeddedVideoPlayer = () => {
     const handleVisibilityChange = () => {
       if (document.hidden) {
         setIsBlurred(true);
-        api.post('/user/log-activity', {
-          type: 'tab_hidden',
-          videoId: currentVideo.id,
-          timestamp: new Date().toISOString()
-        }).catch(err => console.error('Failed to log:', err));
       } else {
         setIsBlurred(false);
       }
@@ -277,20 +260,22 @@ const EmbeddedVideoPlayer = () => {
                     filter: isBlurred ? 'blur(20px)' : 'blur(0px)'
                   }}
                 >
-                  <video
-                    ref={videoRef}
-                    src={currentVideo.src}
-                    controls
-                    className="main-video"
-                    poster=""
-                    controlsList="nodownload noremoteplayback"
-                    disablePictureInPicture
-                    onContextMenu={(e) => e.preventDefault()}
-                    style={{ 
-                      width: '100%',
-                      pointerEvents: 'auto'
-                    }}
-                  />
+                  {currentVideo.src && (
+                    <video
+                      ref={videoRef}
+                      src={currentVideo.src}
+                      controls
+                      className="main-video"
+                      poster=""
+                      controlsList="nodownload noremoteplayback"
+                      disablePictureInPicture
+                      onContextMenu={(e) => e.preventDefault()}
+                      style={{ 
+                        width: '100%',
+                        pointerEvents: 'auto'
+                      }}
+                    />
+                  )}
                   
                   {/* Blur overlay when suspicious activity detected */}
                   {isBlurred && (

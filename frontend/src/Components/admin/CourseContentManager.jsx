@@ -733,7 +733,7 @@ const CourseContentManager = () => {
                                         </div>
 
                                         {/* Content Preview */}
-                                        {content.type === "video" && (
+                                        {content.type === "video" && content.s3Key && (
                                           <video
                                             src={getStreamUrl(content.s3Key)}
                                             controls

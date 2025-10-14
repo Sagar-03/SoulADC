@@ -65,12 +65,14 @@ const PurchasedDashboard = () => {
                 style={{ cursor: "pointer" }}
               >
                 {/* Thumbnail */}
-                <img
-                  src={course.thumbnail}
-                  className="card-img-top"
-                  alt={course.title}
-                  style={{ height: "180px", objectFit: "cover" }}
-                />
+                {course.thumbnail && (
+                  <img
+                    src={course.thumbnail}
+                    className="card-img-top"
+                    alt={course.title}
+                    style={{ height: "180px", objectFit: "cover" }}
+                  />
+                )}
 
                 {/* Body */}
                 <div className="card-body d-flex flex-column">

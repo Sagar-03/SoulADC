@@ -19,23 +19,23 @@ const Highlights = () => {
     {
       icon: "bi-clipboard2-check",
       title: "Practice Tests",
-      description: "Regular assessments to track your progress and readiness",
+      description: "Assessments to track your progress and readiness",
     },
     {
       icon: "bi-people",
       title: "Mentor Support",
       description:
-        "Direct access to ADC-qualified professionals for guidance",
+        "Direct access to Our Mentor for guidance",
     },
   ];
 
   const highlights = [
-    "Modules live Q&A sessions",
     "Personalized study plans",
-    "Progress tracking dashboard",
-    "Mobile-friendly platform",
-    "Lifetime access to materials",
-    "Certificate of completion",
+    "Personalized mentor support",
+    "Free mock exams to test your preparation",
+    "Access to ADC-aligned materials- including recent research articles, books and ADC questionnaires",
+    "Visual, auditory, and reading-based learning for better understanding",
+
   ];
 
   const FeatureItem = ({ icon, title, description }) => (

@@ -59,8 +59,7 @@ const Board = () => {
             <div className="cta-text">
               <h2 className="cta-title">Ready to Start Your ADC Journey?</h2>
               <p className="cta-subtitle">
-                Join hundreds of successful students who have cleared their ADC
-                Part 1 with our expert guidance.
+                But Need Some Help? Leave Us Your Query Today!
               </p>
             </div>
 
