@@ -4,29 +4,39 @@ import "./CourseCurriculum.css";  // Import the external CSS file
 const CourseCurriculum = () => {
   const curriculumData = [
     {
-      weeks: 'Modules 1-4',
-      title: 'Foundation & Basic Sciences',
-      subjects: ['Anatomy', 'Physiology', 'Biochemistry', 'Pathology']
+      weeks: 'Modules 1',
+      title: 'Periodontology',
+      subjects: ['Periodontology', 'TG', 'Odell Cases', 'Past Papers']
     },
     {
-      weeks: 'Modules 5-8',
-      title: 'Clinical Dentistry Fundamentals',
-      subjects: ['Oral Medicine', 'Periodontics', 'Endodontics', 'Oral Surgery']
+      weeks: 'Modules 2',
+      title: 'Paediatric Dentistry and Orthodontics',
+      subjects: ['Paediatric Dentistry and Orthodontics', 'TG', 'Dental Caries', 'Odell', 'Past Papers']
     },
     {
-      weeks: 'Modules 9-12',
-      title: 'Restorative & Prosthetics',
-      subjects: ['Operative Dentistry', 'Prosthodontics', 'Dental Materials', 'Occlusion']
+      weeks: 'Modules 3',
+      title: 'Prosthodontics',
+      subjects: ['Prosthodontics', 'TG', 'Odell', 'Past Papers']
     },
     {
-      weeks: 'Modules 13-16',
-      title: 'Specialized Areas',
-      subjects: ['Pediatric Dentistry', 'Orthodontics', 'Oral Radiology', 'Ethics']
+      weeks: 'Modules 4',
+      title: 'Oral Medicine and Radiology',
+      subjects: ['Oral Medicine and Radiology', 'TG', 'Odell', 'Past Papers']
     },
     {
-      weeks: 'Modules 17-20',
-      title: 'Exam Preparation & Review',
-      subjects: ['Mock Tests', 'Case Studies', 'Final Review', 'Exam Strategy']
+      weeks: 'Modules 5',
+      title: 'Oral surgery',
+      subjects: ['Oral surgery', 'TG', 'Odell', 'Past Papers']
+    },
+    {
+      weeks: 'Modules 6',
+      title: 'Operative and endodontics',
+      subjects: ['Operative and endodontics', 'Odell', 'Code of Conduct', 'Past Papers']
+    },
+    {
+      weeks: 'Modules 7',
+      title: 'Infection control',
+      subjects: ['Infection control', 'Health promotion ', 'TG Revision', 'Past Papers']
     }
   ];
 

@@ -39,8 +39,8 @@ router.get("/presign", protect, adminOnly, async (req, res) => {
       ContentType: fileType,
     });
 
-    // ✅ Generate presigned URL using AWS SDK v3
-    const uploadUrl = await getSignedUrl(s3, command, { expiresIn: 900 }); // 15 minutes
+    // ✅ Generate presigned URL using AWS SDK v3 (2 hours expiry for large files)
+    const uploadUrl = await getSignedUrl(s3, command, { expiresIn: 7200 }); // 2 hours
 
     res.json({ uploadUrl, key });
   } catch (err) {

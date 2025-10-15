@@ -283,6 +283,41 @@ router.delete("/courses/:courseId/weeks/:weekId/days/:dayId", protect, adminOnly
 });
 
 /**
+ * PUT /api/admin/courses/:courseId/weeks/:weekId/days/:dayId/contents/:contentId
+ * Update content title
+ */
+router.put("/courses/:courseId/weeks/:weekId/days/:dayId/contents/:contentId", protect, adminOnly, async (req, res) => {
+  try {
+    const { courseId, weekId, dayId, contentId } = req.params;
+    const { title } = req.body;
+
+    if (!title) {
+      return res.status(400).json({ error: "Title is required" });
+    }
+
+    const course = await Course.findById(courseId);
+    if (!course) return res.status(404).json({ error: "Course not found" });
+
+    const week = course.weeks.id(weekId);
+    if (!week) return res.status(404).json({ error: "Week not found" });
+
+    const day = week.days.id(dayId);
+    if (!day) return res.status(404).json({ error: "Day not found" });
+
+    const content = day.contents.id(contentId);
+    if (!content) return res.status(404).json({ error: "Content not found" });
+
+    content.title = title;
+    await course.save();
+
+    res.json({ message: "Content title updated successfully", content });
+  } catch (err) {
+    console.error("update-content-title error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
  * PUT /api/admin/courses/:id
  * Update course details (title, description, price, thumbnail)
  */

@@ -8,15 +8,23 @@ const paymentRoutes = require('./routes/paymentRoutes');
 const cors = require('cors');
 const uploadRoutes = require('./routes/upload.js');
 const streamRoutes = require('./routes/stream.js');
+const multipartUploadRoutes = require('./routes/multipartUpload.js');
 
 // ✅ Database connection
 dBConnect();
 
 const app = express();
 
+// ✅ INCREASE TIMEOUT FOR LARGE FILE UPLOADS (2 hours = 7200000ms)
+app.use((req, res, next) => {
+  req.setTimeout(7200000); // 2 hours request timeout
+  res.setTimeout(7200000); // 2 hours response timeout
+  next();
+});
 
 // ✅ Middleware
-app.use(express.json());
+app.use(express.json({ limit: '50mb' })); // Increase JSON payload limit
+app.use(express.urlencoded({ limit: '50mb', extended: true })); // Increase URL-encoded payload limit
 
 // app.get('/', (req, res) => {
 //   res.send('API is running...');
@@ -40,7 +48,7 @@ app.use(cors({
     }
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE','PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   optionsSuccessStatus: 200
 }));
@@ -55,8 +63,15 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/payment', paymentRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/stream", streamRoutes);
+app.use("/api/multipart-upload", multipartUploadRoutes);
 
 // ✅ Start server
 const PORT = process.env.PORT || 7001;
-app.listen(PORT, '0.0.0.0', () => {    // ← 👈 Important for Render
+const server = app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Server running on port ${PORT}`);
 });
+
+// ✅ SET SERVER TIMEOUT TO 2 HOURS
+server.timeout = 7200000; // 2 hours
+server.keepAliveTimeout = 7200000; // 2 hours
+server.headersTimeout = 7200000; // 2 hours

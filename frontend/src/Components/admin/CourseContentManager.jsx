@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import AdminLayout from "./AdminLayout";
 import { useParams } from "react-router-dom";
 import "./admin.css";
-import { getStreamUrl, addWeek, addDay, getCourses, getPresignUrl, deleteContent, deleteWeekApi, deleteDayApi, saveContent } from "../../Api/api";
+import { getStreamUrl, addWeek, addDay, getCourses, getPresignUrl, deleteContent, deleteWeekApi, deleteDayApi, saveContent, updateContentTitle, initiateMultipartUpload, getPresignedPartUrl, completeMultipartUpload, abortMultipartUpload } from "../../Api/api";
 
 const CourseContentManager = () => {
   const { id } = useParams();
@@ -16,11 +16,20 @@ const CourseContentManager = () => {
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [error, setError] = useState(null);
-  
+
   // State for bulk operations
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [bulkSaving, setBulkSaving] = useState(false);
   const [bulkSaveProgress, setBulkSaveProgress] = useState(0);
+
+  // State for editing content title
+  const [editingContentId, setEditingContentId] = useState(null);
+  const [editingTitle, setEditingTitle] = useState("");
+  const [updatingTitle, setUpdatingTitle] = useState(false);
+
+  // Popup modal state
+  const [showEditPopup, setShowEditPopup] = useState(false);
+  const [editContext, setEditContext] = useState({ weekId: null, dayId: null, contentId: null });
 
 
   const fetchCourse = async () => {
@@ -61,7 +70,7 @@ const CourseContentManager = () => {
       setError(null);
       await addDay(id, weekId); // from api.js
       fetchCourse();
-      
+
       // Show success message
       const successDiv = document.createElement('div');
       successDiv.className = 'alert alert-success alert-dismissible fade show mt-3';
@@ -117,53 +126,125 @@ const CourseContentManager = () => {
 
       console.log(`Uploading to Week ${activeWeek.weekNumber}, Day ${activeDay.dayNumber}`);
 
-      // 1. Ask backend for presign with week and day information
-      let uploadUrl, key;
-      try {
+      const folder = activeType === "video" ? "videos" : "documents";
+      const MULTIPART_THRESHOLD = 100 * 1024 * 1024; // 100MB threshold for multipart upload
+      let key;
+
+      // Use multipart upload for files larger than 100MB
+      if (file.size > MULTIPART_THRESHOLD) {
+        console.log(`File size: ${(file.size / 1024 / 1024).toFixed(2)}MB - Using multipart upload`);
+        
+        // 1. Initiate multipart upload
+        const initiateRes = await initiateMultipartUpload(
+          file.name,
+          file.type,
+          folder,
+          activeWeek.weekNumber,
+          activeDay.dayNumber
+        );
+        
+        const uploadId = initiateRes.data.uploadId;
+        key = initiateRes.data.key;
+        console.log("Multipart upload initiated:", { uploadId, key });
+
+        try {
+          // 2. Upload file in parts (5MB chunks)
+          const PART_SIZE = 5 * 1024 * 1024; // 5MB per part
+          const numParts = Math.ceil(file.size / PART_SIZE);
+          const uploadedParts = [];
+
+          for (let partNumber = 1; partNumber <= numParts; partNumber++) {
+            const start = (partNumber - 1) * PART_SIZE;
+            const end = Math.min(start + PART_SIZE, file.size);
+            const partBlob = file.slice(start, end);
+
+            // Get presigned URL for this part
+            const partUrlRes = await getPresignedPartUrl(key, uploadId, partNumber);
+            const partUploadUrl = partUrlRes.data.uploadUrl;
+
+            // Upload part
+            const response = await fetch(partUploadUrl, {
+              method: 'PUT',
+              body: partBlob,
+              headers: {
+                'Content-Type': file.type,
+              },
+            });
+
+            if (!response.ok) {
+              throw new Error(`Part ${partNumber} upload failed with status: ${response.status}`);
+            }
+
+            // Get ETag from response
+            const etag = response.headers.get('ETag');
+            uploadedParts.push({
+              PartNumber: partNumber,
+              ETag: etag,
+            });
+
+            // Update progress
+            const progress = Math.round((partNumber / numParts) * 100);
+            setUploadProgress(progress);
+            console.log(`Uploaded part ${partNumber}/${numParts} (${progress}%)`);
+          }
+
+          // 3. Complete multipart upload
+          await completeMultipartUpload(key, uploadId, uploadedParts);
+          console.log("Multipart upload completed successfully");
+
+        } catch (err) {
+          // Abort multipart upload on error
+          console.error("Multipart upload failed, aborting:", err);
+          await abortMultipartUpload(key, uploadId);
+          throw err;
+        }
+
+      } else {
+        // Use regular single-part upload for smaller files
+        console.log(`File size: ${(file.size / 1024 / 1024).toFixed(2)}MB - Using single-part upload`);
+        
         const presignRes = await getPresignUrl(
           file.name,
           file.type,
-          activeType === "video" ? "videos" : "documents",
+          folder,
           activeWeek.weekNumber,
           activeDay.dayNumber
         );
 
-        uploadUrl = presignRes.data.uploadUrl;
+        const uploadUrl = presignRes.data.uploadUrl;
         key = presignRes.data.key;
         console.log("Got presigned URL and key:", { uploadUrl, key });
-      } catch (err) {
-        throw new Error("Failed to get upload URL: " + err.message);
+
+        // Upload file to S3 with progress tracking
+        const xhr = new XMLHttpRequest();
+
+        await new Promise((resolve, reject) => {
+          xhr.upload.addEventListener('progress', (e) => {
+            if (e.lengthComputable) {
+              const progress = Math.round((e.loaded / e.total) * 100);
+              setUploadProgress(progress);
+            }
+          });
+
+          xhr.addEventListener('load', () => {
+            if (xhr.status === 200) {
+              resolve();
+            } else {
+              reject(new Error(`Upload failed with status: ${xhr.status}`));
+            }
+          });
+
+          xhr.addEventListener('error', () => {
+            reject(new Error('Upload failed'));
+          });
+
+          xhr.open('PUT', uploadUrl);
+          xhr.setRequestHeader('Content-Type', file.type);
+          xhr.send(file);
+        });
       }
 
-      // 2. Upload file to S3 with progress tracking
-      const xhr = new XMLHttpRequest();
-
-      await new Promise((resolve, reject) => {
-        xhr.upload.addEventListener('progress', (e) => {
-          if (e.lengthComputable) {
-            const progress = Math.round((e.loaded / e.total) * 100);
-            setUploadProgress(progress);
-          }
-        });
-
-        xhr.addEventListener('load', () => {
-          if (xhr.status === 200) {
-            resolve();
-          } else {
-            reject(new Error(`Upload failed with status: ${xhr.status}`));
-          }
-        });
-
-        xhr.addEventListener('error', () => {
-          reject(new Error('Upload failed'));
-        });
-
-        xhr.open('PUT', uploadUrl);
-        xhr.setRequestHeader('Content-Type', file.type);
-        xhr.send(file);
-      });
-
-      // 3. Save metadata in DB
+      // 4. Save metadata in DB
       try {
         const saveRes = await saveContent(id, activeWeekId, activeDayId, {
           type: activeType,
@@ -171,12 +252,10 @@ const CourseContentManager = () => {
           s3Key: key,
         });
 
-        // Axios resolves to `data` automatically
         console.log("Content saved:", saveRes.data);
       } catch (err) {
         throw new Error("Failed to save content metadata: " + err.message);
       }
-
 
       // Reset form
       setFile(null);
@@ -209,6 +288,45 @@ const CourseContentManager = () => {
       console.error(err);
     }
   };
+
+  const handleEditTitle = (weekId, dayId, contentId, currentTitle) => {
+    setShowEditPopup(false);
+    setEditingContentId(null);
+    setEditingTitle(currentTitle);
+  };
+  const handleEditTitlePopup = (weekId, dayId, contentId, currentTitle) => {
+    setEditContext({ weekId, dayId, contentId });
+    setEditingTitle(currentTitle);
+    setShowEditPopup(true);
+  };
+
+
+  const handleSaveTitle = async (weekId, dayId, contentId) => {
+    if (!editingTitle.trim()) {
+      setError("Title cannot be empty");
+      return;
+    }
+
+    setUpdatingTitle(true);
+    try {
+      await updateContentTitle(id, weekId, dayId, contentId, editingTitle);
+      setEditingContentId(null);
+      setEditingTitle("");
+      fetchCourse();
+    } catch (err) {
+      setError("Failed to update content title");
+      console.error(err);
+    } finally {
+      setUpdatingTitle(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setShowEditPopup(false);
+    setEditingContentId(null);
+    setEditingTitle("");
+  };
+
 
   const deleteWeek = async (weekId) => {
     const week = course.weeks.find(w => w._id === weekId);
@@ -308,51 +426,123 @@ const CourseContentManager = () => {
 
       console.log(`Uploading to Week ${activeWeek.weekNumber}, Day ${activeDay.dayNumber}`);
 
-      // 1. Get presigned URL
-      let uploadUrl, key;
-      try {
+      const folder = activeType === "video" ? "videos" : "documents";
+      const MULTIPART_THRESHOLD = 100 * 1024 * 1024; // 100MB threshold for multipart upload
+      let key;
+
+      // Use multipart upload for files larger than 100MB
+      if (file.size > MULTIPART_THRESHOLD) {
+        console.log(`File size: ${(file.size / 1024 / 1024).toFixed(2)}MB - Using multipart upload`);
+        
+        // 1. Initiate multipart upload
+        const initiateRes = await initiateMultipartUpload(
+          file.name,
+          file.type,
+          folder,
+          activeWeek.weekNumber,
+          activeDay.dayNumber
+        );
+        
+        const uploadId = initiateRes.data.uploadId;
+        key = initiateRes.data.key;
+        console.log("Multipart upload initiated:", { uploadId, key });
+
+        try {
+          // 2. Upload file in parts (5MB chunks)
+          const PART_SIZE = 5 * 1024 * 1024; // 5MB per part
+          const numParts = Math.ceil(file.size / PART_SIZE);
+          const uploadedParts = [];
+
+          for (let partNumber = 1; partNumber <= numParts; partNumber++) {
+            const start = (partNumber - 1) * PART_SIZE;
+            const end = Math.min(start + PART_SIZE, file.size);
+            const partBlob = file.slice(start, end);
+
+            // Get presigned URL for this part
+            const partUrlRes = await getPresignedPartUrl(key, uploadId, partNumber);
+            const partUploadUrl = partUrlRes.data.uploadUrl;
+
+            // Upload part
+            const response = await fetch(partUploadUrl, {
+              method: 'PUT',
+              body: partBlob,
+              headers: {
+                'Content-Type': file.type,
+              },
+            });
+
+            if (!response.ok) {
+              throw new Error(`Part ${partNumber} upload failed with status: ${response.status}`);
+            }
+
+            // Get ETag from response
+            const etag = response.headers.get('ETag');
+            uploadedParts.push({
+              PartNumber: partNumber,
+              ETag: etag,
+            });
+
+            // Update progress
+            const progress = Math.round((partNumber / numParts) * 100);
+            setUploadProgress(progress);
+            console.log(`Uploaded part ${partNumber}/${numParts} (${progress}%)`);
+          }
+
+          // 3. Complete multipart upload
+          await completeMultipartUpload(key, uploadId, uploadedParts);
+          console.log("Multipart upload completed successfully");
+
+        } catch (err) {
+          // Abort multipart upload on error
+          console.error("Multipart upload failed, aborting:", err);
+          await abortMultipartUpload(key, uploadId);
+          throw err;
+        }
+
+      } else {
+        // Use regular single-part upload for smaller files
+        console.log(`File size: ${(file.size / 1024 / 1024).toFixed(2)}MB - Using single-part upload`);
+        
         const presignRes = await getPresignUrl(
           file.name,
           file.type,
-          activeType === "video" ? "videos" : "documents",
+          folder,
           activeWeek.weekNumber,
           activeDay.dayNumber
         );
 
-        uploadUrl = presignRes.data.uploadUrl;
+        const uploadUrl = presignRes.data.uploadUrl;
         key = presignRes.data.key;
         console.log("Got presigned URL and key:", { uploadUrl, key });
-      } catch (err) {
-        throw new Error("Failed to get upload URL: " + err.message);
+
+        // Upload file to S3 with progress tracking
+        const xhr = new XMLHttpRequest();
+
+        await new Promise((resolve, reject) => {
+          xhr.upload.addEventListener('progress', (e) => {
+            if (e.lengthComputable) {
+              const progress = Math.round((e.loaded / e.total) * 100);
+              setUploadProgress(progress);
+            }
+          });
+
+          xhr.addEventListener('load', () => {
+            if (xhr.status === 200) {
+              resolve();
+            } else {
+              reject(new Error(`Upload failed with status: ${xhr.status}`));
+            }
+          });
+
+          xhr.addEventListener('error', () => {
+            reject(new Error('Upload failed'));
+          });
+
+          xhr.open('PUT', uploadUrl);
+          xhr.setRequestHeader('Content-Type', file.type);
+          xhr.send(file);
+        });
       }
-
-      // 2. Upload file to S3 with progress tracking
-      const xhr = new XMLHttpRequest();
-
-      await new Promise((resolve, reject) => {
-        xhr.upload.addEventListener('progress', (e) => {
-          if (e.lengthComputable) {
-            const progress = Math.round((e.loaded / e.total) * 100);
-            setUploadProgress(progress);
-          }
-        });
-
-        xhr.addEventListener('load', () => {
-          if (xhr.status === 200) {
-            resolve();
-          } else {
-            reject(new Error(`Upload failed with status: ${xhr.status}`));
-          }
-        });
-
-        xhr.addEventListener('error', () => {
-          reject(new Error('Upload failed'));
-        });
-
-        xhr.open('PUT', uploadUrl);
-        xhr.setRequestHeader('Content-Type', file.type);
-        xhr.send(file);
-      });
 
       // 3. Add to uploaded files queue instead of saving immediately
       const uploadedFile = {
@@ -399,10 +589,10 @@ const CourseContentManager = () => {
 
     try {
       const unsavedFiles = uploadedFiles.filter(file => !file.saved);
-      
+
       for (let i = 0; i < unsavedFiles.length; i++) {
         const fileData = unsavedFiles[i];
-        
+
         try {
           await saveContent(id, fileData.weekId, fileData.dayId, {
             type: fileData.type,
@@ -411,9 +601,9 @@ const CourseContentManager = () => {
           });
 
           // Mark file as saved
-          setUploadedFiles(prev => 
-            prev.map(file => 
-              file.id === fileData.id 
+          setUploadedFiles(prev =>
+            prev.map(file =>
+              file.id === fileData.id
                 ? { ...file, saved: true }
                 : file
             )
@@ -718,19 +908,58 @@ const CourseContentManager = () => {
                                   <div className="mb-3">
                                     {day.contents.map((content) => (
                                       <div key={content._id} className="mb-2 p-2 border rounded">
-                                        <div className="d-flex justify-content-between align-items-center mb-1">
-                                          <small className="fw-semibold">
-                                            <i className={`bi ${content.type === 'video' ? 'bi-play-circle text-primary' : 'bi-file-earmark-pdf text-info'} me-1`}></i>
-                                            x        {content.title}
-                                          </small>
-                                          <button
-                                            className="btn btn-danger btn-sm p-1"
-                                            style={{ fontSize: "0.7rem" }}
-                                            onClick={() => handleDeleteContent(week._id, day._id, content._id)}
-                                          >
-                                            <i className="bi bi-trash"></i>
-                                          </button>
-                                        </div>
+                                        {editingContentId === content._id ? (
+                                          // Edit mode
+                                          <div className="d-flex justify-content-between align-items-center mb-1">
+                                            <small className="fw-semibold text-break" style={{ flex: 1, paddingRight: "8px" }}>
+                                              <i className={`bi ${content.type === 'video' ? 'bi-play-circle text-primary' : 'bi-file-earmark-pdf text-info'} me-1`}></i>
+                                              {content.title}
+                                            </small>
+                                            <div className="d-flex gap-1">
+                                              <button
+                                                className="btn btn-outline-primary btn-sm p-1"
+                                                style={{ fontSize: "0.7rem" }}
+                                                onClick={() => handleEditTitlePopup(week._id, day._id, content._id, content.title)}
+                                                title="Edit title"
+                                              >
+                                                <i className="bi bi-pencil"></i>
+                                              </button>
+                                              <button
+                                                className="btn btn-danger btn-sm p-1"
+                                                style={{ fontSize: "0.7rem" }}
+                                                onClick={() => handleDeleteContent(week._id, day._id, content._id)}
+                                              >
+                                                <i className="bi bi-trash"></i>
+                                              </button>
+                                            </div>
+                                          </div>
+
+                                        ) : (
+                                          // View mode
+                                          <div className="d-flex justify-content-between align-items-center mb-1">
+                                            <small className="fw-semibold text-break" style={{ flex: 1, paddingRight: "8px" }}>
+                                              <i className={`bi ${content.type === 'video' ? 'bi-play-circle text-primary' : 'bi-file-earmark-pdf text-info'} me-1`}></i>
+                                              {content.title}
+                                            </small>
+                                            <div className="d-flex gap-1">
+                                              <button
+                                                className="btn btn-outline-primary btn-sm p-1"
+                                                style={{ fontSize: "0.7rem" }}
+                                                onClick={() => handleEditTitlePopup(week._id, day._id, content._id, content.title)}
+                                                title="Edit title"
+                                              >
+                                                <i className="bi bi-pencil"></i>
+                                              </button>
+                                              <button
+                                                className="btn btn-danger btn-sm p-1"
+                                                style={{ fontSize: "0.7rem" }}
+                                                onClick={() => handleDeleteContent(week._id, day._id, content._id)}
+                                              >
+                                                <i className="bi bi-trash"></i>
+                                              </button>
+                                            </div>
+                                          </div>
+                                        )}
 
                                         {/* Content Preview */}
                                         {content.type === "video" && content.s3Key && (
@@ -931,6 +1160,70 @@ const CourseContentManager = () => {
           </div>
         )}
       </div>
+      {showEditPopup && (
+        <div
+          className="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center"
+          style={{
+            backgroundColor: "rgba(0,0,0,0.5)",
+            zIndex: 1050
+          }}
+        >
+          <div className="card shadow-lg" style={{ width: "400px", borderRadius: "12px" }}>
+            <div className="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+              <h6 className="mb-0">
+                <i className="bi bi-pencil-square me-2"></i>
+                Edit Content Title
+              </h6>
+              <button
+                className="btn btn-sm btn-light"
+                onClick={handleCancelEdit}
+              >
+                <i className="bi bi-x-lg"></i>
+              </button>
+            </div>
+            <div className="card-body">
+              <label className="form-label small text-muted mb-1">New Title</label>
+              <input
+                type="text"
+                className="form-control"
+                value={editingTitle}
+                onChange={(e) => setEditingTitle(e.target.value)}
+                placeholder="Enter new title"
+                disabled={updatingTitle}
+              />
+              <div className="mt-3 d-flex justify-content-end gap-2">
+                <button
+                  className="btn btn-secondary"
+                  onClick={handleCancelEdit}
+                  disabled={updatingTitle}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="btn btn-success"
+                  onClick={() =>
+                    handleSaveTitle(editContext.weekId, editContext.dayId, editContext.contentId)
+                  }
+                  disabled={updatingTitle || !editingTitle.trim()}
+                >
+                  {updatingTitle ? (
+                    <>
+                      <span className="spinner-border spinner-border-sm me-2"></span>
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <i className="bi bi-check-circle me-1"></i>
+                      Save
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
     </AdminLayout>
   );
 };

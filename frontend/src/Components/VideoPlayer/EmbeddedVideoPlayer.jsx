@@ -229,14 +229,14 @@ const EmbeddedVideoPlayer = () => {
       <div className="video-player-page" style={{ userSelect: 'none' }}>
         <div className="container-fluid px-4">
           <div className="video-header d-flex justify-content-between align-items-center mb-4">
-            <div>
+            <div style={{ flex: 1, maxWidth: '70%' }}>
               <button
                 className="btn btn-outline-secondary me-3"
                 onClick={handleBackToCourse}
               >
                 ← Back to Course
               </button>
-              <h4 className="mb-0 d-inline">{currentVideo.title}</h4>
+              <h4 className="mb-0" style={{ display: 'inline-block', maxWidth: 'calc(100% - 150px)' }}>{currentVideo.title}</h4>
             </div>
             <div className="course-info">
               <small className="text-muted">{course?.title || "Course"}</small>

@@ -13,6 +13,10 @@
 .video-header h4 {
   color: #1f2330;
   font-weight: 700;
+  white-space: normal;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  line-height: 1.4;
 }
 
 .course-info {
@@ -46,6 +50,10 @@
   color: #1f2330;
   font-weight: 600;
   margin-bottom: 10px;
+  white-space: normal;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  line-height: 1.4;
 }
 
 .video-stats {

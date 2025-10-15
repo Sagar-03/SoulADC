@@ -52,7 +52,7 @@ const ManageCourses = () => {
       // Update local state to remove deleted course
       setCourses(courses.filter(course => course._id !== courseId));
       
-      alert(`✅ Course "${courseTitle}" deleted successfully!`);
+      alert(` Course "${courseTitle}" deleted successfully!`);
     } catch (err) {
       console.error("Error deleting course:", err);
       alert("Failed to delete course: " + (err.response?.data?.error || err.message));

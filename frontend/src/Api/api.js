@@ -77,6 +77,10 @@ export const saveContent = (courseId, weekId, dayId, contentData) =>
 export const deleteContent = (courseId, weekId, dayId, contentId) =>
   api.delete(`/admin/courses/${courseId}/weeks/${weekId}/days/${dayId}/contents/${contentId}`);
 
+// Update content title
+export const updateContentTitle = (courseId, weekId, dayId, contentId, title) =>
+  api.put(`/admin/courses/${courseId}/weeks/${weekId}/days/${dayId}/contents/${contentId}`, { title });
+
 
 // Delete a week
 export const deleteWeekApi = (courseId, weekId) =>
@@ -92,5 +96,20 @@ export const createCheckoutSession = (payload) => api.post("/payment/create-chec
 // Handle payment success
 export const PaymentSuccessApi = (sessionId, courseId) =>
   api.get(`/payment/success`, { params: { session_id: sessionId, course_id: courseId } });
+
+// ============================
+// Multipart Upload APIs
+// ============================
+export const initiateMultipartUpload = (fileName, fileType, folder, weekNumber, dayNumber) =>
+  api.post("/multipart-upload/initiate", { fileName, fileType, folder, weekNumber, dayNumber });
+
+export const getPresignedPartUrl = (key, uploadId, partNumber) =>
+  api.post("/multipart-upload/presign-part", { key, uploadId, partNumber });
+
+export const completeMultipartUpload = (key, uploadId, parts) =>
+  api.post("/multipart-upload/complete", { key, uploadId, parts });
+
+export const abortMultipartUpload = (key, uploadId) =>
+  api.post("/multipart-upload/abort", { key, uploadId });
 
 
