@@ -23,6 +23,7 @@ router.post("/initiate", protect, adminOnly, async (req, res) => {
 
     // Validate
     if (!fileName || !fileType || !folder) {
+      console.error("❌ Missing required fields:", { fileName: !!fileName, fileType: !!fileType, folder: !!folder });
       return res.status(400).json({ error: "fileName, fileType, folder are required" });
     }
 
@@ -30,10 +31,10 @@ router.post("/initiate", protect, adminOnly, async (req, res) => {
     let key;
     if (weekNumber && dayNumber) {
       key = `${folder}/week-${weekNumber}/day-${dayNumber}/${uuidv4()}-${fileName}`;
-      console.log(`Creating S3 folder structure: ${key}`);
+      console.log(`✨ Creating S3 folder structure: ${key}`);
     } else {
       key = `${folder}/${uuidv4()}-${fileName}`;
-      console.log(`Using fallback S3 structure: ${key}`);
+      console.log(`✨ Using fallback S3 structure: ${key}`);
     }
 
     // Initiate multipart upload
@@ -45,13 +46,16 @@ router.post("/initiate", protect, adminOnly, async (req, res) => {
 
     const multipartUpload = await s3.send(command);
 
+    console.log(`✅ Multipart upload initiated: ${multipartUpload.UploadId}`);
+
     res.json({
       uploadId: multipartUpload.UploadId,
       key: key,
     });
   } catch (err) {
     console.error("❌ Multipart initiate error:", err);
-    res.status(500).json({ error: "Failed to initiate multipart upload" });
+    console.error("Error details:", err.message, err.stack);
+    res.status(500).json({ error: "Failed to initiate multipart upload", details: err.message });
   }
 });
 
@@ -64,15 +68,26 @@ router.post("/presign-part", protect, adminOnly, async (req, res) => {
   try {
     const { key, uploadId, partNumber } = req.body;
 
-    if (!key || !uploadId || !partNumber) {
+    // Validate required fields (partNumber can be 0, so check explicitly)
+    if (!key || !uploadId || partNumber === null || partNumber === undefined) {
+      console.error("❌ Missing required fields:", { key: !!key, uploadId: !!uploadId, partNumber });
       return res.status(400).json({ error: "key, uploadId, and partNumber are required" });
     }
+
+    // Convert partNumber to integer (AWS requires integer)
+    const partNum = parseInt(partNumber, 10);
+    if (isNaN(partNum) || partNum < 1) {
+      console.error("❌ Invalid partNumber:", partNumber);
+      return res.status(400).json({ error: "partNumber must be a valid positive integer" });
+    }
+
+    console.log(`Generating presigned URL for part ${partNum} of ${key}`);
 
     const command = new UploadPartCommand({
       Bucket: process.env.AWS_S3_BUCKET,
       Key: key,
       UploadId: uploadId,
-      PartNumber: partNumber,
+      PartNumber: partNum,
     });
 
     // Generate presigned URL for this part (expires in 2 hours for large files)
@@ -81,7 +96,8 @@ router.post("/presign-part", protect, adminOnly, async (req, res) => {
     res.json({ uploadUrl });
   } catch (err) {
     console.error("❌ Presign part error:", err);
-    res.status(500).json({ error: "Failed to generate presigned URL for part" });
+    console.error("Error details:", err.message, err.stack);
+    res.status(500).json({ error: "Failed to generate presigned URL for part", details: err.message });
   }
 });
 
@@ -95,19 +111,35 @@ router.post("/complete", protect, adminOnly, async (req, res) => {
     const { key, uploadId, parts } = req.body;
 
     if (!key || !uploadId || !parts || !Array.isArray(parts)) {
+      console.error("❌ Missing required fields for complete:", { key: !!key, uploadId: !!uploadId, partsIsArray: Array.isArray(parts) });
       return res.status(400).json({ error: "key, uploadId, and parts array are required" });
     }
+
+    if (parts.length === 0) {
+      console.error("❌ Parts array is empty");
+      return res.status(400).json({ error: "Parts array cannot be empty" });
+    }
+
+    // Validate and convert parts to proper format
+    const formattedParts = parts.map(part => ({
+      PartNumber: parseInt(part.PartNumber, 10),
+      ETag: part.ETag
+    }));
+
+    console.log(`Completing multipart upload for ${key} with ${formattedParts.length} parts`);
 
     const command = new CompleteMultipartUploadCommand({
       Bucket: process.env.AWS_S3_BUCKET,
       Key: key,
       UploadId: uploadId,
       MultipartUpload: {
-        Parts: parts,
+        Parts: formattedParts,
       },
     });
 
     const result = await s3.send(command);
+
+    console.log("✅ Multipart upload completed successfully:", result.Location);
 
     res.json({
       success: true,
@@ -116,7 +148,8 @@ router.post("/complete", protect, adminOnly, async (req, res) => {
     });
   } catch (err) {
     console.error("❌ Complete multipart error:", err);
-    res.status(500).json({ error: "Failed to complete multipart upload" });
+    console.error("Error details:", err.message, err.stack);
+    res.status(500).json({ error: "Failed to complete multipart upload", details: err.message });
   }
 });
 
@@ -130,8 +163,11 @@ router.post("/abort", protect, adminOnly, async (req, res) => {
     const { key, uploadId } = req.body;
 
     if (!key || !uploadId) {
+      console.error("❌ Missing required fields for abort:", { key: !!key, uploadId: !!uploadId });
       return res.status(400).json({ error: "key and uploadId are required" });
     }
+
+    console.log(`Aborting multipart upload for ${key}`);
 
     const command = new AbortMultipartUploadCommand({
       Bucket: process.env.AWS_S3_BUCKET,
@@ -141,10 +177,13 @@ router.post("/abort", protect, adminOnly, async (req, res) => {
 
     await s3.send(command);
 
+    console.log("✅ Multipart upload aborted successfully");
+
     res.json({ success: true });
   } catch (err) {
     console.error("❌ Abort multipart error:", err);
-    res.status(500).json({ error: "Failed to abort multipart upload" });
+    console.error("Error details:", err.message, err.stack);
+    res.status(500).json({ error: "Failed to abort multipart upload", details: err.message });
   }
 });
 
