@@ -112,4 +112,25 @@ export const completeMultipartUpload = (key, uploadId, parts) =>
 export const abortMultipartUpload = (key, uploadId) =>
   api.post("/multipart-upload/abort", { key, uploadId });
 
+// ============================
+// Doubt System APIs
+// ============================
+
+// Create or update a student's doubt (when student sends message)
+export const sendStudentDoubt = (userId, userName, message) =>
+  api.post("/doubts/student", { userId, userName, message });
+
+// Admin reply to a doubt
+export const replyToDoubt = (doubtId, message) =>
+  api.post(`/doubts/admin/reply/${doubtId}`, { message });
+
+// Close a doubt manually
+export const closeDoubt = (doubtId) => api.patch(`/doubts/close/${doubtId}`);
+
+// Get all doubts (Admin view)
+export const getAllDoubts = () => api.get("/doubts");
+
+// Get open doubts for a student
+export const getStudentDoubts = (userId) => api.get(`/doubts/student/${userId}`);
+
 

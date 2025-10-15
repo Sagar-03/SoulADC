@@ -10,6 +10,8 @@ import ForgotPassword from "./Components/student/ForgotPassword/ForgotPassword";
 import ResetPassword from "./Components/student/ForgotPassword/ForgotPassword";
 import Tnc from "./Pages/SoulADCTerms";
 import ContactUs from "./Components/ContactUs/ContactUs";
+import StudentDoubtPanel from "./components/student/StudentDoubtPanel";
+import AdminDoubtPanel from "./components/admin/AdminDoubtPanel";
 
 // Student Dashboard
 import Studentdashboard from "./Components/student/Studentdashboard";
@@ -70,6 +72,9 @@ function App() {
         <Route path="/reset-password/:token" element={<ResetPassword />} />
         <Route path="/Tnc" element={<Tnc />} />
         <Route path="/ContactUs" element={<ContactUs />} />
+        <Route path="/studentdoubts" element={<StudentDoubtPanel />} />
+        <Route path="/admindoubts" element={<AdminDoubtPanel />} />
+
 
 
 

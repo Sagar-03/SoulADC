@@ -100,13 +100,13 @@ const Footer = () => {
             <p className="text-secondary mb-0 small">&copy; 2025 Soul ADC. All rights reserved.</p>
           </Col>
           <Col md={6} className="text-center text-md-end">
-            <Nav className="justify-content-center justify-content-md-end">
+            {/* <Nav className="justify-content-center justify-content-md-end">
               {['Terms of Service'].map((item, idx) => (
                 <Nav.Link key={idx} href="./Tnc" className="text-secondary small">
                   {item}
                 </Nav.Link>
               ))}
-            </Nav>
+            </Nav> */}
           </Col>
         </Row>
       </Container>

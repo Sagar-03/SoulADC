@@ -1,77 +1,128 @@
-const express = require('express');
-const dotenv = require('dotenv').config();
-const dBConnect = require('./config/dbConnect');
-const authRoutes = require('./routes/authRoutes');
-const userRoutes = require('./routes/userRoutes');
-const adminRoutes = require('./routes/adminRoutes');
-const paymentRoutes = require('./routes/paymentRoutes');
-const cors = require('cors');
-const uploadRoutes = require('./routes/upload.js');
-const streamRoutes = require('./routes/stream.js');
-const multipartUploadRoutes = require('./routes/multipartUpload.js');
+const express = require("express");
+const dotenv = require("dotenv").config();
+const dBConnect = require("./config/dbConnect");
+const authRoutes = require("./routes/authRoutes");
+const userRoutes = require("./routes/userRoutes");
+const adminRoutes = require("./routes/adminRoutes");
+const paymentRoutes = require("./routes/paymentRoutes");
+const cors = require("cors");
+const uploadRoutes = require("./routes/upload.js");
+const streamRoutes = require("./routes/stream.js");
+const multipartUploadRoutes = require("./routes/multipartUpload.js");
+const doubtRoutes = require("./routes/doubtRoutes.js");
+const Doubt = require("./models/Doubt.js"); 
+const http = require("http");
+const { Server } = require("socket.io");
 
-// ✅ Database connection
+// ✅ Connect to Database
 dBConnect();
 
 const app = express();
 
-// ✅ INCREASE TIMEOUT FOR LARGE FILE UPLOADS (2 hours = 7200000ms)
+// ✅ Timeouts (2 hours)
 app.use((req, res, next) => {
-  req.setTimeout(7200000); // 2 hours request timeout
-  res.setTimeout(7200000); // 2 hours response timeout
+  req.setTimeout(7200000);
+  res.setTimeout(7200000);
   next();
 });
 
-// ✅ Middleware
-app.use(express.json({ limit: '50mb' })); // Increase JSON payload limit
-app.use(express.urlencoded({ limit: '50mb', extended: true })); // Increase URL-encoded payload limit
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
-// app.get('/', (req, res) => {
-//   res.send('API is running...');
-// }); 
-
-// ✅ CORS configuration
-// ✅ CORS configuration (fixed version)
+// ✅ CORS Configuration
 const allowedOrigins = process.env.CORS_ORIGIN
-  ? process.env.CORS_ORIGIN.split(',').map(origin => origin.trim())
-  : ['https://souladc.com', 'https://www.souladc.com', 'http://localhost:5173'];
+  ? process.env.CORS_ORIGIN.split(",").map((o) => o.trim())
+  : ["https://souladc.com", "https://www.souladc.com", "http://localhost:5173"];
 
-console.log('CORS allowed:', allowedOrigins);
-
-app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      console.log('🚫 Blocked by CORS:', origin);
-      callback(null, false); // ← don’t throw an error — just block silently
-    }
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE','PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  optionsSuccessStatus: 200
-}));
-
-
-
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        console.log("🚫 Blocked by CORS:", origin);
+        callback(null, false);
+      }
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    optionsSuccessStatus: 200,
+  })
+);
 
 // ✅ Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/user', userRoutes);
-app.use('/api/admin', adminRoutes);
-app.use('/api/payment', paymentRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/user", userRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api/payment", paymentRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/stream", streamRoutes);
 app.use("/api/multipart-upload", multipartUploadRoutes);
+app.use("/api/doubts", doubtRoutes); // ✅ Add Doubt API route
+
+// ✅ Create HTTP + Socket.IO server
+const PORT = process.env.PORT || 7001;
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: { origin: allowedOrigins, credentials: true },
+});
+
+// ✅ SOCKET.IO LOGIC
+io.on("connection", (socket) => {
+  console.log("🟢 User connected:", socket.id);
+
+  // 🎓 Student sends a doubt
+  socket.on("send_doubt", async ({ studentId, studentName, message }) => {
+    try {
+      let doubt = await Doubt.findOne({ studentId, status: "open" });
+      if (!doubt) {
+        doubt = new Doubt({
+          studentId,
+          studentName,
+          messages: [{ sender: "student", message }],
+        });
+      } else {
+        doubt.messages.push({ sender: "student", message });
+      }
+      await doubt.save();
+      io.emit("doubt_update", doubt);
+    } catch (err) {
+      console.error("Error saving doubt:", err);
+    }
+  });
+
+  // 🧑‍💼 Admin replies
+  socket.on("admin_reply", async ({ doubtId, message }) => {
+    try {
+      const doubt = await Doubt.findById(doubtId);
+      if (!doubt) return;
+      doubt.messages.push({ sender: "admin", message });
+      await doubt.save();
+      io.emit("doubt_update", doubt);
+    } catch (err) {
+      console.error("Error replying:", err);
+    }
+  });
+
+  // ✅ Admin closes a doubt
+  socket.on("close_doubt", async (doubtId) => {
+    try {
+      await Doubt.findByIdAndUpdate(doubtId, { status: "closed" });
+      io.emit("doubt_closed", doubtId);
+    } catch (err) {
+      console.error("Error closing doubt:", err);
+    }
+  });
+
+  socket.on("disconnect", () => console.log("🔴 Disconnected:", socket.id));
+});
 
 // ✅ Start server
-const PORT = process.env.PORT || 7001;
-const server = app.listen(PORT, '0.0.0.0', () => {
+server.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
 
-// ✅ SET SERVER TIMEOUT TO 2 HOURS
-server.timeout = 7200000; // 2 hours
-server.keepAliveTimeout = 7200000; // 2 hours
-server.headersTimeout = 7200000; // 2 hours
+server.timeout = 7200000;
+server.keepAliveTimeout = 7200000;
+server.headersTimeout = 7200000;

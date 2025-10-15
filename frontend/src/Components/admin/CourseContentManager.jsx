@@ -1088,7 +1088,7 @@ const CourseContentManager = () => {
                   <strong>File:</strong> {file.name}<br />
                   <strong>Type:</strong> <span className="text-capitalize">{activeType}</span><br />
                   <strong>Size:</strong> {(file.size / (1024 * 1024)).toFixed(2)} MB<br />
-                  <strong>Module:</strong> {course.weeks.find(w => w._id === activeWeekId)?.weekNumber} - Module {course.weeks.find(w => w._id === activeWeekId)?.days.find(d => d._id === activeDayId)?.dayNumber}
+                  <strong>Module:</strong> {course.weeks.find(w => w._id === activeWeekId)?.weekNumber} -  {course.weeks.find(w => w._id === activeWeekId)?.days.find(d => d._id === activeDayId)?.dayNumber} part
                 </div>
                 <div>
                   <i className={`bi ${activeType === 'video' ? 'bi-camera-video' : 'bi-file-earmark-pdf'} display-4 text-muted`}></i>

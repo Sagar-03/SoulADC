@@ -51,7 +51,7 @@ const login = async (req, res) => {
       const token = jwt.sign(
         { id: "admin", email: "admin@souladc.com", role: "admin" },
         process.env.JWT_SECRET,
-        { expiresIn: "1h" }
+    
       );
       return res.json({
         message: "Admin login successful",
@@ -79,7 +79,6 @@ const login = async (req, res) => {
     const token = jwt.sign(
       { id: user._id, email: user.email, role: user.role || "user" },
       process.env.JWT_SECRET,
-      { expiresIn: "1h" }
     );
 
     console.log("User login successful:", email);
