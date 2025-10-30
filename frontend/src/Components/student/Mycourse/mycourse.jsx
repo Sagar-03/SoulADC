@@ -38,7 +38,11 @@ const Mycourse = () => {
         setCourse(data);
       } catch (err) {
         console.error("Error fetching course:", err);
-        setError(err.response?.data?.message || err.message);
+        if (err.response?.status === 403) {
+          setError("You need to purchase this course to access its content. Please visit the courses page to purchase.");
+        } else {
+          setError(err.response?.data?.error || err.message || "Failed to load course");
+        }
       } finally {
         setLoading(false);
       }
@@ -73,20 +77,34 @@ const Mycourse = () => {
   }
 
   if (error || !course) {
+    const isAccessDenied = error && error.includes("purchase this course");
+    
     return (
       <StudentLayout>
         <div className="container">
           <div className="text-center py-5">
-            <h3 className="text-muted mb-3">Course Not Available</h3>
+            <h3 className="text-muted mb-3">
+              {isAccessDenied ? "Course Access Restricted" : "Course Not Available"}
+            </h3>
             <p className="text-muted mb-4">
               {error || "No course data found. Please check the course ID or try again later."}
             </p>
-            <button
-              className="btn btn-primary"
-              onClick={() => navigate('/student/dashboard')}
-            >
-              Back to Dashboard
-            </button>
+            <div className="d-flex gap-3 justify-content-center">
+              <button
+                className="btn btn-primary"
+                onClick={() => navigate('/student/dashboard')}
+              >
+                Back to Dashboard
+              </button>
+              {isAccessDenied && (
+                <button
+                  className="btn btn-outline-primary"
+                  onClick={() => navigate('/courses')}
+                >
+                  Browse Courses
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </StudentLayout>

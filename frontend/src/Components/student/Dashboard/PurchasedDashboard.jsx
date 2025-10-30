@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import StudentLayout from "../StudentaLayout";
 import "./dashboard.css";
-import { getLiveCourses } from "../../../Api/api"; // adjust path
+import { getPurchasedCourses } from "../../../Api/api"; // Import the new API function
 
 
 const PurchasedDashboard = () => {
@@ -14,10 +14,10 @@ const PurchasedDashboard = () => {
   useEffect(() => {
     const fetchPurchasedCourses = async () => {
       try {
-        const { data } = await getLiveCourses();
+        const { data } = await getPurchasedCourses();
         setPurchasedCourses(data);
       } catch (err) {
-        console.error("Error fetching courses:", err);
+        console.error("Error fetching purchased courses:", err);
       } finally {
         setLoading(false);
       }
@@ -29,31 +29,17 @@ const PurchasedDashboard = () => {
   return (
     <StudentLayout>
       <h2 className="mb-4 fw-bold flex-grow-1 p-4" style={{ color: "#5A3825" }}>
-        Available Live Courses
-        {/* TODO: Change to "My Purchased Courses" when payment integration is complete */}
+        My Purchased Courses
       </h2>
 
-      {/* 
-      COMMENTED CODE FOR FUTURE IMPLEMENTATION:
-      When payment is integrated, this component should:
-      1. Fetch user's purchased courses from backend
-      2. Filter courses based on user's purchases
-      3. Show only courses the user has paid for
-      
-      Example API call:
-      fetch(`http://localhost:7001/api/user/purchased-courses`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      })
-      */}
-
       {loading ? (
-        <p className="text-muted">Loading courses...</p>
+        <p className="text-muted">Loading your courses...</p>
       ) : purchasedCourses.length === 0 ? (
         <div>
-          <p className="text-muted">No live courses available at the moment.</p>
-          {/* TODO: Change to "No courses purchased yet." when payment integration is complete */}
+          <p className="text-muted">You haven't purchased any courses yet.</p>
+          <p className="text-muted">
+            <a href="/courses" className="text-decoration-none">Browse available courses</a> to get started!
+          </p>
         </div>
       ) : (
         <div className="row g-4">

@@ -58,6 +58,7 @@ export const fetchcourse = () => api.patch(`/admin/courses/${courseId}/toggle-li
 // Student APIs
 // ============================
 export const getStudents = () => api.get("/admin/students"); // assume you add this route later
+export const getPurchasedCourses = () => api.get("/user/purchased-courses");
 
 // ============================
 // export const getStreamUrl = (s3Key) => `http://localhost:7001/api/stream/${s3Key}`;
@@ -72,6 +73,10 @@ export const getPresignUrl = (fileName, fileType, folder, weekNumber, dayNumber)
 // Save uploaded content metadata
 export const saveContent = (courseId, weekId, dayId, contentData) =>
   api.post(`/admin/courses/${courseId}/weeks/${weekId}/days/${dayId}/contents`, contentData);
+
+// Save document to module/week level
+export const saveWeekDocument = (courseId, weekId, contentData) =>
+  api.post(`/admin/courses/${courseId}/weeks/${weekId}/documents`, contentData);
 
 // Delete a content item
 export const deleteContent = (courseId, weekId, dayId, contentId) =>

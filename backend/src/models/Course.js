@@ -18,6 +18,7 @@ const weekSchema = new mongoose.Schema({
   weekNumber: Number,
   title: String,
   days: [daySchema],
+  documents: [contentSchema], // Module-level documents
 });
 
 const courseSchema = new mongoose.Schema({

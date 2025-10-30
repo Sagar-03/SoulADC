@@ -126,6 +126,31 @@ router.post("/courses/:courseId/weeks/:weekId/days", protect, adminOnly, async (
 });
 
 /**
+ * POST /api/admin/courses/:courseId/weeks/:weekId/documents
+ * Add document to module/week level
+ */
+router.post("/courses/:courseId/weeks/:weekId/documents", protect, adminOnly, async (req, res) => {
+  try {
+    const { type, title, s3Key } = req.body;
+    const course = await Course.findById(req.params.courseId);
+    if (!course) return res.status(404).json({ error: "Course not found" });
+
+    const week = course.weeks.id(req.params.weekId);
+    if (!week) return res.status(404).json({ error: "Week not found" });
+
+    if (!week.documents) {
+      week.documents = [];
+    }
+
+    week.documents.push({ type, title, s3Key });
+    await course.save();
+    res.json(course);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
  * POST /api/admin/courses/:courseId/weeks/:weekId/days/:dayId/contents
  * Add video/document to a specific day
  */

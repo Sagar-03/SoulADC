@@ -195,7 +195,7 @@ const About = () => {
               rel="noopener noreferrer"
               className="adc-download-btn"
             >
-              <i className="bi bi-download me-2"></i> View Process PDF
+              <i className=" me-2"></i> View Process PDF
             </a>
           </div>
         </div>

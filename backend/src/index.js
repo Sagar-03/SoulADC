@@ -1,35 +1,50 @@
+// ===================== IMPORTS =====================
 const express = require("express");
 const dotenv = require("dotenv").config();
+const http = require("http");
+const cors = require("cors");
+const { Server } = require("socket.io");
+const mongoose = require("mongoose");
+
+// ✅ Existing Imports (Don’t Touch)
 const dBConnect = require("./config/dbConnect");
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
-const cors = require("cors");
 const uploadRoutes = require("./routes/upload.js");
 const streamRoutes = require("./routes/stream.js");
 const multipartUploadRoutes = require("./routes/multipartUpload.js");
-const doubtRoutes = require("./routes/doubtRoutes.js");
-const Doubt = require("./models/Doubt.js"); 
-const http = require("http");
-const { Server } = require("socket.io");
+// const doubtRoutes = require("./routes/doubtRoutes.js");
+// const Doubt = require("./models/Chat.js");
 
-// ✅ Connect to Database
+// ✅ New Chat Model
+const Chat = require("./models/Chat.js");
+
+// ===================== CONFIG =====================
+
+// ✅ Connect to Database (existing logic)
 dBConnect();
 
+// ===================== APP + SERVER =====================
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: { origin: "*" },
+});
 
-// ✅ Timeouts (2 hours)
+// ===================== TIMEOUTS =====================
 app.use((req, res, next) => {
   req.setTimeout(7200000);
   res.setTimeout(7200000);
   next();
 });
 
+// ===================== MIDDLEWARE =====================
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
-// ✅ CORS Configuration
+// ===================== CORS =====================
 const allowedOrigins = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(",").map((o) => o.trim())
   : ["https://souladc.com", "https://www.souladc.com", "http://localhost:5173"];
@@ -51,7 +66,7 @@ app.use(
   })
 );
 
-// ✅ Routes
+// ===================== EXISTING ROUTES =====================
 app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/admin", adminRoutes);
@@ -59,66 +74,106 @@ app.use("/api/payment", paymentRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/stream", streamRoutes);
 app.use("/api/multipart-upload", multipartUploadRoutes);
-app.use("/api/doubts", doubtRoutes); // ✅ Add Doubt API route
+// app.use("/api/doubts", doubtRoutes);
 
-// ✅ Create HTTP + Socket.IO server
-const PORT = process.env.PORT || 7001;
-const server = http.createServer(app);
-const io = new Server(server, {
-  cors: { origin: allowedOrigins, credentials: true },
-});
+// ===================== CHAT SOCKET.IO =====================
 
-// ✅ SOCKET.IO LOGIC
+// Helper: Validate ObjectId
+const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
+
 io.on("connection", (socket) => {
-  console.log("🟢 User connected:", socket.id);
+  console.log("🟢 Chat connected:", socket.id);
 
-  // 🎓 Student sends a doubt
-  socket.on("send_doubt", async ({ studentId, studentName, message }) => {
-    try {
-      let doubt = await Doubt.findOne({ studentId, status: "open" });
-      if (!doubt) {
-        doubt = new Doubt({
-          studentId,
-          studentName,
-          messages: [{ sender: "student", message }],
-        });
-      } else {
-        doubt.messages.push({ sender: "student", message });
-      }
-      await doubt.save();
-      io.emit("doubt_update", doubt);
-    } catch (err) {
-      console.error("Error saving doubt:", err);
-    }
+  // Join chat room
+  socket.on("join_chat", async (chatId) => {
+    if (!isValidObjectId(chatId)) return;
+    socket.join(chatId);
+
+    const chat = await Chat.findById(chatId);
+    if (chat) socket.emit("receive_message", chat.messages);
   });
 
-  // 🧑‍💼 Admin replies
-  socket.on("admin_reply", async ({ doubtId, message }) => {
-    try {
-      const doubt = await Doubt.findById(doubtId);
-      if (!doubt) return;
-      doubt.messages.push({ sender: "admin", message });
-      await doubt.save();
-      io.emit("doubt_update", doubt);
-    } catch (err) {
-      console.error("Error replying:", err);
-    }
+  // Handle new message
+  socket.on("send_message", async ({ chatId, sender, text }) => {
+    if (!isValidObjectId(chatId)) return;
+
+    const chat = await Chat.findById(chatId);
+    if (!chat || chat.isClosed) return;
+
+    chat.messages.push({ senderRole: sender, text });
+    await chat.save();
+
+    io.to(chatId).emit("receive_message", chat.messages);
   });
 
-  // ✅ Admin closes a doubt
-  socket.on("close_doubt", async (doubtId) => {
-    try {
-      await Doubt.findByIdAndUpdate(doubtId, { status: "closed" });
-      io.emit("doubt_closed", doubtId);
-    } catch (err) {
-      console.error("Error closing doubt:", err);
-    }
+  // Close chat
+  socket.on("close_chat", async (chatId) => {
+    if (!isValidObjectId(chatId)) return;
+
+    const chat = await Chat.findById(chatId);
+    if (!chat) return;
+
+    chat.isClosed = true;
+    await chat.save();
+    io.to(chatId).emit("chat_closed");
   });
 
-  socket.on("disconnect", () => console.log("🔴 Disconnected:", socket.id));
+  socket.on("disconnect", () => {
+    console.log("🔴 Chat disconnected:", socket.id);
+  });
 });
 
-// ✅ Start server
+// ===================== CHAT REST ROUTES =====================
+
+// Create new chat
+app.post("/chat", async (req, res) => {
+  try {
+    const { userName, firstMessage } = req.body;
+
+    const chat = new Chat({
+      userName,
+      messages: [{ senderRole: "user", text: firstMessage }],
+    });
+
+    await chat.save();
+    res.json({ chatId: chat._id });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to create chat" });
+  }
+});
+
+// Get all chats (admin)
+app.get("/chats", async (req, res) => {
+  const chats = await Chat.find().sort({ createdAt: -1 });
+  res.json(chats);
+});
+
+// Get single chat
+app.get("/chat/:id", async (req, res) => {
+  const { id } = req.params;
+  if (!isValidObjectId(id)) return res.status(400).json({ error: "Invalid ID" });
+  const chat = await Chat.findById(id);
+  res.json(chat);
+});
+
+// Get open chats for user
+app.get("/user-chats/:userName", async (req, res) => {
+  const { userName } = req.params;
+  const chats = await Chat.find({ userName, isClosed: false });
+  res.json(chats);
+});
+
+// Delete chat (admin)
+app.delete("/chat/:id", async (req, res) => {
+  const { id } = req.params;
+  if (!isValidObjectId(id)) return res.status(400).json({ error: "Invalid ID" });
+  await Chat.findByIdAndDelete(id);
+  res.json({ success: true });
+});
+
+// ===================== SERVER START =====================
+const PORT = process.env.PORT || 7001;
+
 server.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });

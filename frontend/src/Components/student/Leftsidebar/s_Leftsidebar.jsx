@@ -2,6 +2,8 @@ import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { RxDashboard } from "react-icons/rx";
 import { FaBook, FaSignOutAlt } from "react-icons/fa";
+import { FiMessageCircle } from "react-icons/fi";
+
 import { CgProfile } from "react-icons/cg";
 import { logout } from "../../../utils/auth"; // ✅ cookie-based logout
 import logo from "../../../assets/logo.png";
@@ -39,6 +41,13 @@ const Leftsidebar = () => {
           onClick={() => navigate("/Dashboard")}
           hoverColor="#8B5E3C"
         />
+         <SidebarItem
+          icon={<FiMessageCircle />}
+          text="Doubts Section"
+          active={location.pathname === "/studentdashboard/doubtpanel"}
+          onClick={() => navigate("/studentdashboard/doubtpanel")}
+           hoverColor="#8B5E3C"
+        />
         {/* <SidebarItem
           icon={<FaBook />}
           text="Courses"
@@ -65,6 +74,7 @@ const Leftsidebar = () => {
           onClick={handleSignOut}
           hoverColor="red"
         />
+       
       </div>
     </div>
   );
@@ -73,9 +83,8 @@ const Leftsidebar = () => {
 // Reusable sidebar button
 const SidebarItem = ({ icon, text, active, onClick, hoverColor }) => (
   <button
-    className={`btn text-start d-flex align-items-center mb-2 w-100 ${
-      active ? "active-sidebar" : ""
-    }`}
+    className={`btn text-start d-flex align-items-center mb-2 w-100 ${active ? "active-sidebar" : ""
+      }`}
     style={{
       gap: "10px",
       padding: "10px 12px",

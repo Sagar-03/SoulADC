@@ -10,14 +10,14 @@ import ForgotPassword from "./Components/student/ForgotPassword/ForgotPassword";
 import ResetPassword from "./Components/student/ForgotPassword/ForgotPassword";
 import Tnc from "./Pages/SoulADCTerms";
 import ContactUs from "./Components/ContactUs/ContactUs";
-import StudentDoubtPanel from "./components/student/StudentDoubtPanel";
-import AdminDoubtPanel from "./components/admin/AdminDoubtPanel";
+
 
 // Student Dashboard
 import Studentdashboard from "./Components/student/Studentdashboard";
 import Mycourse from "./Components/student/Mycourse/mycourse";
 import Dashboard from "./Components/student/Dashboard/PurchasedDashboard";
 import EmbeddedVideoPlayer from "./Components/VideoPlayer/EmbeddedVideoPlayer";
+import StudentDoubtPanel from "./Components/student/Studentdoubt";
 
 // Payment Components
 import PaymentPage from "./Components/PaymentDashboard/PaymentPage";
@@ -33,6 +33,7 @@ import AddCourse from "./Components/admin/AddCourse";
 import EditCourse from "./Components/admin/EditCourse";
 import CourseContentManager from "./Components/admin/CourseContentManager";
 import BulkPdfUpload from "./Components/admin/BulkPdfUpload";
+import AdminDoubtDashboard from "./Components/admin/AdminDoubtPanel";
 
 // 🔹 Protected Route Wrapper
 const ProtectedRoute = ({ children, requirePurchased = false, adminOnly = false }) => {
@@ -72,8 +73,8 @@ function App() {
         <Route path="/reset-password/:token" element={<ResetPassword />} />
         <Route path="/Tnc" element={<Tnc />} />
         <Route path="/ContactUs" element={<ContactUs />} />
-        <Route path="/studentdoubts" element={<StudentDoubtPanel />} />
-        <Route path="/admindoubts" element={<AdminDoubtPanel />} />
+        {/* <Route path="/studentdoubts" element={<StudentDoubtPanel />} />
+        <Route path="/admindoubts" element={<AdminDoubtPanel />} /> */}
 
 
 
@@ -127,7 +128,14 @@ function App() {
             </ProtectedRoute>
           }
         />
-
+        <Route
+          path="/studentdashboard/doubtpanel"
+          element={
+            <ProtectedRoute>
+              <StudentDoubtPanel />
+            </ProtectedRoute>
+          }
+        />
         {/* Payment Routes (Protected: must be logged in, no need for purchased yet) */}
         <Route
           path="/payment"
@@ -178,6 +186,14 @@ function App() {
           element={
             <ProtectedRoute adminOnly={true}>
               <ManageCourses />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/admindoubts"
+          element={
+            <ProtectedRoute adminOnly={true}>
+              <AdminDoubtDashboard />
             </ProtectedRoute>
           }
         />

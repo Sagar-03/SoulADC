@@ -25,8 +25,13 @@ router.post("/create-checkout-session", protect, async (req, res) => {
 
     // Calculate price (apply coupon if valid)
     let price = course.price;
-    if (coupon && coupon.toLowerCase() === "soul10") {
-      price = price * 0.9; // 10% discount
+    if (coupon) {
+      const code = coupon.toLowerCase();
+      if (code === "soul10") {
+        price = price * 0.9; // 10% discount
+      } else if (code === "free100") {
+        price = 0; // 100% discount
+      }
     }
 
     // Create real Stripe Checkout session
@@ -132,7 +137,7 @@ router.get("/success", protect, async (req, res) => {
       });
     }
 
-    console.log(`✅ Verified payment success - User: ${userId}, Course: ${course_id}`);
+    console.log(` Verified payment success - User: ${userId}, Course: ${course_id}`);
 
     res.json({
       success: true,

@@ -35,16 +35,19 @@ export default function PaymentPage() {
     }
   }, [navigate]);
 
-  const handleApplyCoupon = () => {
-    // ⚠️ Frontend-only placeholder
-    // Real validation should be done on the backend!
-    if (coupon.toLowerCase() === "soul10") {
-      setDiscount(0.1 * course.price);
-    } else {
-      setDiscount(0);
-      alert("Invalid coupon code");
-    }
-  };
+ const handleApplyCoupon = () => {
+  // Real validation should be done on the backend!
+  const code = coupon.toLowerCase();
+
+  if (code === "soul10") {
+    setDiscount(0.1 * course.price); // 10% discount
+  } else if (code === "free100") {
+    setDiscount(course.price); // 100% discount
+  } else {
+    setDiscount(0);
+    alert("Invalid coupon code");
+  }
+};
 
 
 const handleCheckout = async () => {

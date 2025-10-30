@@ -1,13 +1,19 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { RxDashboard } from "react-icons/rx";
-import { FaBook, FaUsers, FaPlus, FaFilePdf } from "react-icons/fa";
+import { FaBook, FaUsers, FaPlus, FaFilePdf,FaSignOutAlt } from "react-icons/fa";
+import { FiMessageCircle } from "react-icons/fi";
 import logo from "../../assets/logo.png";
+import { logout } from "../../utils/auth"; 
 
 const AdminSidebar = () => {
     const navigate = useNavigate();
     const location = useLocation();
 
+    const handleSignOut = () => {
+        logout(); // clears cookies + emits auth change
+        navigate("/login"); // redirect to login
+    };
     return (
         <div
             className="bg-white border-end shadow-sm d-flex flex-column align-items-start p-3"
@@ -50,6 +56,18 @@ const AdminSidebar = () => {
                     active={location.pathname === "/admin/students"}
                     onClick={() => navigate("/admin/students")}
                 />
+                <SidebarItem
+                    icon={<FiMessageCircle />}
+                    text="Doubts Section"
+                    active={location.pathname === "/admin/admindoubts"}
+                    onClick={() => navigate("/admin/admindoubts")}
+                />
+                <SidebarItem
+                    icon={<FaSignOutAlt />}
+                    text="Sign Out"
+                    onClick={handleSignOut}
+                    hoverColor="red"
+                />
             </div>
         </div>
     );
@@ -57,9 +75,8 @@ const AdminSidebar = () => {
 
 const SidebarItem = ({ icon, text, active, onClick }) => (
     <button
-        className={`btn text-start d-flex align-items-center mb-2 w-100 ${
-            active ? "active-sidebar" : ""
-        }`}
+        className={`btn text-start d-flex align-items-center mb-2 w-100 ${active ? "active-sidebar" : ""
+            }`}
         style={{
             gap: "10px",
             padding: "10px 12px",

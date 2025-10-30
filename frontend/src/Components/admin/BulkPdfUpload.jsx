@@ -1,13 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
 import AdminLayout from "./AdminLayout";
-import { getCourses, getPresignUrl, saveContent } from "../../Api/api";
+import { getCourses, getPresignUrl, saveWeekDocument } from "../../Api/api";
 import "./admin.css";
 
 const BulkPdfUpload = () => {
   const [courses, setCourses] = useState([]);
   const [selectedCourse, setSelectedCourse] = useState("");
   const [selectedWeek, setSelectedWeek] = useState("");
-  const [selectedDay, setSelectedDay] = useState("");
   const [files, setFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState({});
@@ -32,7 +31,6 @@ const BulkPdfUpload = () => {
 
   const selectedCourseData = courses.find(course => course._id === selectedCourse);
   const selectedWeekData = selectedCourseData?.weeks.find(week => week._id === selectedWeek);
-  const selectedDayData = selectedWeekData?.days.find(day => day._id === selectedDay);
 
   const validateAndSetFiles = (selectedFiles) => {
     // Filter only PDF files
@@ -44,16 +42,8 @@ const BulkPdfUpload = () => {
       setError(null);
     }
 
-    // Validate file sizes (max 10MB per file)
-    // const validFiles = pdfFiles.filter(file => {
-    //   if (file.size > 10 * 1024 * 1024) {
-    //     setError(`File "${file.name}" is too large. Max size: 10MB`);
-    //     return false;
-    //   }
-    //   return true;
-    // });
-
-    setFiles(validFiles);
+    // No file size limit - accept all PDF files
+    setFiles(pdfFiles);
   };
 
   const handleFileChange = (e) => {
@@ -84,15 +74,15 @@ const BulkPdfUpload = () => {
     fileInputRef.current?.click();
   };
 
-  const uploadSingleFile = async (file, weekNumber, dayNumber, weekId, dayId) => {
+  const uploadSingleFile = async (file, weekNumber, weekId) => {
     try {
-      // 1. Get presigned URL
+      // 1. Get presigned URL (dayNumber not needed for module-level documents)
       const presignRes = await getPresignUrl(
         file.name,
         file.type,
         "documents",
         weekNumber,
-        dayNumber
+        0 // Pass 0 for day since this is module-level
       );
 
       const { uploadUrl, key } = presignRes.data;
@@ -128,8 +118,8 @@ const BulkPdfUpload = () => {
         xhr.send(file);
       });
 
-      // 3. Save metadata in database
-      await saveContent(selectedCourse, weekId, dayId, {
+      // 3. Save metadata in database at module/week level
+      await saveWeekDocument(selectedCourse, weekId, {
         type: "pdf",
         title: file.name.split(".")[0], // remove extension
         s3Key: key,
@@ -143,8 +133,8 @@ const BulkPdfUpload = () => {
   };
 
   const handleBulkUpload = async () => {
-    if (!selectedCourse || !selectedWeek || !selectedDay || files.length === 0) {
-      setError("Please select course, week, day and choose PDF files to upload");
+    if (!selectedCourse || !selectedWeek || files.length === 0) {
+      setError("Please select course, module and choose PDF files to upload");
       return;
     }
 
@@ -161,9 +151,7 @@ const BulkPdfUpload = () => {
         const result = await uploadSingleFile(
           file,
           selectedWeekData.weekNumber,
-          selectedDayData.dayNumber,
-          selectedWeek,
-          selectedDay
+          selectedWeek
         );
         results.push(result);
         setUploadResults([...results]);
@@ -175,7 +163,7 @@ const BulkPdfUpload = () => {
 
       if (failed === 0) {
         setError(null);
-        alert(`Success! ${successful} PDF files uploaded successfully.`);
+        alert(`Success! ${successful} PDF files uploaded successfully to module documents.`);
       } else {
         setError(`Upload completed with ${failed} failures out of ${files.length} files.`);
       }
@@ -185,7 +173,6 @@ const BulkPdfUpload = () => {
         setFiles([]);
         setSelectedCourse("");
         setSelectedWeek("");
-        setSelectedDay("");
         if (fileInputRef.current) fileInputRef.current.value = '';
       }
 
@@ -233,7 +220,7 @@ const BulkPdfUpload = () => {
           <div className="card-body">
             <div className="row">
               {/* Course Selection */}
-              <div className="col-md-4 mb-3">
+              <div className="col-md-6 mb-3">
                 <label className="form-label">Course</label>
                 <select
                   className="form-select"
@@ -241,7 +228,6 @@ const BulkPdfUpload = () => {
                   onChange={(e) => {
                     setSelectedCourse(e.target.value);
                     setSelectedWeek("");
-                    setSelectedDay("");
                   }}
                   disabled={uploading}
                 >
@@ -255,14 +241,13 @@ const BulkPdfUpload = () => {
               </div>
 
               {/* Week Selection */}
-              <div className="col-md-4 mb-3">
+              <div className="col-md-6 mb-3">
                 <label className="form-label">Module</label>
                 <select
                   className="form-select"
                   value={selectedWeek}
                   onChange={(e) => {
                     setSelectedWeek(e.target.value);
-                    setSelectedDay("");
                   }}
                   disabled={!selectedCourse || uploading}
                 >
@@ -270,24 +255,6 @@ const BulkPdfUpload = () => {
                   {selectedCourseData?.weeks.map(week => (
                     <option key={week._id} value={week._id}>
                       Week {week.weekNumber}: {week.title}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Day Selection */}
-              <div className="col-md-4 mb-3">
-                <label className="form-label">Day</label>
-                <select
-                  className="form-select"
-                  value={selectedDay}
-                  onChange={(e) => setSelectedDay(e.target.value)}
-                  disabled={!selectedWeek || uploading}
-                >
-                  <option value="">Select Day</option>
-                  {selectedWeekData?.days.map(day => (
-                    <option key={day._id} value={day._id}>
-                      Day {day.dayNumber}
                     </option>
                   ))}
                 </select>
@@ -333,7 +300,7 @@ const BulkPdfUpload = () => {
             
             <div className="form-text mt-2">
               <i className="bi bi-info-circle me-1"></i>
-              Select multiple PDF files (Max 10MB each). You can drag files directly or use the file browser.
+              Select multiple PDF files. You can drag files directly or use the file browser.
             </div>
 
             {/* Selected Files List */}
@@ -402,7 +369,7 @@ const BulkPdfUpload = () => {
         </div>
 
         {/* Upload Confirmation & Progress */}
-        {files.length > 0 && selectedCourse && selectedWeek && selectedDay && (
+        {files.length > 0 && selectedCourse && selectedWeek && (
           <div className="card mb-4">
             <div className="card-header bg-success text-white">
               <h5 className="mb-0">
@@ -422,11 +389,12 @@ const BulkPdfUpload = () => {
                       <p className="mb-1">
                         <strong>Course:</strong> {selectedCourseData?.title}
                       </p>
-                      <p className="mb-1">
+                      <p className="mb-0">
                         <strong>Module:</strong> Week {selectedWeekData?.weekNumber} - {selectedWeekData?.title}
                       </p>
-                      <p className="mb-0">
-                        <strong>Day:</strong> {selectedDayData?.dayNumber}
+                      <p className="mb-0 text-muted mt-2">
+                        <i className="bi bi-info-circle me-1"></i>
+                        Documents will be available in the module's Documents section
                       </p>
                     </div>
                     {uploading && (
@@ -473,7 +441,6 @@ const BulkPdfUpload = () => {
                             setFiles([]);
                             setSelectedCourse("");
                             setSelectedWeek("");
-                            setSelectedDay("");
                             if (fileInputRef.current) fileInputRef.current.value = '';
                           }}
                         >

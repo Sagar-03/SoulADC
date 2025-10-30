@@ -1,100 +1,78 @@
 import React, { useEffect, useState } from "react";
-import { io } from "socket.io-client";
-import { getAllDoubts, replyToDoubt, closeDoubt } from "../../Api/api";
-import "../../Pages/Doubt.css";
+import axios from "axios";
+import "../student/chatstyles.css";
+import ChatRoom from "../student/ChatRoom";
+import AdminLayout from "./AdminLayout";
 
-const socket = io(import.meta.env.VITE_API_URL.replace("/api", ""), {
-    withCredentials: true,
-});
+export default function Adminchat() {
+  const [chats, setChats] = useState([]);
+  const [selectedChat, setSelectedChat] = useState(null);
 
-export default function AdminDoubtPanel() {
-    const [doubts, setDoubts] = useState([]);
-    const [selected, setSelected] = useState(null);
-    const [reply, setReply] = useState("");
+  const fetchChats = async () => {
+    const res = await axios.get("http://localhost:7001/chats");
+    setChats(res.data);
+  };
 
-    useEffect(() => {
-        getAllDoubts().then((res) => setDoubts(res.data));
+  useEffect(() => {
+    fetchChats();
+    const timer = setInterval(fetchChats, 4000);
+    return () => clearInterval(timer);
+  }, []);
 
-        socket.on("doubt_update", (updatedDoubt) => {
-            setDoubts((prev) => {
-                const exists = prev.find((d) => d._id === updatedDoubt._id);
-                return exists
-                    ? prev.map((d) => (d._id === updatedDoubt._id ? updatedDoubt : d))
-                    : [updatedDoubt, ...prev];
-            });
-        });
+  const deleteChat = async (id, e) => {
+    // Stop event from triggering parent click
+    e.stopPropagation();
 
-        socket.on("doubt_closed", (id) =>
-            setDoubts((prev) => prev.filter((d) => d._id !== id))
-        );
+    if (window.confirm("Delete this chat permanently?")) {
+      await axios.delete(`http://localhost:7001/chat/${id}`);
+      fetchChats();
+    }
+  };
 
-        return () => {
-            socket.off("doubt_update");
-            socket.off("doubt_closed");
-        };
-    }, []);
-
-    const sendReply = async () => {
-        if (!reply.trim() || !selected) return;
-        socket.emit("admin_reply", { doubtId: selected._id, message: reply });
-        setReply("");
-    };
-
-    const handleClose = async (id) => {
-        socket.emit("close_doubt", id);
-    };
-
+  if (selectedChat)
     return (
-        <div className="dashboard admin-doubt">
-            <h2>Admin Doubt Dashboard</h2>
-            <div className="admin-layout">
-                <div className="doubt-list">
-                    {doubts.map((d) => (
-                        <div
-                            key={d._id}
-                            className={`doubt-item ${selected?._id === d._id ? "active" : ""}`}
-                            onClick={() => setSelected(d)}
-                        >
-                            <p><strong>{d.studentName}</strong></p>
-                            <small>Status: {d.status}</small>
-                        </div>
-                    ))}
-                </div>
-
-                <div className="chat-area">
-                    {selected ? (
-                        <>
-                            <div className="chat-box">
-                                {selected.messages.map((msg, i) => (
-                                    <div
-                                        key={i}
-                                        className={`msg ${msg.sender === "admin" ? "sent" : "received"
-                                            }`}
-                                    >
-                                        {msg.message}
-                                    </div>
-                                ))}
-                            </div>
-                            <div className="input-box">
-                                <input
-                                    value={reply}
-                                    onChange={(e) => setReply(e.target.value)}
-                                    placeholder="Reply..."
-                                />
-                                <button onClick={sendReply}>Send</button>
-                                <button
-                                    className="close-btn"
-                                    onClick={() => handleClose(selected._id)}
-                                >
-                                    Close
-                                </button>
-                            </div>
-                        </>
-                    ) : (
-                        <p className="no-msg">Select a doubt to view messages</p>
-                    )}
-                </div>
-            </div>
-        </div>
+      <ChatRoom
+        chatId={selectedChat._id}
+        senderRole="admin"
+        onBack={() => setSelectedChat(null)}
+        onDelete={() => {
+          fetchChats();
+          setSelectedChat(null);
+        }}
+      />
     );
+
+  return (
+    <AdminLayout>
+    <div className="panel">
+      <h2>Your Doubt Dashboard</h2>
+      <p>All doubts from the students will appear below (auto-refresh)</p>
+      <div className="chat-list">
+        {chats.length === 0 && (
+          <p style={{ textAlign: "center", color: "#888" }}>No doubts yet...</p>
+        )}
+
+        {chats.map((chat) => (
+          <div
+            key={chat._id}
+            className={`chat-item ${chat.isClosed ? "closed" : ""}`}
+            onClick={() => setSelectedChat(chat)}
+          >
+            <div className="chat-info">
+              <strong>{chat.userName || "Anonymous"}</strong>
+              <p>{chat.messages[0]?.text?.slice(0, 60) || "No message yet"}</p>
+            </div>
+            <button
+              className="delete-btn"
+              onClick={(e) => deleteChat(chat._id, e)}
+              title="Delete Chat"
+            >
+              🗑️
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+      </AdminLayout>
+  );
 }

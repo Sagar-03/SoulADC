@@ -19,17 +19,26 @@ router.get('/courses/live', async (req, res) => {
 
 /**
  * GET /api/user/courses/:id
- * Get full course details including weeks and content (for enrolled students)
+ * Get full course details including weeks and content (for enrolled students only)
  */
-router.get('/courses/:id', async (req, res) => {
+router.get('/courses/:id', protect, async (req, res) => {
   try {
     const course = await Course.findById(req.params.id);
     if (!course) {
       return res.status(404).json({ error: 'Course not found' });
     }
     
-    // For now, return full course data
-    // TODO: Add check for user enrollment when payment is integrated
+    // Check if user has purchased this course
+    const user = await User.findById(req.user.id);
+    const hasPurchased = user.purchasedCourses.includes(req.params.id);
+    
+    if (!hasPurchased) {
+      return res.status(403).json({ 
+        error: 'Access denied. You need to purchase this course to view its content.' 
+      });
+    }
+    
+    // Return full course data if user has purchased it
     res.json(course);
   } catch (err) {
     res.status(500).json({ error: err.message });
