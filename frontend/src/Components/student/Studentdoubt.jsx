@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import { createChat, getUserChats } from "../../Api/api";
 import io from "socket.io-client";
 import ChatRoom from "./ChatRoom";
 import "../student/chatstyles.css"; // ✅ Ensure CSS is imported
+import StudentLayout from "./StudentLayout";
 
 const socket = io("http://localhost:7001");
 
@@ -17,7 +18,7 @@ export default function Studentdoubt() {
   // ✅ Fetch user's open chats
   const fetchUserChats = async () => {
     if (!userName) return;
-    const res = await axios.get(`http://localhost:7001/user-chats/${userName}`);
+    const res = await getUserChats(userName);
     setActiveChats(res.data);
   };
 
@@ -47,13 +48,10 @@ export default function Studentdoubt() {
   }, [selectedChat]);
 
   // ✅ Create new chat
-  const createChat = async () => {
+  const createChatHandler = async () => {
     if (!userName || !firstMessage.trim())
       return alert("Please enter your name and doubt before sending!");
-    const res = await axios.post("http://localhost:7001/chat", {
-      userName,
-      firstMessage,
-    });
+    const res = await createChat(userName, firstMessage);
     const chatObj = { _id: res.data.chatId };
     setSelectedChat(chatObj);
     setFirstMessage("");
@@ -77,7 +75,8 @@ export default function Studentdoubt() {
     );
 
   // ✅ Render Student Dashboard
-  return (
+return (
+  <StudentLayout>
     <div className="panel student-panel">
       <h2>Ask a Doubt 💭</h2>
 
@@ -95,7 +94,7 @@ export default function Studentdoubt() {
           onChange={(e) => setFirstMessage(e.target.value)}
         />
 
-        <button onClick={createChat}>Send Doubt</button>
+        <button onClick={createChatHandler}>Send Doubt</button>
       </div>
 
       {/* ===== Active Doubts ===== */}
@@ -117,10 +116,7 @@ export default function Studentdoubt() {
                   <div className="chat-info">
                     <strong>{chat.userName}</strong>
                     <p>
-                      {
-                        chat.messages[chat.messages.length - 1]?.text ||
-                        "No message"
-                      }
+                      {chat.messages[chat.messages.length - 1]?.text || "No message"}
                     </p>
                   </div>
                 </div>
@@ -130,5 +126,7 @@ export default function Studentdoubt() {
         </>
       )}
     </div>
-  );
+  </StudentLayout>
+);
+
 }

@@ -20,6 +20,7 @@ const multipartUploadRoutes = require("./routes/multipartUpload.js");
 
 // ✅ New Chat Model
 const Chat = require("./models/Chat.js");
+const chatUploadRoutes = require("./routes/chatUploadRoutes");
 
 // ===================== CONFIG =====================
 
@@ -94,13 +95,25 @@ io.on("connection", (socket) => {
   });
 
   // Handle new message
-  socket.on("send_message", async ({ chatId, sender, text }) => {
+  socket.on("send_message", async ({ chatId, sender, text, media, audioUrl }) => {
     if (!isValidObjectId(chatId)) return;
 
     const chat = await Chat.findById(chatId);
     if (!chat || chat.isClosed) return;
 
-    chat.messages.push({ senderRole: sender, text });
+    const messageData = { senderRole: sender, text: text || "" };
+    
+    // Handle media (image)
+    if (media) {
+      messageData.media = media;
+    }
+    
+    // Handle audio (for backward compatibility)
+    if (audioUrl) {
+      messageData.media = { type: "audio", url: audioUrl };
+    }
+
+    chat.messages.push(messageData);
     await chat.save();
 
     io.to(chatId).emit("receive_message", chat.messages);
@@ -126,7 +139,7 @@ io.on("connection", (socket) => {
 // ===================== CHAT REST ROUTES =====================
 
 // Create new chat
-app.post("/chat", async (req, res) => {
+app.post("/api/chat", async (req, res) => {
   try {
     const { userName, firstMessage } = req.body;
 
@@ -143,13 +156,13 @@ app.post("/chat", async (req, res) => {
 });
 
 // Get all chats (admin)
-app.get("/chats", async (req, res) => {
+app.get("/api/chats", async (req, res) => {
   const chats = await Chat.find().sort({ createdAt: -1 });
   res.json(chats);
 });
 
 // Get single chat
-app.get("/chat/:id", async (req, res) => {
+app.get("/api/chat/:id", async (req, res) => {
   const { id } = req.params;
   if (!isValidObjectId(id)) return res.status(400).json({ error: "Invalid ID" });
   const chat = await Chat.findById(id);
@@ -157,19 +170,22 @@ app.get("/chat/:id", async (req, res) => {
 });
 
 // Get open chats for user
-app.get("/user-chats/:userName", async (req, res) => {
+app.get("/api/user-chats/:userName", async (req, res) => {
   const { userName } = req.params;
   const chats = await Chat.find({ userName, isClosed: false });
   res.json(chats);
 });
 
 // Delete chat (admin)
-app.delete("/chat/:id", async (req, res) => {
+app.delete("/api/chat/:id", async (req, res) => {
   const { id } = req.params;
   if (!isValidObjectId(id)) return res.status(400).json({ error: "Invalid ID" });
   await Chat.findByIdAndDelete(id);
   res.json({ success: true });
 });
+
+app.use("/upload", chatUploadRoutes);
+app.use("/uploads", express.static("uploads"));
 
 // ===================== SERVER START =====================
 const PORT = process.env.PORT || 7001;

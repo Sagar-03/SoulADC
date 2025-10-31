@@ -118,24 +118,59 @@ export const abortMultipartUpload = (key, uploadId) =>
   api.post("/multipart-upload/abort", { key, uploadId });
 
 // ============================
-// Doubt System APIs
+// Chat/Doubt System APIs
 // ============================
 
-// Create or update a student's doubt (when student sends message)
-export const sendStudentDoubt = (userId, userName, message) =>
-  api.post("/doubts/student", { userId, userName, message });
+export const getAllChats = () => api.get("/chats");
 
-// Admin reply to a doubt
-export const replyToDoubt = (doubtId, message) =>
-  api.post(`/doubts/admin/reply/${doubtId}`, { message });
+export const getChatById = (chatId) => api.get(`/chat/${chatId}`);
 
-// Close a doubt manually
-export const closeDoubt = (doubtId) => api.patch(`/doubts/close/${doubtId}`);
+export const createChat = (userName, firstMessage) =>
+  api.post("/chat", { userName, firstMessage });
 
-// Get all doubts (Admin view)
-export const getAllDoubts = () => api.get("/doubts");
+export const deleteChat = (chatId) => api.delete(`/chat/${chatId}`);
 
-// Get open doubts for a student
-export const getStudentDoubts = (userId) => api.get(`/doubts/student/${userId}`);
+export const getUserChats = (userName) => api.get(`/user-chats/${userName}`);
 
+// ============================
+// Chat Upload APIs
+// ============================
+
+export const uploadChatImage = (chatId, senderRole, file) => {
+  const formData = new FormData();
+  formData.append("file", file);
+  
+  return axios.post(
+    `${API_BASE_URL.replace('/api', '')}/upload/chat-image/${chatId}/${senderRole}`,
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
+};
+
+export const uploadChatAudio = (chatId, senderRole, audioBlob) => {
+  const formData = new FormData();
+  formData.append("file", audioBlob, "voiceNote.webm");
+  formData.append("chatId", chatId);
+  formData.append("senderRole", senderRole);
+  
+  return axios.post(
+    `${API_BASE_URL.replace('/api', '')}/upload/chat-audio`,
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
+};
+
+// Get the WebSocket URL for chat
+export const getChatSocketUrl = () => {
+  const baseUrl = API_BASE_URL.replace('/api', '');
+  return baseUrl;
+};
 

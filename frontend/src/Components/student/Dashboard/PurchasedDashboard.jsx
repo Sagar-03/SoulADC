@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import StudentLayout from "../StudentaLayout";
+import StudentLayout from "../StudentLayout";
 import "./dashboard.css";
 import { getPurchasedCourses } from "../../../Api/api"; // Import the new API function
 

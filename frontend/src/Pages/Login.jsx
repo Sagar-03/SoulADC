@@ -99,7 +99,7 @@ const Login = () => {
   return (
     <div className="auth-overlay" tabIndex={-1}>
       <div className="auth-modal">
-        <button className="auth-close" onClick={() => navigate(-1)}>
+        <button className="auth-close" onClick={() => navigate("/home")}>
           ×
         </button>
 

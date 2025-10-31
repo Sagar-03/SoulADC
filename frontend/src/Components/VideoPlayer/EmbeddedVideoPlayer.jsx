@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import "./EmbeddedVideoPlayer.css";
-import StudentLayout from "../student/StudentaLayout";
+import StudentLayout from "../student/StudentLayout";
 import { api, getStreamUrl } from "../../Api/api";
 
 // Static data for fallback

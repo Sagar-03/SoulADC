@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import "./mycourse.css";
-import StudentLayout from "../StudentaLayout";
+import StudentLayout from "../StudentLayout";
 import { getStreamUrl } from "../../../Api/api";
 import { api } from "../../../Api/api";
 

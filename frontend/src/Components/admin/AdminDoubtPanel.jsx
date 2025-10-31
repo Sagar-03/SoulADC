@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import { getAllChats, deleteChat } from "../../Api/api";
 import "../student/chatstyles.css";
 import ChatRoom from "../student/ChatRoom";
 import AdminLayout from "./AdminLayout";
@@ -9,8 +9,14 @@ export default function Adminchat() {
   const [selectedChat, setSelectedChat] = useState(null);
 
   const fetchChats = async () => {
-    const res = await axios.get("http://localhost:7001/chats");
-    setChats(res.data);
+    try {
+      const res = await getAllChats();
+      setChats(res.data);
+    } catch (error) {
+      console.error("Failed to fetch chats:", error);
+      // Set empty array on error to prevent UI issues
+      setChats([]);
+    }
   };
 
   useEffect(() => {
@@ -19,12 +25,12 @@ export default function Adminchat() {
     return () => clearInterval(timer);
   }, []);
 
-  const deleteChat = async (id, e) => {
+  const deleteChatHandler = async (id, e) => {
     // Stop event from triggering parent click
     e.stopPropagation();
 
     if (window.confirm("Delete this chat permanently?")) {
-      await axios.delete(`http://localhost:7001/chat/${id}`);
+      await deleteChat(id);
       fetchChats();
     }
   };
@@ -64,7 +70,7 @@ export default function Adminchat() {
             </div>
             <button
               className="delete-btn"
-              onClick={(e) => deleteChat(chat._id, e)}
+              onClick={(e) => deleteChatHandler(chat._id, e)}
               title="Delete Chat"
             >
               🗑️
