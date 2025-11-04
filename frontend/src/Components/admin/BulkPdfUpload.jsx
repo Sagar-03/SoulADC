@@ -35,7 +35,7 @@ const BulkPdfUpload = () => {
   const validateAndSetFiles = (selectedFiles) => {
     // Filter only PDF files
     const pdfFiles = selectedFiles.filter(file => file.type === "application/pdf");
-    
+
     if (pdfFiles.length !== selectedFiles.length) {
       setError("Only PDF files are allowed. Non-PDF files have been filtered out.");
     } else {
@@ -65,7 +65,7 @@ const BulkPdfUpload = () => {
   const handleDrop = (e) => {
     e.preventDefault();
     setIsDragOver(false);
-    
+
     const droppedFiles = Array.from(e.dataTransfer.files);
     validateAndSetFiles(droppedFiles);
   };
@@ -80,9 +80,9 @@ const BulkPdfUpload = () => {
       const presignRes = await getPresignUrl(
         file.name,
         file.type,
-        "documents",
+        `documents/week-${weekNumber}`, // Directly upload to week folder
         weekNumber,
-        0 // Pass 0 for day since this is module-level
+        null // no day subfolder
       );
 
       const { uploadUrl, key } = presignRes.data;
@@ -186,7 +186,7 @@ const BulkPdfUpload = () => {
   const removeFile = (index) => {
     const newFiles = files.filter((_, i) => i !== index);
     setFiles(newFiles);
-    
+
     // If all files are removed, also clear the input
     if (newFiles.length === 0 && fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -297,7 +297,7 @@ const BulkPdfUpload = () => {
                 disabled={uploading}
               />
             </div>
-            
+
             <div className="form-text mt-2">
               <i className="bi bi-info-circle me-1"></i>
               Select multiple PDF files. You can drag files directly or use the file browser.
@@ -473,9 +473,8 @@ const BulkPdfUpload = () => {
                 {uploadResults.map((result, index) => (
                   <div key={index} className="col-md-6 col-lg-4 mb-3">
                     <div
-                      className={`card h-100 ${
-                        result.success ? "result-item-success" : "result-item-error"
-                      }`}
+                      className={`card h-100 ${result.success ? "result-item-success" : "result-item-error"
+                        }`}
                     >
                       <div className="card-body">
                         <div className="d-flex align-items-center mb-2">

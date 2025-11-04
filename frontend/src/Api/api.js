@@ -174,3 +174,18 @@ export const getChatSocketUrl = () => {
   return baseUrl;
 };
 
+
+export const getAdminDashboardStats = () => api.get("/admin/dashboard/stats");
+
+export const getDocuments = () => {
+  return axios.get(`${BASE_URL}/api/admin/documents`, {
+    // headers: { Authorization: `Bearer ${token}` },
+  });
+};
+
+// 🗑️ Delete a document
+export const deleteDocument = (id) => {
+  return axios.delete(`${BASE_URL}/api/admin/documents/${id}`, {
+    // headers: { Authorization: `Bearer ${token}` },
+  });
+};

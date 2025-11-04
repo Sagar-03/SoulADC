@@ -361,7 +361,7 @@ const EmbeddedVideoPlayer = () => {
                             <div key={day._id || dayIndex} className="day-item">
                               <div className="day-header">
                                 <small className="day-number"> {day.dayNumber}</small>
-                                <div className="day-title">{day.title}</div>
+                                <div className="day-title"></div>
                               </div>
                               <div className="day-contents">
                                 {day.contents?.map((content, contentIndex) => (

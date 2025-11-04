@@ -34,6 +34,7 @@ import EditCourse from "./Components/admin/EditCourse";
 import CourseContentManager from "./Components/admin/CourseContentManager";
 import BulkPdfUpload from "./Components/admin/BulkPdfUpload";
 import AdminDoubtDashboard from "./Components/admin/AdminDoubtPanel";
+import AdminDocuments from "./Components/admin/admindocument";
 
 // 🔹 Protected Route Wrapper
 const ProtectedRoute = ({ children, requirePurchased = false, adminOnly = false }) => {
@@ -229,7 +230,16 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/admin/documents"
+          element={
+            <ProtectedRoute adminOnly={true}>
+              <AdminDocuments />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
+
     </Router>
   );
 }

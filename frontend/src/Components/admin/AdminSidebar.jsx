@@ -63,6 +63,12 @@ const AdminSidebar = () => {
                     onClick={() => navigate("/admin/admindoubts")}
                 />
                 <SidebarItem
+                    icon={<FiMessageCircle />}
+                    text="Documents Section"
+                    active={location.pathname === "/admin/documents"}
+                    onClick={() => navigate("/admin/documents")}
+                />
+                <SidebarItem
                     icon={<FaSignOutAlt />}
                     text="Sign Out"
                     onClick={handleSignOut}

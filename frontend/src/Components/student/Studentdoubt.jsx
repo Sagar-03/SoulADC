@@ -5,7 +5,7 @@ import ChatRoom from "./ChatRoom";
 import "../student/chatstyles.css"; // ✅ Ensure CSS is imported
 import StudentLayout from "./StudentLayout";
 
-const socket = io("http://localhost:7001");
+const socket = io("http://localhost:7001" || "https://api.souladc.com"); 
 
 export default function Studentdoubt() {
   const [userName, setUserName] = useState(localStorage.getItem("userName") || "");
