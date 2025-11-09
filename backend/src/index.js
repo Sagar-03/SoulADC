@@ -185,8 +185,54 @@ app.get("/api/user-chats", protect, async (req, res) => {
 app.delete("/api/chat/:id", async (req, res) => {
   const { id } = req.params;
   if (!isValidObjectId(id)) return res.status(400).json({ error: "Invalid ID" });
+  
+  // Find the chat before deleting to get user info
+  const chat = await Chat.findById(id);
+  if (!chat) {
+    return res.status(404).json({ error: "Chat not found" });
+  }
+  
+  // Delete the chat from database
   await Chat.findByIdAndDelete(id);
+  
+  // Notify all clients in the chat room that the chat has been deleted
+  io.to(id).emit("chat_deleted", { chatId: id, userEmail: chat.userEmail });
+  
+  // Also emit to all admin clients to refresh their chat lists
+  io.emit("admin_chat_deleted", { chatId: id });
+  
   res.json({ success: true });
+});
+
+// Delete all chats (admin only)
+app.delete("/api/chats/all", async (req, res) => {
+  try {
+    // Get all chats before deleting to notify clients
+    const allChats = await Chat.find({});
+    
+    // Delete all chats from database
+    const result = await Chat.deleteMany({});
+    
+    // Notify all clients that all chats have been deleted
+    allChats.forEach(chat => {
+      io.to(chat._id.toString()).emit("chat_deleted", { 
+        chatId: chat._id.toString(), 
+        userEmail: chat.userEmail 
+      });
+    });
+    
+    // Notify all admin clients to refresh their chat lists
+    io.emit("admin_all_chats_deleted");
+    
+    res.json({ 
+      success: true, 
+      message: `Deleted ${result.deletedCount} chats`,
+      deletedCount: result.deletedCount 
+    });
+  } catch (error) {
+    console.error("Error deleting all chats:", error);
+    res.status(500).json({ error: "Failed to delete all chats" });
+  }
 });
 
 app.use("/upload", chatUploadRoutes);

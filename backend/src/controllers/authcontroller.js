@@ -158,4 +158,58 @@ const resetPassword = async (req, res) => {
   }
 };
 
-module.exports = { register, login, forgotPassword, resetPassword };
+// UPDATE PROFILE controller
+const updateProfile = async (req, res) => {
+  try {
+    const { name, email } = req.body;
+    const userId = req.user.id;
+
+    // Validate required fields
+    if (!name || !email) {
+      return res.status(400).json({ message: "Name and email are required" });
+    }
+
+    // Check if email is already taken by another user
+    const existingUser = await User.findOne({ 
+      email, 
+      _id: { $ne: userId } 
+    });
+    
+    if (existingUser) {
+      return res.status(400).json({ message: "Email is already taken by another user" });
+    }
+
+    // Update user profile
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { 
+        name: name.trim(),
+        email: email.trim().toLowerCase()
+      },
+      { new: true, runValidators: true }
+    ).select('-password -resetToken -resetTokenExpire');
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    console.log("Profile updated successfully for user:", email);
+    res.json({
+      message: "Profile updated successfully",
+      user: {
+        id: updatedUser._id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        phone: updatedUser.phone,
+        role: updatedUser.role,
+        purchasedCourses: updatedUser.purchasedCourses || []
+      }
+    });
+
+  } catch (error) {
+    console.error("Update profile error:", error);
+    res.status(500).json({ message: "Profile update failed", error: error.message });
+  }
+};
+
+module.exports = { register, login, forgotPassword, resetPassword, updateProfile };

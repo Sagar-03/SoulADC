@@ -27,10 +27,18 @@ export default function ChatRoom({ chatId, senderRole, onBack, onDelete }) {
 
     socketConnection.on("receive_message", (msgs) => setMessages(msgs));
     socketConnection.on("chat_closed", () => setIsClosed(true));
+    socketConnection.on("chat_deleted", (data) => {
+      if (data.chatId === chatId) {
+        // Chat was deleted by admin, go back to chat list
+        alert("This chat has been deleted by an administrator.");
+        onBack();
+      }
+    });
 
     return () => {
       socketConnection.off("receive_message");
       socketConnection.off("chat_closed");
+      socketConnection.off("chat_deleted");
       socketConnection.disconnect();
     };
   }, [chatId]);

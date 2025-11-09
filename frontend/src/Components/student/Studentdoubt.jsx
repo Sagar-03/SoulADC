@@ -40,11 +40,22 @@ export default function Studentdoubt() {
   useEffect(() => {
     socket.on("receive_message", fetchUserChats);
     socket.on("chat_closed", fetchUserChats);
+    socket.on("chat_deleted", (data) => {
+      // If the deleted chat is currently selected, clear selection
+      if (selectedChat && selectedChat._id === data.chatId) {
+        setSelectedChat(null);
+        localStorage.removeItem("activeChat");
+      }
+      // Refresh chat list
+      fetchUserChats();
+    });
+    
     return () => {
       socket.off("receive_message", fetchUserChats);
       socket.off("chat_closed", fetchUserChats);
+      socket.off("chat_deleted");
     };
-  }, [user]);
+  }, [user, selectedChat]);
 
   // ✅ Load chats whenever user changes
   useEffect(() => {
@@ -100,7 +111,7 @@ export default function Studentdoubt() {
 return (
   <StudentLayout>
     <div className="panel student-panel">
-      <h2>Ask a Doubt 💭</h2>
+      <h2>Ask Your Doubt 💭</h2>
 
       {/* ===== Doubt Form ===== */}
       <div className="student-form">

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { getUser } from "../../../utils/auth";
+import { getUser, updateUserData } from "../../../utils/auth";
+import { updateUserProfile } from "../../../Api/api";
 import StudentLayout from "../StudentLayout";
 import { FaUser, FaEnvelope, FaPhone, FaEdit, FaSave, FaTimes } from "react-icons/fa";
 import "./StudentProfile.css";
@@ -7,6 +8,9 @@ import "./StudentProfile.css";
 const StudentProfile = () => {
   const [user, setUser] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -33,11 +37,53 @@ const StudentProfile = () => {
     }));
   };
 
-  const handleSave = () => {
-    // Here you can add API call to update user profile
-    console.log("Saving profile data:", formData);
-    setIsEditing(false);
-    // You might want to update the user data in cookies/state here
+  const handleSave = async () => {
+    setError("");
+    setSuccess("");
+    setIsLoading(true);
+
+    try {
+      // Validate form data
+      if (!formData.name.trim() || !formData.email.trim()) {
+        setError("Name and email are required");
+        setIsLoading(false);
+        return;
+      }
+
+      // Email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email.trim())) {
+        setError("Please enter a valid email address");
+        setIsLoading(false);
+        return;
+      }
+
+      console.log("Saving profile data:", formData);
+      
+      // Call API to update profile
+      const response = await updateUserProfile({
+        name: formData.name.trim(),
+        email: formData.email.trim()
+      });
+
+      if (response.data && response.data.user) {
+        // Update local user data
+        const updatedUser = updateUserData(response.data.user);
+        setUser(updatedUser);
+        setSuccess("Profile updated successfully!");
+        setIsEditing(false);
+        
+        // Clear success message after 3 seconds
+        setTimeout(() => setSuccess(""), 3000);
+      }
+
+    } catch (error) {
+      console.error("Profile update error:", error);
+      const errorMessage = error.response?.data?.message || "Failed to update profile. Please try again.";
+      setError(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleCancel = () => {
@@ -46,6 +92,8 @@ const StudentProfile = () => {
       email: user?.email || "",
       phone: user?.phone || "",
     });
+    setError("");
+    setSuccess("");
     setIsEditing(false);
   };
 
@@ -87,9 +135,21 @@ const StudentProfile = () => {
                       <button
                         className="btn profile-btn profile-btn-success btn-sm d-flex align-items-center"
                         onClick={handleSave}
+                        disabled={isLoading}
                       >
-                        <FaSave className="me-1" />
-                        Save
+                        {isLoading ? (
+                          <>
+                            <div className="spinner-border spinner-border-sm me-1" role="status">
+                              <span className="visually-hidden">Loading...</span>
+                            </div>
+                            Saving...
+                          </>
+                        ) : (
+                          <>
+                            <FaSave className="me-1" />
+                            Save
+                          </>
+                        )}
                       </button>
                       <button
                         className="btn profile-btn profile-btn-secondary btn-sm d-flex align-items-center"
@@ -101,6 +161,21 @@ const StudentProfile = () => {
                     </div>
                   )}
                 </div>
+
+                {/* Error and Success Messages */}
+                {error && (
+                  <div className="alert alert-danger mb-3" role="alert">
+                    <i className="fas fa-exclamation-circle me-2"></i>
+                    {error}
+                  </div>
+                )}
+                
+                {success && (
+                  <div className="alert alert-success mb-3" role="alert">
+                    <i className="fas fa-check-circle me-2"></i>
+                    {success}
+                  </div>
+                )}
 
                 {/* Profile Content */}
                 <div className="row">
@@ -124,11 +199,12 @@ const StudentProfile = () => {
                           <div className="profile-field">
                             <input
                               type="text"
-                              className="profile-input w-100"
+                              className={`profile-input w-100 ${error && !formData.name.trim() ? 'is-invalid' : ''}`}
                               name="name"
                               value={formData.name}
                               onChange={handleInputChange}
                               placeholder="Enter your full name"
+                              required
                             />
                           </div>
                         ) : (
@@ -148,11 +224,12 @@ const StudentProfile = () => {
                           <div className="profile-field">
                             <input
                               type="email"
-                              className="profile-input w-100"
+                              className={`profile-input w-100 ${error && (!formData.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) ? 'is-invalid' : ''}`}
                               name="email"
                               value={formData.email}
                               onChange={handleInputChange}
                               placeholder="Enter your email address"
+                              required
                             />
                           </div>
                         ) : (

@@ -2,6 +2,7 @@ const express = require('express');
 const { protect } = require("../middleware/authMiddleware");
 const Course = require("../models/Course");
 const User = require("../models/userModel");
+const { updateProfile } = require("../controllers/authcontroller");
 const router = express.Router();
 
 /**
@@ -69,6 +70,12 @@ router.get('/admin', protect, (req, res) => {
 // only user can access this route  
 router.get('/user', protect, (req, res) => {
     res.status(200).json({ message: 'Welcome User' });
-}); 
+});
+
+/**
+ * PUT /api/user/profile
+ * Update user profile (name, email)
+ */
+router.put('/profile', protect, updateProfile);
 
 module.exports = router;

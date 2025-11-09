@@ -49,6 +49,17 @@ export const setAuthData = (token, user, role) => {
   emitAuthChange(); // 🔔 Notify all components
 };
 
+export const updateUserData = (userData) => {
+  const currentUser = getUser();
+  if (currentUser) {
+    const updatedUser = { ...currentUser, ...userData };
+    setCookie("user", JSON.stringify(updatedUser));
+    emitAuthChange(); // 🔔 Notify all components
+    return updatedUser;
+  }
+  return null;
+};
+
 // -------------------
 // Redirect Helpers
 // -------------------
