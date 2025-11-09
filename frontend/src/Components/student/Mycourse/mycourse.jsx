@@ -6,18 +6,17 @@ import "./mycourse.css";
 import StudentLayout from "../StudentLayout";
 import { getStreamUrl } from "../../../Api/api";
 import { api } from "../../../Api/api";
+import { FaFileAlt } from "react-icons/fa";
 
 const Mycourse = () => {
   const { courseId } = useParams(); // Get course ID from URL
   const navigate = useNavigate();
 
-  const [tab, setTab] = useState("content"); // "content" | "documents"
   const [selectedWeek, setSelectedWeek] = useState(1);
   const [activeDay, setActiveDay] = useState(0); // 0 = Day 1
   const [course, setCourse] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedWeekDocs, setSelectedWeekDocs] = useState([]);
 
   // Fetch course data from backend
   useEffect(() => {
@@ -48,13 +47,7 @@ const Mycourse = () => {
     fetchCourse();
   }, [courseId]);
 
-  // Fetch week-level documents when course or selectedWeek changes
-  useEffect(() => {
-    if (course && selectedWeek) {
-      const currentWeek = course.weeks?.find((w) => w.weekNumber === selectedWeek);
-      setSelectedWeekDocs(currentWeek?.documents || []);
-    }
-  }, [course, selectedWeek]);
+
 
   // Handle content opening
   const handleOpenContent = (content) => {
@@ -127,33 +120,26 @@ const Mycourse = () => {
           </div>
         </div>
 
-        {/* Switch Tabs */}
+        {/* Course Content Header */}
         <div className="container">
-          <ul className="nav nav-pills switch-tabs mb-4" role="tablist">
-            <li className="nav-item" role="presentation">
+          <div className="course-content-header mb-4">
+            <div className="d-flex justify-content-between align-items-center">
+              <div>
+                <h5 className="section-heading">Course Content</h5>
+                <p className="text-muted">Access your course modules and study materials</p>
+              </div>
               <button
-                className={`nav-link ${tab === "content" ? "active" : ""}`}
-                onClick={() => setTab("content")}
-                type="button"
-                role="tab"
+                className="btn btn-outline-primary"
+                onClick={() => navigate(`/documents/${courseId}`)}
               >
-                Course Content
+                <FaFileAlt className="me-2" />
+                View Documents
               </button>
-            </li>
-            <li className="nav-item" role="presentation">
-              <button
-                className={`nav-link ${tab === "documents" ? "active" : ""}`}
-                onClick={() => setTab("documents")}
-                type="button"
-                role="tab"
-              >
-                Documents / Mock Papers
-              </button>
-            </li>
-          </ul>
+            </div>
+          </div>
 
-          {/* TAB: Course Content */}
-          {tab === "content" && (
+          {/* Course Content */}
+          <div className="course-content-section">
             <div className="row g-4">
               {/* Left rail: Weeks list */}
               <aside className="col-lg-3">
@@ -225,44 +211,7 @@ const Mycourse = () => {
                 </div>
               </main>
             </div>
-          )}
-
-          {/* TAB: Documents / Mock Papers */}
-          {tab === "documents" && (
-            <div className="row g-3">
-              {selectedWeekDocs.length > 0 ? (
-                selectedWeekDocs.map((doc, i) => (
-                  <div key={i} className="col-sm-6 col-md-4 col-lg-3">
-                    <div className="doc-card shadow-sm p-3 h-100 d-flex flex-column justify-content-between">
-                      <div className="d-flex align-items-start mb-2">
-                        <div className="doc-icon me-2">📄</div>
-                        <div className="flex-grow-1">
-                          <div className="doc-title" title={doc.title}>
-                            {doc.title}
-                          </div>
-                          <span className="doc-tag badge bg-light text-dark">
-                            {doc.type?.toUpperCase() || "PDF"}
-                          </span>
-                        </div>
-                      </div>
-
-                      <button
-                        className="btn btn-outline-primary btn-sm mt-2 w-100"
-                        onClick={() => window.open(getStreamUrl(doc.s3Key), "_blank")}
-                      >
-                        View
-                      </button>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="text-center text-muted py-4">
-                  <i className="bi bi-info-circle me-2"></i>
-                  No documents uploaded for this module yet.
-                </div>
-              )}
-            </div>
-          )}
+          </div>
 
         </div>
       </div>

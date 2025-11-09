@@ -19,6 +19,8 @@ import Dashboard from "./Components/student/Dashboard/PurchasedDashboard";
 import EmbeddedVideoPlayer from "./Components/VideoPlayer/EmbeddedVideoPlayer";
 import StudentDoubtPanel from "./Components/student/Studentdoubt";
 import StudentProfile from "./Components/student/Profile/StudentProfile";
+import DocumentsPage from "./Components/student/Documents/DocumentsPage";
+import StudentDocuments from "./Components/student/Documents/StudentDocuments";
 
 // Payment Components
 import PaymentPage from "./Components/PaymentDashboard/PaymentPage";
@@ -143,6 +145,22 @@ function App() {
           element={
             <ProtectedRoute>
               <StudentProfile />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/documents"
+          element={
+            <ProtectedRoute requirePurchased={true}>
+              <DocumentsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/documents/:courseId"
+          element={
+            <ProtectedRoute requirePurchased={true}>
+              <StudentDocuments />
             </ProtectedRoute>
           }
         />

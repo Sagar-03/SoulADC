@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { RxDashboard } from "react-icons/rx";
-import { FaBook, FaSignOutAlt } from "react-icons/fa";
+import { FaBook, FaSignOutAlt, FaFileAlt } from "react-icons/fa";
 import { FiMessageCircle } from "react-icons/fi";
 
 import { CgProfile } from "react-icons/cg";
@@ -39,6 +39,13 @@ const Leftsidebar = () => {
           text="Dashboard"
           active={location.pathname === "/Dashboard"}
           onClick={() => navigate("/Dashboard")}
+          hoverColor="#8B5E3C"
+        />
+        <SidebarItem
+          icon={<FaFileAlt />}
+          text="Documents"
+          active={location.pathname.includes("/documents")}
+          onClick={() => navigate("/documents")}
           hoverColor="#8B5E3C"
         />
          <SidebarItem

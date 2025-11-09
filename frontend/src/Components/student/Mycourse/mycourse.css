@@ -4,6 +4,30 @@
   min-height: 100vh;
 }
 
+/* Course Content Header */
+.course-content-header {
+  padding: 20px 0;
+}
+
+.course-content-header .section-heading {
+  color: #5A3825;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.course-content-header p {
+  color: #6c757d;
+  margin-bottom: 0;
+}
+
+@media (max-width: 768px) {
+  .course-content-header .d-flex {
+    flex-direction: column;
+    gap: 15px;
+    text-align: center;
+  }
+}
+
 /* Video Layout Styles */
 .video-layout {
   margin-top: 20px;
