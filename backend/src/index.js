@@ -21,6 +21,7 @@ const multipartUploadRoutes = require("./routes/multipartUpload.js");
 // ✅ New Chat Model
 const Chat = require("./models/Chat.js");
 const { router: chatUploadRoutes, setIoInstance } = require("./routes/chatUploadRoutes");
+const { protect } = require("./middleware/authMiddleware");
 
 // ===================== CONFIG =====================
 
@@ -142,12 +143,13 @@ io.on("connection", (socket) => {
 // ===================== CHAT REST ROUTES =====================
 
 // Create new chat
-app.post("/api/chat", async (req, res) => {
+app.post("/api/chat", protect, async (req, res) => {
   try {
-    const { userName, firstMessage } = req.body;
+    const { firstMessage } = req.body;
+    const userEmail = req.user.email; // Get email from authenticated user
 
     const chat = new Chat({
-      userName,
+      userEmail,
       messages: [{ senderRole: "user", text: firstMessage }],
     });
 
@@ -173,9 +175,9 @@ app.get("/api/chat/:id", async (req, res) => {
 });
 
 // Get open chats for user
-app.get("/api/user-chats/:userName", async (req, res) => {
-  const { userName } = req.params;
-  const chats = await Chat.find({ userName, isClosed: false });
+app.get("/api/user-chats", protect, async (req, res) => {
+  const userEmail = req.user.email; // Get email from authenticated user
+  const chats = await Chat.find({ userEmail, isClosed: false });
   res.json(chats);
 });
 

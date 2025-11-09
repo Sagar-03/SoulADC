@@ -125,12 +125,12 @@ export const getAllChats = () => api.get("/chats");
 
 export const getChatById = (chatId) => api.get(`/chat/${chatId}`);
 
-export const createChat = (userName, firstMessage) =>
-  api.post("/chat", { userName, firstMessage });
+export const createChat = (firstMessage) =>
+  api.post("/chat", { firstMessage });
 
 export const deleteChat = (chatId) => api.delete(`/chat/${chatId}`);
 
-export const getUserChats = (userName) => api.get(`/user-chats/${userName}`);
+export const getUserChats = () => api.get("/user-chats");
 
 // ============================
 // Chat Upload APIs

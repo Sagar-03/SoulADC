@@ -65,7 +65,7 @@ export default function Adminchat() {
             onClick={() => setSelectedChat(chat)}
           >
             <div className="chat-info">
-              <strong>{chat.userName || "Anonymous"}</strong>
+              <strong>{chat.userEmail || "Anonymous"}</strong>
               <p>{chat.messages[0]?.text?.slice(0, 60) || "No message yet"}</p>
             </div>
             <button

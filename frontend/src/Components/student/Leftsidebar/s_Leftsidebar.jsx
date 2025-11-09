@@ -23,7 +23,7 @@ const Leftsidebar = () => {
       className="bg-white border-end shadow-sm d-flex flex-column align-items-start p-3"
       style={{
         width: "220px",
-        minHeight: "90vh",
+        minHeight: "100vh",
         borderRadius: "12px",
       }}
     >

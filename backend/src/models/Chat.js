@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 const chatSchema = new mongoose.Schema({
-  userName: String,
+  userEmail: String,
   messages: [
     {
       senderRole: { type: String, enum: ["user", "admin"], required: true },
