@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { FaFileAlt, FaFilePdf } from "react-icons/fa";
 import StudentLayout from "../StudentLayout";
 import { api, getStreamUrl } from "../../../Api/api";
@@ -7,6 +7,7 @@ import "./StudentDocuments.css";
 
 const StudentDocuments = () => {
   const { courseId } = useParams();
+  const navigate = useNavigate();
   const [course, setCourse] = useState(null);
   const [selectedModule, setSelectedModule] = useState(1);
   const [documents, setDocuments] = useState([]);
@@ -54,9 +55,9 @@ const StudentDocuments = () => {
   }, [course, selectedModule]);
 
   const handleDocumentOpen = (doc) => {
-    if (doc.s3Key || doc._id) {
-      const docId = doc.s3Key || doc._id;
-      window.open(getStreamUrl(docId), "_blank");
+    const docId = doc._id || doc.id;
+    if (docId) {
+      navigate(`/documents/${courseId}/view/${docId}`);
     }
   };
 

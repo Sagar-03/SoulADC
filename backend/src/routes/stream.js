@@ -3,11 +3,12 @@ const mongoose = require("mongoose");
 const { HeadObjectCommand, GetObjectCommand, ListObjectsV2Command } = require("@aws-sdk/client-s3");
 const Course = require("../models/Course.js");
 const s3 = require("../config/s3.js");
+const { protect, protectStream } = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
 // Get video metadata endpoint
-router.get("/info/:identifier", async (req, res) => {
+router.get("/info/:identifier", protectStream, async (req, res) => {
   try {
     const { identifier } = req.params;
     let s3Key, contentInfo = null;
@@ -17,7 +18,8 @@ router.get("/info/:identifier", async (req, res) => {
       const course = await Course.findOne({
         $or: [
           { "weeks.contents._id": identifier },
-          { "weeks.days.contents._id": identifier }
+          { "weeks.days.contents._id": identifier },
+          { "weeks.documents._id": identifier }
         ]
       }).lean();
 
@@ -59,6 +61,24 @@ router.get("/info/:identifier", async (req, res) => {
                   break outer;
                 }
               }
+            }
+          }
+        }
+
+        // Check module-level documents (weeks.documents)
+        if (w.documents) {
+          for (const doc of w.documents) {
+            if (String(doc._id) === String(identifier)) {
+              s3Key = doc.s3Key;
+              contentInfo = {
+                id: doc._id,
+                title: doc.title,
+                type: doc.type,
+                weekNumber: w.weekNumber,
+                weekTitle: w.title,
+                isDocument: true
+              };
+              break outer;
             }
           }
         }
@@ -105,7 +125,7 @@ router.get("/info/:identifier", async (req, res) => {
   }
 });
 
-router.get("/:identifier", async (req, res) => {
+router.get("/:identifier", protectStream, async (req, res) => {
   try {
     const { identifier } = req.params;
     const range = req.headers.range;
@@ -117,7 +137,8 @@ router.get("/:identifier", async (req, res) => {
       const course = await Course.findOne({
         $or: [
           { "weeks.contents._id": identifier }, // Old structure support
-          { "weeks.days.contents._id": identifier } // New day-based structure
+          { "weeks.days.contents._id": identifier }, // New day-based structure
+          { "weeks.documents._id": identifier } // Module-level documents
         ]
       }).lean();
 
@@ -149,6 +170,17 @@ router.get("/:identifier", async (req, res) => {
             }
           }
         }
+
+        // Check module-level documents (weeks.documents)
+        if (w.documents) {
+          for (const doc of w.documents) {
+            if (String(doc._id) === String(identifier)) {
+              s3Key = doc.s3Key;
+              mime = doc.type === "pdf" ? "application/pdf" : "application/octet-stream";
+              break outer;
+            }
+          }
+        }
       }
     } else {
       s3Key = identifier;
@@ -166,6 +198,25 @@ router.get("/:identifier", async (req, res) => {
       fileSize = head.ContentLength;
     } catch (s3Error) {
       console.error(`S3 file not found: ${s3Key}`, s3Error.message);
+      
+      // List available files for debugging
+      console.log(`Available S3 files in documents/week-1/:`);
+      try {
+        const listCommand = new ListObjectsV2Command({
+          Bucket: process.env.AWS_S3_BUCKET,
+          Prefix: 'documents/week-1/',
+          MaxKeys: 20
+        });
+        const listResult = await s3.send(listCommand);
+        if (listResult.Contents) {
+          listResult.Contents.forEach(obj => {
+            console.log(`  - ${obj.Key}`);
+          });
+        }
+      } catch (listError) {
+        console.error('Error listing S3 objects:', listError.message);
+      }
+      
       return res.status(404).json({
         error: "File not found in storage",
         s3Key: s3Key,
@@ -192,15 +243,25 @@ router.get("/:identifier", async (req, res) => {
 
       const contentLength = end - start + 1;
 
-      // Set appropriate headers for partial content
-      res.writeHead(206, {
+      // Set appropriate headers for partial content with security measures
+      const headers = {
         "Content-Range": `bytes ${start}-${end}/${fileSize}`,
         "Accept-Ranges": "bytes",
         "Content-Length": contentLength,
         "Content-Type": mime,
-        "Cache-Control": "public, max-age=31536000", // Cache for 1 year
+        "Cache-Control": "public, max-age=31536000",
         "Access-Control-Expose-Headers": "Content-Range, Accept-Ranges, Content-Length"
-      });
+      };
+
+      // Add security headers for PDF documents
+      if (mime === "application/pdf") {
+        headers["Content-Disposition"] = "inline; filename=\"document.pdf\"";
+        headers["X-Frame-Options"] = "SAMEORIGIN";
+        headers["X-Content-Type-Options"] = "nosniff";
+        headers["Referrer-Policy"] = "no-referrer";
+      }
+
+      res.writeHead(206, headers);
 
       // Stream the requested range from S3
       try {
@@ -216,13 +277,23 @@ router.get("/:identifier", async (req, res) => {
         return res.status(500).json({ error: "Error streaming file content" });
       }
     } else {
-      // Handle non-range requests (full file)
-      res.writeHead(200, {
+      // Handle non-range requests (full file) with security measures
+      const headers = {
         "Content-Length": fileSize,
         "Content-Type": mime,
         "Accept-Ranges": "bytes",
         "Cache-Control": "public, max-age=31536000"
-      });
+      };
+
+      // Add security headers for PDF documents
+      if (mime === "application/pdf") {
+        headers["Content-Disposition"] = "inline; filename=\"document.pdf\"";
+        headers["X-Frame-Options"] = "SAMEORIGIN";
+        headers["X-Content-Type-Options"] = "nosniff";
+        headers["Referrer-Policy"] = "no-referrer";
+      }
+
+      res.writeHead(200, headers);
 
       try {
         const stream = await s3.send(new GetObjectCommand({

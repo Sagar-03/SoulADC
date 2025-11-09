@@ -21,6 +21,7 @@ import StudentDoubtPanel from "./Components/student/Studentdoubt";
 import StudentProfile from "./Components/student/Profile/StudentProfile";
 import DocumentsPage from "./Components/student/Documents/DocumentsPage";
 import StudentDocuments from "./Components/student/Documents/StudentDocuments";
+import DocumentViewer from "./Components/VideoPlayer/DocumentViewer";
 
 // Payment Components
 import PaymentPage from "./Components/PaymentDashboard/PaymentPage";
@@ -161,6 +162,14 @@ function App() {
           element={
             <ProtectedRoute requirePurchased={true}>
               <StudentDocuments />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/documents/:courseId/view/:documentId"
+          element={
+            <ProtectedRoute requirePurchased={true}>
+              <DocumentViewer />
             </ProtectedRoute>
           }
         />

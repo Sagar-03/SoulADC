@@ -1,0 +1,300 @@
+/* Document Viewer Container */
+.document-viewer-container {
+  position: relative;
+}
+
+.document-viewer-container.fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9999;
+  background: white;
+}
+
+/* Loading and Error States */
+.document-viewer-loading,
+.document-viewer-error {
+  background: #FAF9F6;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+/* Main Document Viewer */
+.document-viewer {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: #f8f9fa;
+}
+
+.document-viewer-container.fullscreen .document-viewer {
+  height: 100vh;
+}
+
+.document-viewer-container:not(.fullscreen) .document-viewer {
+  height: calc(100vh - 60px); /* Account for layout padding */
+}
+
+/* Document Header */
+.document-header {
+  background: white;
+  border-bottom: 1px solid #dee2e6;
+  padding: 15px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+}
+
+.document-header-left {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.document-info {
+  flex: 1;
+}
+
+.document-title {
+  color: #2c3e50;
+  font-weight: 600;
+  margin-bottom: 5px;
+  font-size: 1.1rem;
+}
+
+.document-meta {
+  color: #6c757d;
+  margin-bottom: 0;
+  font-size: 0.9rem;
+}
+
+.document-header-actions {
+  display: flex;
+  align-items: center;
+}
+
+.document-header-actions .btn {
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 0.9rem;
+}
+
+/* Document Content */
+.document-content {
+  flex: 1;
+  position: relative;
+  background: #fff;
+  overflow: hidden;
+}
+
+.document-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+}
+
+/* Security Overlay */
+.document-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Document Watermark */
+.document-watermark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-45deg);
+  opacity: 0.1;
+  pointer-events: none;
+  z-index: 2;
+  text-align: center;
+  font-size: 2rem;
+  font-weight: bold;
+  color: #000;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.document-watermark span {
+  display: block;
+  margin: 10px 0;
+  font-size: 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .document-watermark {
+    font-size: 1.5rem;
+  }
+  
+  .document-watermark span {
+    font-size: 1rem;
+  }
+}
+
+/* Prevent text selection and right-click */
+.document-content {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+.document-content::selection {
+  background: transparent;
+}
+
+.document-content::-moz-selection {
+  background: transparent;
+}
+
+/* Disable context menu */
+.document-iframe {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .document-header {
+    padding: 12px 15px;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .document-header-left {
+    width: 100%;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .document-header-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .document-title {
+    font-size: 1rem;
+  }
+
+  .document-meta {
+    font-size: 0.85rem;
+  }
+
+  .document-header-actions .btn {
+    padding: 6px 10px;
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .document-header {
+    padding: 10px;
+  }
+
+  .document-header-left button {
+    padding: 6px 10px;
+    font-size: 0.85rem;
+  }
+
+  .document-title {
+    font-size: 0.95rem;
+  }
+
+  .document-meta {
+    font-size: 0.8rem;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .document-header {
+    display: none;
+  }
+  
+  .document-content {
+    height: 100vh;
+  }
+  
+  .document-overlay {
+    display: none;
+  }
+}
+
+/* Security Enhancements */
+.document-viewer * {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Additional Security */
+.document-content {
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+/* Disable screenshot on some browsers */
+.document-viewer {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Prevent drag and drop */
+.document-viewer img,
+.document-viewer iframe {
+  -webkit-user-drag: none;
+  -khtml-user-drag: none;
+  -moz-user-drag: none;
+  -o-user-drag: none;
+  pointer-events: none;
+}
+
+/* Hide scrollbars but keep functionality */
+.document-iframe::-webkit-scrollbar {
+  display: none;
+}
+
+.document-iframe {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Loading Animation */
+.document-viewer-loading .spinner-border {
+  width: 3rem;
+  height: 3rem;
+  border-width: 0.3em;
+}
+
+/* Error State */
+.document-viewer-error h3 {
+  color: #6c757d;
+  font-weight: 600;
+}
+
+.document-viewer-error p {
+  font-size: 1rem;
+}

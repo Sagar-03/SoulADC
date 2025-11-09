@@ -62,7 +62,11 @@ export const getPurchasedCourses = () => api.get("/user/purchased-courses");
 
 // ============================
 // export const getStreamUrl = (s3Key) => `http://localhost:7001/api/stream/${s3Key}`;
-export const getStreamUrl = (s3Key) => `${API_BASE_URL}/stream/${s3Key}`;
+export const getStreamUrl = (s3Key) => {
+  const token = getCookie("token");
+  const url = `${API_BASE_URL}/stream/${s3Key}`;
+  return token ? `${url}?token=${encodeURIComponent(token)}` : url;
+};
 
 
 export const getPresignUrl = (fileName, fileType, folder, weekNumber, dayNumber) =>
