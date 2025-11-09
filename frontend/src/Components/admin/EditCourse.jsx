@@ -11,6 +11,7 @@ const EditCourse = () => {
     title: "",
     description: "",
     price: "",
+    cutPrice: "",
     thumbnail: null,
   });
   
@@ -28,6 +29,7 @@ const EditCourse = () => {
           title: data.title || "",
           description: data.description || "",
           price: data.price || "",
+          cutPrice: data.cutPrice || "",
           thumbnail: null,
         });
         setCurrentThumbnail(data.thumbnail || "");
@@ -106,6 +108,7 @@ const EditCourse = () => {
         title: form.title,
         description: form.description,
         price: parseFloat(form.price),
+        cutPrice: form.cutPrice ? parseFloat(form.cutPrice) : null,
         thumbnail: thumbnailKey,
       };
 
@@ -180,20 +183,39 @@ const EditCourse = () => {
           />
         </div>
 
-        {/* Price */}
-        <div className="mb-3">
-          <label className="form-label">Price ($)</label>
-          <input
-            type="number"
-            name="price"
-            value={form.price}
-            onChange={handleChange}
-            className="form-control"
-            required
-            min="0"
-            step="0.01"
-            disabled={updating}
-          />
+        {/* Price Section */}
+        <div className="row">
+          <div className="col-md-6 mb-3">
+            <label className="form-label">Actual Price ($)</label>
+            <input
+              type="number"
+              name="price"
+              value={form.price}
+              onChange={handleChange}
+              className="form-control"
+              required
+              min="0"
+              step="0.01"
+              disabled={updating}
+              placeholder="Enter the actual selling price"
+            />
+            <div className="form-text">This is the price customers will pay</div>
+          </div>
+          <div className="col-md-6 mb-3">
+            <label className="form-label">Cut Price ($) - Optional</label>
+            <input
+              type="number"
+              name="cutPrice"
+              value={form.cutPrice}
+              onChange={handleChange}
+              className="form-control"
+              min="0"
+              step="0.01"
+              disabled={updating}
+              placeholder="Enter original price to show discount"
+            />
+            <div className="form-text">Original price to show as strikethrough</div>
+          </div>
         </div>
 
         {/* Current Thumbnail */}

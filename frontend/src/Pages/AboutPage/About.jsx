@@ -232,7 +232,7 @@ const About = () => {
       {/* About Mentor */}
       <section className="mentor-section container py-5">
         <h2 className="section-title">
-          About <span className="highlight">Mentor</span>
+          About <span className="highlight">Our Mentor</span>
         </h2>
         <p>
           <strong>Dr. Chidambra Makker (Dr. Chi)</strong> — with a Bachelor of Dental Surgery and an MBA in Hospital

@@ -62,33 +62,42 @@ export default function ChatRoom({ chatId, senderRole, onBack, onDelete }) {
     const file = e.target.files[0];
     if (!file) return;
 
+    // Prevent duplicate uploads by checking if already uploading
+    if (uploading) {
+      console.log("Upload already in progress, ignoring duplicate request");
+      return;
+    }
+
     if (file.size > 5 * 1024 * 1024) { // 5 MB limit
       alert("Image size must be under 5MB");
+      // Reset the input
+      e.target.value = '';
       return;
     }
 
     try {
       setUploading(true);
+      console.log("Uploading image to chat:", chatId, "as", senderRole);
       const response = await uploadChatImage(chatId, senderRole, file);
       const data = response.data;
       
       if (data.success) {
-        if (socket) {
-          socket.emit("send_message", {
-            chatId,
-            sender: senderRole,
-            text: "",
-            media: { type: "image", url: data.url },
-          });
-        }
+        console.log("Image upload successful:", data.url);
+        // Note: No need to emit socket message here since backend already saves the message
+        // and the socket will broadcast the updated messages automatically
       } else {
+        console.error("Image upload failed - server response:", data);
         alert("Image upload failed: " + (data.error || "Unknown error"));
       }
     } catch (err) {
-      console.error("Image upload failed", err);
-      alert("Image upload failed: " + (err.response?.data?.error || err.message));
+      console.error("Image upload error - full error:", err);
+      console.error("Error response:", err.response);
+      const errorMessage = err.response?.data?.error || err.message || "Network error";
+      alert("Image upload failed: " + errorMessage);
     } finally {
       setUploading(false);
+      // Reset the file input after upload completes
+      e.target.value = '';
     }
   };
 
@@ -112,24 +121,23 @@ export default function ChatRoom({ chatId, senderRole, onBack, onDelete }) {
 
         try {
           setUploading(true);
+          console.log("Uploading audio to chat:", chatId, "as", senderRole);
           const response = await uploadChatAudio(chatId, senderRole, blob);
           const data = response.data;
           
           if (data.success) {
-            if (socket) {
-              socket.emit("send_message", {
-                chatId,
-                sender: senderRole,
-                text: "",
-                media: { type: "audio", url: data.url },
-              });
-            }
+            console.log("Audio upload successful:", data.url);
+            // Note: No need to emit socket message here since backend already saves the message
+            // and the socket will broadcast the updated messages automatically
           } else {
+            console.error("Audio upload failed - server response:", data);
             alert("Audio upload failed: " + (data.error || "Unknown error"));
           }
         } catch (err) {
-          console.error("Audio upload failed", err);
-          alert("Audio upload failed: " + (err.response?.data?.error || err.message));
+          console.error("Audio upload error - full error:", err);
+          console.error("Error response:", err.response);
+          const errorMessage = err.response?.data?.error || err.message || "Network error";
+          alert("Audio upload failed: " + errorMessage);
         } finally {
           setUploading(false);
         }

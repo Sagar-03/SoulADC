@@ -78,7 +78,7 @@ export default function CoursesPage() {
                   <a href="#courses" className="btn btn-dark">
                     View Courses
                   </a>
-                  <a href="https://wa.me/0000000000" className="btn btn-outline-dark">
+                  <a href="https://wa.me/0493746935" className="btn btn-outline-dark">
                     Talk to a Mentor
                   </a>
                 </div>

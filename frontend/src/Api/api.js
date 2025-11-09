@@ -140,15 +140,19 @@ export const uploadChatImage = (chatId, senderRole, file) => {
   const formData = new FormData();
   formData.append("file", file);
   
-  return axios.post(
-    `${API_BASE_URL.replace('/api', '')}/upload/chat-image/${chatId}/${senderRole}`,
-    formData,
-    {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    }
-  );
+  // Properly construct base URL by removing only the /api suffix
+  const baseUrl = API_BASE_URL.endsWith('/api') ? API_BASE_URL.slice(0, -4) : API_BASE_URL;
+  const uploadUrl = `${baseUrl}/upload/chat-image/${chatId}/${senderRole}`;
+  
+  console.log("Chat image upload URL:", uploadUrl);
+  console.log("API_BASE_URL:", API_BASE_URL);
+  console.log("Base URL:", baseUrl);
+  
+  return axios.post(uploadUrl, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
 };
 
 export const uploadChatAudio = (chatId, senderRole, audioBlob) => {
@@ -157,20 +161,30 @@ export const uploadChatAudio = (chatId, senderRole, audioBlob) => {
   formData.append("chatId", chatId);
   formData.append("senderRole", senderRole);
   
-  return axios.post(
-    `${API_BASE_URL.replace('/api', '')}/upload/chat-audio`,
-    formData,
-    {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    }
-  );
+  // Properly construct base URL by removing only the /api suffix
+  const baseUrl = API_BASE_URL.endsWith('/api') ? API_BASE_URL.slice(0, -4) : API_BASE_URL;
+  const uploadUrl = `${baseUrl}/upload/chat-audio`;
+  
+  console.log("Chat audio upload URL:", uploadUrl);
+  console.log("API_BASE_URL:", API_BASE_URL);
+  console.log("Base URL:", baseUrl);
+  
+  return axios.post(uploadUrl, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
 };
 
 // Get the WebSocket URL for chat
 export const getChatSocketUrl = () => {
-  const baseUrl = API_BASE_URL.replace('/api', '');
+  // Properly construct base URL by removing only the /api suffix
+  const baseUrl = API_BASE_URL.endsWith('/api') ? API_BASE_URL.slice(0, -4) : API_BASE_URL;
+  
+  console.log("WebSocket URL construction:");
+  console.log("API_BASE_URL:", API_BASE_URL);
+  console.log("Base URL:", baseUrl);
+  
   return baseUrl;
 };
 

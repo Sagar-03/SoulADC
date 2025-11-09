@@ -47,8 +47,8 @@ export default function CourseCard({ course }) {
     }
   };
 
-  // 10% increase for cut price
-  const cutPrice = courseData.price * 1.1;
+  // Use cut price from backend data if available
+  const cutPrice = course.cutPrice;
 
   return (
     <section id={courseData._id} className="col-12 col-lg-6 mb-4">
@@ -80,10 +80,12 @@ export default function CourseCard({ course }) {
 
           {/* Price Section */}
           <div className="mb-3 d-flex align-items-center gap-3">
-            {/* Cut price with strikethrough */}
-            <span className="cut-price">
-              {formatPrice(cutPrice)}
-            </span>
+            {/* Cut price with strikethrough - only show if cutPrice exists */}
+            {cutPrice && (
+              <span className="cut-price">
+                {formatPrice(cutPrice)}
+              </span>
+            )}
 
             {/* Actual backend price */}
             <span className="h4 fw-bold text-success">

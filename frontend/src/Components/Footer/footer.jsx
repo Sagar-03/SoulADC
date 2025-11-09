@@ -82,7 +82,7 @@ const Footer = () => {
                 <FaMapMarkerAlt className="me-2" /> Canberra, Australia
               </Nav.Link>
             </Nav>
-            <Button style={{ backgroundColor: '#8B4513', borderColor: '#8B4513' }}
+            <Button style={{ background: "linear-gradient(145deg, #A98C6A, #7B563D)" , outline: "none", border: "none" }}
               as={Link}
               to="/courses"
               variant='dark'

@@ -193,12 +193,12 @@ video {
   cursor: pointer;
 }
 
-.file-drop-zone:hover {
+/* .file-drop-zone:hover {
   border-color: #5A3825;
   background: linear-gradient(135deg, #f8f7f6 0%, #f0ede9 100%);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(139, 94, 60, 0.2);
-}
+} */
 
 .file-drop-zone.dragover {
   border-color: #5A3825;

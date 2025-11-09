@@ -6,6 +6,14 @@ const Chat = require("../models/Chat"); // 👈 import Chat model
 
 const router = express.Router();
 
+// Store io instance
+let ioInstance = null;
+
+// Function to set io instance
+const setIoInstance = (io) => {
+  ioInstance = io;
+};
+
 // ✅ Create uploads/chat folder if missing
 const uploadDir = path.join(process.cwd(), "uploads", "chat");
 if (!fs.existsSync(uploadDir)) {
@@ -29,14 +37,31 @@ const upload = multer({
 // ✅ Upload image
 router.post("/chat-image/:chatId/:senderRole", upload.single("file"), async (req, res) => {
   try {
+    console.log("📸 Image upload request received");
+    console.log("Chat ID:", req.params.chatId);
+    console.log("Sender Role:", req.params.senderRole);
+    console.log("File info:", req.file ? {
+      filename: req.file.filename,
+      originalname: req.file.originalname,
+      size: req.file.size,
+      mimetype: req.file.mimetype
+    } : "No file");
+    
     const { chatId, senderRole } = req.params;
-    if (!req.file) return res.status(400).json({ error: "No file uploaded" });
+    if (!req.file) {
+      console.log("❌ No file uploaded");
+      return res.status(400).json({ error: "No file uploaded" });
+    }
 
     const fileUrl = `${req.protocol}://${req.get("host")}/uploads/chat/${req.file.filename}`;
+    console.log("Generated file URL:", fileUrl);
 
     // ✅ Save message to MongoDB
     const chat = await Chat.findById(chatId);
-    if (!chat) return res.status(404).json({ error: "Chat not found" });
+    if (!chat) {
+      console.log("❌ Chat not found:", chatId);
+      return res.status(404).json({ error: "Chat not found" });
+    }
 
     chat.messages.push({
       senderRole,
@@ -45,6 +70,12 @@ router.post("/chat-image/:chatId/:senderRole", upload.single("file"), async (req
     });
 
     await chat.save();
+    console.log("✅ Image upload successful:", fileUrl);
+
+    // Broadcast updated messages via socket
+    if (ioInstance) {
+      ioInstance.to(chatId).emit("receive_message", chat.messages);
+    }
 
     return res.json({ success: true, url: fileUrl });
   } catch (err) {
@@ -56,14 +87,30 @@ router.post("/chat-image/:chatId/:senderRole", upload.single("file"), async (req
 // ✅ Upload audio
 router.post("/chat-audio", upload.single("file"), async (req, res) => {
   try {
+    console.log("🎵 Audio upload request received");
+    console.log("Body:", req.body);
+    console.log("File info:", req.file ? {
+      filename: req.file.filename,
+      originalname: req.file.originalname,
+      size: req.file.size,
+      mimetype: req.file.mimetype
+    } : "No file");
+    
     const { chatId, senderRole } = req.body;
-    if (!req.file) return res.status(400).json({ error: "No file uploaded" });
+    if (!req.file) {
+      console.log("❌ No audio file uploaded");
+      return res.status(400).json({ error: "No file uploaded" });
+    }
 
     const fileUrl = `${req.protocol}://${req.get("host")}/uploads/chat/${req.file.filename}`;
+    console.log("Generated audio file URL:", fileUrl);
 
     // ✅ Save message to MongoDB
     const chat = await Chat.findById(chatId);
-    if (!chat) return res.status(404).json({ error: "Chat not found" });
+    if (!chat) {
+      console.log("❌ Chat not found:", chatId);
+      return res.status(404).json({ error: "Chat not found" });
+    }
 
     chat.messages.push({
       senderRole,
@@ -72,6 +119,12 @@ router.post("/chat-audio", upload.single("file"), async (req, res) => {
     });
 
     await chat.save();
+    console.log("✅ Audio upload successful:", fileUrl);
+
+    // Broadcast updated messages via socket
+    if (ioInstance) {
+      ioInstance.to(chatId).emit("receive_message", chat.messages);
+    }
 
     return res.json({ success: true, url: fileUrl });
   } catch (err) {
@@ -80,4 +133,4 @@ router.post("/chat-audio", upload.single("file"), async (req, res) => {
   }
 });
 
-module.exports = router;
+module.exports = { router, setIoInstance };

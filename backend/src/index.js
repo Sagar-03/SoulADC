@@ -20,7 +20,7 @@ const multipartUploadRoutes = require("./routes/multipartUpload.js");
 
 // ✅ New Chat Model
 const Chat = require("./models/Chat.js");
-const chatUploadRoutes = require("./routes/chatUploadRoutes");
+const { router: chatUploadRoutes, setIoInstance } = require("./routes/chatUploadRoutes");
 
 // ===================== CONFIG =====================
 
@@ -33,6 +33,9 @@ const server = http.createServer(app);
 const io = new Server(server, {
   cors: { origin: "*" },
 });
+
+// Set io instance for chat upload routes
+setIoInstance(io);
 
 // ===================== TIMEOUTS =====================
 app.use((req, res, next) => {
@@ -62,7 +65,7 @@ app.use(
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    allowedHeaders: ["Content-Type", "Authorization", "Accept", "Content-Length"],
     optionsSuccessStatus: 200,
   })
 );

@@ -133,7 +133,23 @@
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
   color: #8B5E3C;
   text-align: center;
-  /* animation: float 6s ease-in-out infinite; */
+
+  /* ✅ Uniform structure */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  /* spacing between icon & text */
+  width: max-content;
+  /* use natural width */
+  height: auto;
+  /* auto height like card 1 */
+}
+
+.card-icon {
+  font-size: 24px;
+  color: #8B5E3C;
 }
 
 .floating-card.card-1 {
@@ -145,25 +161,31 @@
 .floating-card.card-2 {
   top: 170px;
   right: 0px;
-  animation-delay: 2s;
+  width: 210px;
+  height: 120px;
 }
 
 .floating-card.card-3 {
   bottom: 216px;
   left: 0px;
   animation-delay: 4s;
+  width: 210px;
+  height: 120px;
 }
 
 .floating-card.card-4 {
   top: 400px;
   right: 400px;
   animation-delay: 4s;
+  width: 210px;
+  height: 120px;
 }
 
 .floating-card.card-5 {
   top: 400px;
   right: 50px;
   animation-delay: 2s;
+
 }
 
 .card-icon {
@@ -319,7 +341,7 @@
   position: relative;
 }
 
-.promise-section::before {
+/* .promise-section::before {
   content: '';
   position: absolute;
   top: 0;
@@ -328,7 +350,7 @@
   bottom: 0;
   background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="dots" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="10" cy="10" r="1" fill="%23ffffff" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23dots)"/></svg>');
   pointer-events: none;
-}
+} */
 
 .promise-badge {
   display: inline-block;
@@ -693,7 +715,8 @@
 
 .adc-download-wrapper {
   position: relative;
-  margin-top: 60px; /* add spacing below the steps */
+  margin-top: 60px;
+  /* add spacing below the steps */
   display: flex;
   justify-content: flex-end;
   padding-right: 60px;
@@ -739,4 +762,3 @@
     display: none !important;
   }
 }
-

@@ -10,6 +10,7 @@ const AddCourse = () => {
     durationMonths: "",
     weeks: "",
     price: "",
+    cutPrice: "",
     thumbnail: null,
   });
 
@@ -82,6 +83,7 @@ const AddCourse = () => {
         durationMonths: parseInt(form.durationMonths),
         weeks: parseInt(form.weeks),
         price: parseFloat(form.price),
+        cutPrice: form.cutPrice ? parseFloat(form.cutPrice) : null,
         thumbnail: thumbnailKey,
       };
 
@@ -166,18 +168,35 @@ const AddCourse = () => {
           </div>
         </div>
 
-        {/* Price */}
-        <div className="mb-3">
-          <label className="form-label">Price ($)</label>
-          <input
-            type="number"
-            name="price"
-            value={form.price}
-            onChange={handleChange}
-            className="form-control"
-            required
-            disabled={uploading}
-          />
+        {/* Price Section */}
+        <div className="row">
+          <div className="col-md-6 mb-3">
+            <label className="form-label">Actual Price ($)</label>
+            <input
+              type="number"
+              name="price"
+              value={form.price}
+              onChange={handleChange}
+              className="form-control"
+              required
+              disabled={uploading}
+              placeholder="Enter the actual selling price"
+            />
+            <div className="form-text">This is the price customers will pay</div>
+          </div>
+          <div className="col-md-6 mb-3">
+            <label className="form-label">Cut Price ($) - Optional</label>
+            <input
+              type="number"
+              name="cutPrice"
+              value={form.cutPrice}
+              onChange={handleChange}
+              className="form-control"
+              disabled={uploading}
+              placeholder="Enter original price to show discount"
+            />
+            <div className="form-text">Original price to show as strikethrough</div>
+          </div>
         </div>
 
         {/* Thumbnail Upload */}

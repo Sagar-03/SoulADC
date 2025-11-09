@@ -13,7 +13,7 @@ const User = require("../models/userModel");
 
 router.post("/courses", protect, adminOnly, async (req, res) => {
   try {
-    const { title, description, durationMonths, weeks, price, thumbnail } = req.body;
+    const { title, description, durationMonths, weeks, price, cutPrice, thumbnail } = req.body;
 
     if (!title || !durationMonths || !weeks || !price) {
       return res.status(400).json({ error: "Missing required fields" });
@@ -23,6 +23,7 @@ router.post("/courses", protect, adminOnly, async (req, res) => {
       title,
       description,
       price,
+      cutPrice: cutPrice || null, // Optional cut price
       thumbnail: thumbnail || "", // store S3 key or URL
       weeks: [], // start empty
     });
@@ -348,7 +349,7 @@ router.put("/courses/:courseId/weeks/:weekId/days/:dayId/contents/:contentId", p
  */
 router.put("/courses/:id", protect, adminOnly, async (req, res) => {
   try {
-    const { title, description, price, thumbnail } = req.body;
+    const { title, description, price, cutPrice, thumbnail } = req.body;
     const course = await Course.findById(req.params.id);
 
     if (!course) return res.status(404).json({ error: "Course not found" });
@@ -357,6 +358,7 @@ router.put("/courses/:id", protect, adminOnly, async (req, res) => {
     if (title !== undefined) course.title = title;
     if (description !== undefined) course.description = description;
     if (price !== undefined) course.price = price;
+    if (cutPrice !== undefined) course.cutPrice = cutPrice;
     if (thumbnail !== undefined) course.thumbnail = thumbnail;
 
     await course.save();

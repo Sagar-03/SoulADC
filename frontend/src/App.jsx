@@ -18,6 +18,7 @@ import Mycourse from "./Components/student/Mycourse/mycourse";
 import Dashboard from "./Components/student/Dashboard/PurchasedDashboard";
 import EmbeddedVideoPlayer from "./Components/VideoPlayer/EmbeddedVideoPlayer";
 import StudentDoubtPanel from "./Components/student/Studentdoubt";
+import StudentProfile from "./Components/student/Profile/StudentProfile";
 
 // Payment Components
 import PaymentPage from "./Components/PaymentDashboard/PaymentPage";
@@ -134,6 +135,14 @@ function App() {
           element={
             <ProtectedRoute>
               <StudentDoubtPanel />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <StudentProfile />
             </ProtectedRoute>
           }
         />

@@ -30,7 +30,7 @@ const About = () => {
     <section className="mission-section">
       <div className="container">
         {/* Top Section: Button, Heading, and Sub-heading */}
-        <button className="btn btn-mission">About Our Mission</button>
+        <div className="btn btn-mission">About Our Mission </div>
         <h1 className="main-heading">
           Empowering Future <span className="highlight">Australian Dentists</span>
         </h1>

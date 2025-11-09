@@ -11,7 +11,7 @@ const MentorCard = () => {
       <div className="mentor-card">
         {/* Left Side */}
         <div className="mentor-left">
-          <h2 className="mentor-title">About Mentor</h2>
+          <h2 className="mentor-title">About Our Founder</h2>
 
           <div className="mentor-commitment">
             <h2 className="commitment-title">Dr. Chidambra Makker (Dr. Chi)
@@ -33,7 +33,7 @@ const MentorCard = () => {
             </ul> */}
             <button
               as={Link}
-              to="/courses"   // your target route
+              to="/courses"   
               variant="dark"
               className="mentor-button">
               Start Your Preparation Today

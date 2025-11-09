@@ -25,6 +25,7 @@ const courseSchema = new mongoose.Schema({
   title: String,
   description: String,
   price: Number,
+  cutPrice: { type: Number, required: false }, // Original/discounted price
   thumbnail: { type: String , required: false},
   weeks: [weekSchema],
   isLive: { type: Boolean, default: false },
