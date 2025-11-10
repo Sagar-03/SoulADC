@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { FaArrowLeft, FaDownload, FaPrint, FaExpand, FaCompress } from "react-icons/fa";
+import { FaArrowLeft, FaExpand, FaCompress } from "react-icons/fa";
 import StudentLayout from "../student/StudentLayout";
 import { api, getStreamUrl } from "../../Api/api";
 import "./DocumentViewer.css";
@@ -106,10 +106,7 @@ const DocumentViewer = () => {
         setIsFullscreen(!isFullscreen);
     };
 
-    const handlePrint = () => {
-        // Simple print function - will print the whole page
-        window.print();
-    };
+
 
     if (loading) {
         return (
@@ -170,7 +167,6 @@ const DocumentViewer = () => {
                         documentUrl={documentUrl}
                         isFullscreen={isFullscreen}
                         toggleFullscreen={toggleFullscreen}
-                        handlePrint={handlePrint}
                         navigate={navigate}
                         courseId={courseId}
                     />
@@ -184,7 +180,6 @@ const DocumentViewer = () => {
                     documentUrl={documentUrl}
                     isFullscreen={isFullscreen}
                     toggleFullscreen={toggleFullscreen}
-                    handlePrint={handlePrint}
                     navigate={navigate}
                     courseId={courseId}
                 />
@@ -199,7 +194,6 @@ const DocumentViewerContent = ({
     documentUrl,
     isFullscreen,
     toggleFullscreen,
-    handlePrint,
     navigate,
     courseId
 }) => {
@@ -228,13 +222,6 @@ const DocumentViewerContent = ({
 
                 <div className="document-header-actions">
                     <button
-                        className="btn btn-outline-primary me-2"
-                        onClick={handlePrint}
-                        title="Print Document"
-                    >
-                        <FaPrint />
-                    </button>
-                    <button
                         className="btn btn-outline-primary"
                         onClick={toggleFullscreen}
                         title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
@@ -248,7 +235,7 @@ const DocumentViewerContent = ({
             <div className="document-content">
                 <iframe
                     id="documentFrame"
-                    src={documentUrl}
+                    src={`${documentUrl}#toolbar=0&navpanes=0&scrollbar=1`}
                     className="document-iframe"
                     title={documentData.title}
                 />
