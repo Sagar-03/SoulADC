@@ -203,14 +203,10 @@ export const getAdminDashboardStats = () => api.get("/admin/dashboard/stats");
 export const updateUserProfile = (profileData) => api.put("/user/profile", profileData);
 
 export const getDocuments = () => {
-  return axios.get(`${API_BASE_URL}/admin/documents`, {
-    // headers: { Authorization: `Bearer ${token}` },
-  });
+  return api.get("/admin/documents");
 };
 
 // 🗑️ Delete a document
 export const deleteDocument = (id) => {
-  return axios.delete(`${API_BASE_URL}/admin/documents/${id}`, {
-    // headers: { Authorization: `Bearer ${token}` },
-  });
+  return api.delete(`/admin/documents/${id}`);
 };

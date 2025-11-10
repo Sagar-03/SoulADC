@@ -573,16 +573,63 @@ router.get("/dashboard/stats", protect, adminOnly, async (req, res) => {
 
 /**
  * GET /api/admin/documents
- * Fetch all uploaded documents (from anywhere)
+ * Fetch all uploaded documents (from courses)
  */
 router.get("/documents", protect, adminOnly, async (req, res) => {
   try {
-    const docs = await Document.find({ isActive: true })
-      .populate("uploadedBy", "name email")
-      .sort({ createdAt: -1 });
+    const courses = await Course.find({});
+    const allDocuments = [];
 
-    console.log(`📂 Admin fetched ${docs.length} documents`);
-    res.status(200).json(docs);
+    courses.forEach(course => {
+      // Get week-level documents
+      course.weeks.forEach(week => {
+        if (week.documents && week.documents.length > 0) {
+          week.documents.forEach(doc => {
+            allDocuments.push({
+              _id: doc._id,
+              title: doc.title,
+              type: doc.type,
+              s3Key: doc.s3Key,
+              url: doc.s3Key ? `/api/stream/${doc.s3Key}` : null,
+              createdAt: doc._id.getTimestamp(), // Get timestamp from ObjectId
+              uploadedBy: { name: "Admin" }, // Since we don't have user info
+              courseTitle: course.title,
+              weekTitle: week.title,
+              source: 'week'
+            });
+          });
+        }
+
+        // Get day-level contents (documents)
+        week.days.forEach(day => {
+          if (day.contents && day.contents.length > 0) {
+            day.contents.forEach(content => {
+              if (content.type === 'document' || content.type === 'pdf') {
+                allDocuments.push({
+                  _id: content._id,
+                  title: content.title,
+                  type: content.type,
+                  s3Key: content.s3Key,
+                  url: content.s3Key ? `/api/stream/${content.s3Key}` : null,
+                  createdAt: content._id.getTimestamp(), // Get timestamp from ObjectId
+                  uploadedBy: { name: "Admin" }, // Since we don't have user info
+                  courseTitle: course.title,
+                  weekTitle: week.title,
+                  dayTitle: day.title,
+                  source: 'day'
+                });
+              }
+            });
+          }
+        });
+      });
+    });
+
+    // Sort by creation date (newest first)
+    allDocuments.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    console.log(`📂 Admin fetched ${allDocuments.length} documents`);
+    res.status(200).json(allDocuments);
   } catch (err) {
     console.error("❌ Error fetching documents:", err.message);
     res.status(500).json({ error: "Failed to fetch documents" });
@@ -591,22 +638,79 @@ router.get("/documents", protect, adminOnly, async (req, res) => {
 
 /**
  * DELETE /api/admin/documents/:id
- * Delete a document from S3 + DB
+ * Delete a document from S3 + DB (from courses)
  */
 router.delete("/documents/:id", protect, adminOnly, async (req, res) => {
   try {
-    const doc = await Document.findById(req.params.id);
-    if (!doc) return res.status(404).json({ error: "Document not found" });
+    const documentId = req.params.id;
+    let documentFound = false;
+    let documentToDelete = null;
 
-    const deleteParams = {
-      Bucket: process.env.AWS_S3_BUCKET,
-      Key: doc.s3Key,
-    };
+    // Find the document in courses
+    const courses = await Course.find({});
+    
+    for (const course of courses) {
+      for (const week of course.weeks) {
+        // Check week-level documents
+        if (week.documents) {
+          const docIndex = week.documents.findIndex(doc => doc._id.toString() === documentId);
+          if (docIndex !== -1) {
+            documentToDelete = week.documents[docIndex];
+            week.documents.splice(docIndex, 1);
+            await course.save();
+            documentFound = true;
+            break;
+          }
+        }
 
-    await s3.send(new DeleteObjectCommand(deleteParams));
-    await doc.deleteOne();
+        // Check day-level contents
+        if (!documentFound) {
+          for (const day of week.days) {
+            if (day.contents) {
+              const contentIndex = day.contents.findIndex(content => 
+                content._id.toString() === documentId && 
+                (content.type === 'document' || content.type === 'pdf')
+              );
+              if (contentIndex !== -1) {
+                documentToDelete = day.contents[contentIndex];
+                day.contents.splice(contentIndex, 1);
+                await course.save();
+                documentFound = true;
+                break;
+              }
+            }
+          }
+        }
+        
+        if (documentFound) break;
+      }
+      if (documentFound) break;
+    }
 
-    console.log(`🗑️ Deleted document: ${doc.title}`);
+    if (!documentFound) {
+      return res.status(404).json({ error: "Document not found" });
+    }
+
+    // Delete from S3 if s3Key exists
+    if (documentToDelete.s3Key) {
+      try {
+        const s3 = require("../config/s3");
+        const { DeleteObjectCommand } = require("@aws-sdk/client-s3");
+
+        const deleteParams = {
+          Bucket: process.env.AWS_S3_BUCKET,
+          Key: documentToDelete.s3Key,
+        };
+
+        await s3.send(new DeleteObjectCommand(deleteParams));
+        console.log(`🗑️ Deleted from S3: ${documentToDelete.s3Key}`);
+      } catch (s3Error) {
+        console.error("❌ S3 delete error:", s3Error.message);
+        // Continue even if S3 delete fails
+      }
+    }
+
+    console.log(`🗑️ Deleted document: ${documentToDelete.title}`);
     res.json({ success: true, message: "Document deleted successfully" });
   } catch (err) {
     console.error("❌ Delete document error:", err.message);
