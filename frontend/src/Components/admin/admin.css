@@ -349,3 +349,67 @@ video {
   border-color: #dc3545;
   color: white;
 }
+
+/* Module-wise Document Styles */
+.documents-by-module {
+  max-width: 100%;
+}
+
+.course-section {
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(91, 56, 37, 0.1);
+}
+
+.course-header {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-bottom: 1px solid #e0e0e0;
+  transition: background-color 0.2s ease;
+}
+
+.course-header:hover {
+  background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+}
+
+.course-content {
+  padding: 1rem;
+  background-color: #fafafa;
+}
+
+.week-section {
+  background-color: white;
+  border-radius: 8px;
+  padding: 1rem;
+  border: 1px solid #f0f0f0;
+}
+
+.week-header h6 {
+  color: #5A3825;
+  font-size: 1rem;
+}
+
+.badge {
+  font-size: 0.75rem;
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+/* Responsive adjustments for module view */
+@media (max-width: 768px) {
+  .course-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .course-header .badge {
+    margin-top: 0.5rem;
+    margin-left: 0;
+  }
+  
+  .document-card {
+    margin-bottom: 1rem;
+  }
+}
