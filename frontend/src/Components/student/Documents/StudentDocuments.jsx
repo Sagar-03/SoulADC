@@ -80,7 +80,7 @@ const StudentDocuments = () => {
       <StudentLayout>
         <div className="documents-container">
           <div className="text-center py-5">
-            <h3 className="text-muted mb-3">Documents Not Available</h3>
+            <h3 className="text-muted mb-3">Notes Not Available</h3>
             <p className="text-muted mb-4">{error || "No course data found."}</p>
           </div>
         </div>
@@ -94,7 +94,7 @@ const StudentDocuments = () => {
         {/* Header */}
         <div className="documents-header mb-4">
           <h2 className="fw-bold" style={{ color: "#5A3825" }}>
-            Documents & Mock Papers
+            Notes & Mock Papers
           </h2>
           <p className="text-muted">{course.title}</p>
         </div>
@@ -135,7 +135,7 @@ const StudentDocuments = () => {
             <div className="documents-content">
               <div className="d-flex justify-content-between align-items-center mb-3">
                 <h5 className="section-title">
-                  MODULE {String(selectedModule).padStart(2, "0")} — Documents
+                  MODULE {String(selectedModule).padStart(2, "0")} — Notes / Papers
                 </h5>
                 <span className="documents-count-badge">
                   {documents.length} document{documents.length !== 1 ? "s" : ""}
@@ -168,7 +168,7 @@ const StudentDocuments = () => {
                           className="btn btn-primary btn-sm document-button"
                           onClick={() => handleDocumentOpen(doc)}
                         >
-                          View Document
+                          View Notes
                         </button>
                       </div>
                     </div>
@@ -178,9 +178,9 @@ const StudentDocuments = () => {
                 <div className="no-documents">
                   <div className="text-center py-5">
                     <FaFileAlt className="no-docs-icon mb-3" />
-                    <h5 className="text-muted">No Documents Available</h5>
+                    <h5 className="text-muted">No Notes Available</h5>
                     <p className="text-muted">
-                      No documents have been uploaded for Module {selectedModule} yet.
+                      No Notes have been uploaded for Module {selectedModule} yet.
                     </p>
                   </div>
                 </div>
