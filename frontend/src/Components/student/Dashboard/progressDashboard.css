@@ -53,12 +53,20 @@
 
 /* Card Styles */
 .stat-card, .section-card {
-  background: white;
+  background: white !important;
   border-radius: 16px;
   padding: 24px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   border: 1px solid #e9ecef;
   transition: all 0.3s ease;
+}
+
+/* Ensure all stat-card variations have white background */
+.stat-card.main-progress,
+.stat-card.continue-learning,
+.stat-card.learning-streak-card,
+.stat-card.course-progress-card {
+  background: white !important;
 }
 
 .stat-card:hover, .section-card:hover {
@@ -107,7 +115,7 @@
 
 .progress-percentage {
   display: block;
-  font-size: 1.8rem;
+  font-size: 2.2rem;
   font-weight: 700;
   color: #5A3825;
   line-height: 1;
@@ -115,30 +123,31 @@
 
 .progress-label {
   display: block;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   color: #6c757d;
-  margin-top: 2px;
+  margin-top: 4px;
 }
 
 /* Progress Details */
 .progress-details {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
+  margin-top: 10px;
 }
 
 .stat-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 8px 0;
+  gap: 10px;
+  padding: 6px 0;
   color: #495057;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
 }
 
 .stat-icon {
   color: #8B5E3C;
-  font-size: 1.1rem;
+  font-size: 1rem;
 }
 
 /* Weekly Chart */
@@ -321,7 +330,7 @@
 }
 
 .streak-label {
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   color: #6c757d;
   font-weight: 500;
   margin-bottom: 2px;
@@ -336,7 +345,7 @@
 }
 
 .streak-msg {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: #8B5E3C;
   font-style: italic;
 }
@@ -344,10 +353,10 @@
 .streak-motivation-compact {
   background: linear-gradient(135deg, #8B5E3C, #b77644);
   color: white;
-  padding: 14px 18px;
+  padding: 12px 18px;
   border-radius: 10px;
   text-align: center;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 600;
   margin-top: 6px;
 }
@@ -1050,10 +1059,10 @@
   background: linear-gradient(135deg, #8B5E3C, #b77644);
   color: white;
   border: none;
-  padding: 12px 24px;
+  padding: 10px 20px;
   border-radius: 8px;
-  font-size: 0.95rem;
-  font-weight: 500;
+  font-size: 0.9rem;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
   margin-top: 16px;

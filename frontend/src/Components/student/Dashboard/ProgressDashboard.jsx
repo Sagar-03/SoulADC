@@ -136,11 +136,18 @@ const ProgressDashboard = () => {
           getProgressDashboard()
         ]);
         
+        console.log(' Progress Dashboard Data:', {
+          courses: coursesResponse.data,
+          streak: streakResponse.data,
+          progress: progressResponse.data
+        });
+        
         setPurchasedCourses(coursesResponse.data || []);
         setStreakData(streakResponse.data || { current: 0, highest: 0, lastLoginDate: null });
         
         // Set real progress data
         if (progressResponse.data) {
+          console.log('✅ Setting progress data:', progressResponse.data);
           setProgressData(progressResponse.data);
           setRecentActivity(progressResponse.data.recentActivity || []);
           
@@ -150,6 +157,8 @@ const ProgressDashboard = () => {
             streakResponse.data || { current: 0, highest: 0 }
           );
           setMilestones(calculatedMilestones);
+        } else {
+          console.warn('⚠️ No progress data received from API');
         }
 
         // Fetch video progress for all purchased courses

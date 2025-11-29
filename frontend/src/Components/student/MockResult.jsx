@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { getMockResult } from '../../Api/api';
+import StudentLayout from './StudentLayout';
 import './StudentMockStyles.css';
 
 const MockResult = () => {
@@ -46,9 +47,11 @@ const MockResult = () => {
 
   if (loading) {
     return (
-      <div className="loading-container">
-        <h2>Loading Results...</h2>
-      </div>
+      <StudentLayout>
+        <div className="loading-container">
+          <h2>Loading Results...</h2>
+        </div>
+      </StudentLayout>
     );
   }
 
@@ -60,7 +63,8 @@ const MockResult = () => {
   const percentage = parseFloat(result.percentage);
 
   return (
-    <div className="mock-result-container">
+    <StudentLayout>
+      <div className="mock-result-container">
       <div className="result-header">
         <button onClick={() => navigate('/student/mocks')} className="back-btn">
           ← Back to Mocks
@@ -233,6 +237,7 @@ const MockResult = () => {
         </div>
       </div>
     </div>
+    </StudentLayout>
   );
 };
 
