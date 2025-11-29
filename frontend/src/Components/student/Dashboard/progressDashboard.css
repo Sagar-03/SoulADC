@@ -241,7 +241,7 @@
   color: #6c757d;
 }
 
-/* Continue Learning */
+/* Resume Watching (Top Card) */
 .continue-learning {
   grid-column: span 1;
 }
@@ -253,7 +253,7 @@
 .video-card.featured {
   background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
   border-radius: 12px;
-  padding: 16px;
+  padding: 20px;
   cursor: pointer;
   transition: all 0.3s ease;
 }
@@ -268,10 +268,10 @@
   align-items: center;
   justify-content: center;
   width: 100%;
-  height: 80px;
-  margin-bottom: 12px;
+  height: 120px;
+  margin-bottom: 16px;
   background: linear-gradient(135deg, #8B5E3C, #b77644);
-  border-radius: 8px;
+  border-radius: 12px;
 }
 
 .play-icon-large {
@@ -285,7 +285,7 @@
   height: 6px;
   background: #e9ecef;
   border-radius: 3px;
-  margin: 10px 0;
+  margin: 14px 0 16px 0;
   overflow: hidden;
 }
 
@@ -306,10 +306,10 @@
 
 .video-info h4 {
   color: #5A3825;
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   font-weight: 600;
-  margin-bottom: 4px;
-  line-height: 1.3;
+  margin-bottom: 8px;
+  line-height: 1.4;
 }
 
 .course-name {
@@ -320,9 +320,10 @@
 
 .video-meta {
   display: flex;
-  gap: 12px;
-  margin-bottom: 12px;
-  font-size: 0.8rem;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 14px;
+  font-size: 0.82rem;
   color: #6c757d;
 }
 
@@ -331,16 +332,16 @@
 }
 
 .resume-btn {
-  background: linear-gradient(135deg, #8B5E3C, #b77644);
+  background: linear-gradient(135deg, #007bff, #0056b3);
   color: white;
   border: none;
-  padding: 8px 16px;
-  border-radius: 6px;
-  font-size: 0.9rem;
-  font-weight: 500;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   cursor: pointer;
   transition: all 0.3s ease;
   width: 100%;
@@ -348,8 +349,9 @@
 }
 
 .resume-btn:hover {
-  background: linear-gradient(135deg, #5A3825, #8B5E3C);
-  transform: translateY(-1px);
+  background: linear-gradient(135deg, #0056b3, #003d82);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
 }
 
 /* Section Cards */

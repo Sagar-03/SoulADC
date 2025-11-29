@@ -163,11 +163,26 @@ const ProgressDashboard = () => {
           // Find resumable videos (not completed, watched > 30 seconds, < 95% complete)
           Object.entries(courseProgress).forEach(([videoId, progress]) => {
             if (!progress.completed && progress.currentTime > 30 && progress.percentage < 95) {
+              // Find the actual video name from course structure
+              let videoName = progress.title || '';
+              if (!videoName || videoName.startsWith('Video ')) {
+                // Search through course weeks/days/contents to find the video name
+                course.weeks?.forEach(week => {
+                  week.days?.forEach(day => {
+                    day.contents?.forEach(content => {
+                      if (content.type === 'video' && content._id === videoId) {
+                        videoName = content.title || content.name || videoName;
+                      }
+                    });
+                  });
+                });
+              }
+              
               resumableVideosList.push({
                 courseId: course._id,
                 courseTitle: course.title,
                 videoId,
-                videoTitle: progress.title || `Video ${videoId}`,
+                videoTitle: videoName || `Video ${videoId}`,
                 currentTime: progress.currentTime,
                 duration: progress.duration,
                 percentage: progress.percentage,
@@ -347,39 +362,42 @@ const ProgressDashboard = () => {
             </div>
           </div> */}
 
-          {/* Continue Learning */}
+          {/* Resume Watching */}
           <div className="stat-card continue-learning">
             <div className="card-header">
-              <h3><FaPlay /> Continue Learning</h3>
+              <h3><FaPlayCircle /> Resume Watching</h3>
             </div>
-            {recentActivity.length > 0 ? (
+            {resumableVideos.length > 0 ? (
               <div className="resume-section">
                 <div className="video-card featured">
                   <div className="video-icon">
                     <FaPlayCircle className="play-icon-large" />
                   </div>
                   <div className="video-info">
-                    <h4>{recentActivity[0].videoTitle}</h4>
-                    <p className="course-name">{recentActivity[0].courseTitle}</p>
+                    <h4>{resumableVideos[0].videoTitle}</h4>
+                    <p className="course-name">{resumableVideos[0].courseTitle}</p>
                     <div className="video-meta">
-                      {recentActivity[0].duration && (
-                        <span className="duration"><FaClock /> {recentActivity[0].duration}</span>
-                      )}
+                      <span className="duration">
+                        <FaClock /> {formatVideoTime(resumableVideos[0].currentTime)} / {formatVideoTime(resumableVideos[0].duration)}
+                      </span>
                       <span className="last-watched">
-                        <FaEye /> Last watched {formatTime(recentActivity[0].lastWatchedAt)}
+                        <FaEye /> {formatTime(resumableVideos[0].lastWatched)}
                       </span>
                     </div>
                     <div className="progress-bar-simple">
                       <div 
                         className="progress-fill-simple"
-                        style={{ width: `${recentActivity[0].progress * 100}%` }}
+                        style={{ width: `${resumableVideos[0].percentage}%` }}
                       />
                       <span className="progress-text-simple">
-                        {Math.round(recentActivity[0].progress * 100)}% complete
+                        {Math.round(resumableVideos[0].percentage)}% complete
                       </span>
                     </div>
-                    <button className="resume-btn">
-                      <FaPlay /> Resume Learning
+                    <button 
+                      className="resume-btn"
+                      onClick={() => handleResumeVideo(resumableVideos[0].courseId, resumableVideos[0].videoId)}
+                    >
+                      <FaPlay /> Resume Watching
                     </button>
                   </div>
                 </div>
@@ -454,78 +472,7 @@ const ProgressDashboard = () => {
           )}
         </div>
 
-        {/* Resume Watching */}
-        {resumableVideos.length > 0 && (
-          <div className="section-card">
-            <div className="section-header">
-              <h3><FaPlayCircle /> Resume Watching</h3>
-              <span className="video-count">{resumableVideos.length} video{resumableVideos.length !== 1 ? 's' : ''} in progress</span>
-            </div>
-            <div className="resumable-videos">
-              {resumableVideos.map((video, index) => (
-                <div key={`${video.courseId}_${video.videoId}`} className="resumable-video-item">
-                  <div className="video-progress-indicator">
-                    <div className="progress-ring">
-                      <svg width="50" height="50">
-                        <circle
-                          cx="25"
-                          cy="25"
-                          r="20"
-                          stroke="#e6e6e6"
-                          strokeWidth="3"
-                          fill="transparent"
-                        />
-                        <circle
-                          cx="25"
-                          cy="25"
-                          r="20"
-                          stroke="#007bff"
-                          strokeWidth="3"
-                          fill="transparent"
-                          strokeDasharray={`${(video.percentage / 100) * 125.66} 125.66`}
-                          strokeLinecap="round"
-                          transform="rotate(-90 25 25)"
-                        />
-                      </svg>
-                      <span className="progress-text">{Math.round(video.percentage)}%</span>
-                    </div>
-                  </div>
-                  
-                  <div className="video-details">
-                    <h4>{video.videoTitle}</h4>
-                    <p className="course-name">{video.courseTitle}</p>
-                    <div className="video-meta">
-                      <span className="time-info">
-                        <FaClock /> {formatVideoTime(video.currentTime)} / {formatVideoTime(video.duration)}
-                      </span>
-                      <span className="last-watched">
-                        <FaEye /> {formatTime(video.lastWatched)}
-                      </span>
-                    </div>
-                    <div className="progress-bar-small">
-                      <div 
-                        className="progress-fill" 
-                        style={{ width: `${video.percentage}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                  
-                  <div className="video-actions">
-                    <button 
-                      className="resume-btn"
-                      onClick={() => handleResumeVideo(video.courseId, video.videoId)}
-                    >
-                      <FaPlay /> Resume
-                    </button>
-                    <span className="remaining-time">
-                      {formatVideoTime(video.duration - video.currentTime)} left
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+
 
         {/* Course Progress */}
         <div className="section-card">
