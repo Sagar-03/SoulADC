@@ -4,7 +4,8 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import "./EmbeddedVideoPlayer.css";
 import StudentLayout from "../student/StudentLayout";
-import { api, getStreamUrl } from "../../Api/api";
+import { api, getStreamUrl, updateVideoProgress } from "../../Api/api";
+import { toast } from 'react-toastify';
 import {
   saveVideoProgress,
   getVideoProgress,
@@ -36,7 +37,10 @@ const EmbeddedVideoPlayer = () => {
   const [currentVideo, setCurrentVideo] = useState({
     id: videoId || null,
     title: "",
-    src: ""
+    src: "",
+    weekId: null,
+    dayId: null,
+    contentId: null
   });
   const [selectedWeek, setSelectedWeek] = useState(1);
   const [loading, setLoading] = useState(true);
@@ -48,6 +52,7 @@ const EmbeddedVideoPlayer = () => {
   const [showResumeNotification, setShowResumeNotification] = useState(false);
   const [savedProgress, setSavedProgress] = useState(null);
   const [hasResumed, setHasResumed] = useState(false);
+  const [lastBackendUpdate, setLastBackendUpdate] = useState(0);
 
   // Fetch course data and video info
   useEffect(() => {
@@ -61,16 +66,64 @@ const EmbeddedVideoPlayer = () => {
         if (videoId) {
           try {
             const { data: videoInfo } = await api.get(`/stream/info/${videoId}`);
+            
+            // Find weekId and dayId from course data
+            let weekId = null;
+            let dayId = null;
+            
+            if (courseId) {
+              const { data: courseData } = await api.get(`/user/courses/${courseId}`);
+              setCourse(courseData);
+              
+              // Find the week and day that contains this video
+              outer: for (const week of courseData.weeks || []) {
+                if (week.days) {
+                  for (const day of week.days) {
+                    if (day.contents) {
+                      for (const content of day.contents) {
+                        if (String(content._id) === String(videoId) || content.s3Key === videoId) {
+                          weekId = week._id;
+                          dayId = day._id;
+                          console.log("📹 Found video metadata:", {
+                            weekId,
+                            dayId,
+                            contentId: videoId,
+                            weekNumber: week.weekNumber,
+                            dayNumber: day.dayNumber
+                          });
+                          break outer;
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            
             setCurrentVideo({
               id: videoId,
               title: videoInfo.title || "Video Lesson",
               src: getStreamUrl(videoId),
+              weekId: weekId,
+              dayId: dayId,
+              contentId: videoId
             });
-          } catch {
+            
+            console.log("✅ Video loaded:", {
+              title: videoInfo.title,
+              hasWeekId: !!weekId,
+              hasDayId: !!dayId,
+              courseId: courseId
+            });
+          } catch (err) {
+            console.error("⚠️ Failed to load video metadata:", err);
             setCurrentVideo({
               id: videoId,
               title: "Video Lesson",
               src: getStreamUrl(videoId),
+              weekId: null,
+              dayId: null,
+              contentId: videoId
             });
           }
         }
@@ -223,13 +276,70 @@ const EmbeddedVideoPlayer = () => {
       const videoDuration = video.duration;
       setCurrentTime(currentVideoTime);
       
-      // Save progress periodically (throttled)
+      // Save progress to localStorage (throttled)
       if (courseId && videoId && videoDuration > 0) {
         throttledSaveProgress(courseId, videoId, currentVideoTime, videoDuration);
+        
+        // Send progress to backend every 10 seconds
+        const now = Date.now();
+        if (now - lastBackendUpdate > 10000) {
+          setLastBackendUpdate(now);
+          
+          const progressData = {
+            courseId: courseId,
+            weekId: currentVideo.weekId,
+            dayId: currentVideo.dayId,
+            contentId: currentVideo.contentId || videoId,
+            videoTitle: currentVideo.title,
+            progress: currentVideoTime / videoDuration,
+            watchTime: currentVideoTime,
+            totalDuration: videoDuration
+          };
+          
+          console.log("📊 Sending progress to backend:", {
+            progress: `${(progressData.progress * 100).toFixed(1)}%`,
+            time: `${Math.floor(currentVideoTime)}s / ${Math.floor(videoDuration)}s`,
+            courseId,
+            videoId
+          });
+          
+          // Send to backend asynchronously (don't wait for response)
+          updateVideoProgress(progressData)
+            .then(() => {
+              console.log("✅ Progress saved successfully");
+            })
+            .catch(err => {
+              console.error("❌ Failed to update progress on backend:", err);
+              console.error("Error details:", err.response?.data || err.message);
+            });
+        }
         
         // Mark as completed if watched 95% or more
         if ((currentVideoTime / videoDuration) >= 0.95) {
           markVideoCompleted(courseId, videoId, videoDuration);
+          
+          console.log("🎉 Video completed! Sending final update...");
+          
+          // Send final completion update to backend
+          const completionData = {
+            courseId: courseId,
+            weekId: currentVideo.weekId,
+            dayId: currentVideo.dayId,
+            contentId: currentVideo.contentId || videoId,
+            videoTitle: currentVideo.title,
+            progress: 1.0,
+            watchTime: videoDuration,
+            totalDuration: videoDuration
+          };
+          
+          updateVideoProgress(completionData)
+            .then(() => {
+              console.log("✅ Video marked as completed on backend");
+              toast.success("Video completed! Progress saved.");
+            })
+            .catch(err => {
+              console.error("❌ Failed to mark video as completed on backend:", err);
+            });
         }
       }
     };
@@ -252,6 +362,22 @@ const EmbeddedVideoPlayer = () => {
       // Save progress when video is paused
       if (courseId && videoId && video.duration > 0) {
         saveVideoProgress(courseId, videoId, video.currentTime, video.duration);
+        
+        // Also send to backend
+        const progressData = {
+          courseId: courseId,
+          weekId: currentVideo.weekId,
+          dayId: currentVideo.dayId,
+          contentId: currentVideo.contentId || videoId,
+          videoTitle: currentVideo.title,
+          progress: video.currentTime / video.duration,
+          watchTime: video.currentTime,
+          totalDuration: video.duration
+        };
+        
+        updateVideoProgress(progressData).catch(err => {
+          console.error("Failed to update progress on pause:", err);
+        });
       }
     };
 
@@ -259,6 +385,22 @@ const EmbeddedVideoPlayer = () => {
     const handleBeforeUnload = () => {
       if (courseId && videoId && video.duration > 0) {
         saveVideoProgress(courseId, videoId, video.currentTime, video.duration);
+        
+        // Send final progress to backend (synchronous for page unload)
+        const progressData = {
+          courseId: courseId,
+          weekId: currentVideo.weekId,
+          dayId: currentVideo.dayId,
+          contentId: currentVideo.contentId || videoId,
+          videoTitle: currentVideo.title,
+          progress: video.currentTime / video.duration,
+          watchTime: video.currentTime,
+          totalDuration: video.duration
+        };
+        
+        // Use sendBeacon for reliable delivery on page unload
+        const blob = new Blob([JSON.stringify(progressData)], { type: 'application/json' });
+        navigator.sendBeacon(`${api.defaults.baseURL}/user/video-progress`, blob);
       }
     };
 
@@ -277,7 +419,7 @@ const EmbeddedVideoPlayer = () => {
       video.removeEventListener("pause", handlePause);
       window.removeEventListener("beforeunload", handleBeforeUnload);
     };
-  }, [currentVideo.src, courseId, videoId, savedProgress, hasResumed, showResumeNotification]);
+  }, [currentVideo.src, currentVideo.weekId, currentVideo.dayId, currentVideo.contentId, currentVideo.title, courseId, videoId, savedProgress, hasResumed, showResumeNotification, lastBackendUpdate]);
 
   const handleOpenContent = (content) => {
     const id = content._id || content.s3Key;

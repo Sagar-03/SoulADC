@@ -718,4 +718,64 @@ router.delete("/documents/:id", protect, adminOnly, async (req, res) => {
   }
 });
 
+/**
+ * GET /api/admin/users
+ * Fetch all users (excluding admins)
+ */
+router.get("/users", protect, adminOnly, async (req, res) => {
+  try {
+    const users = await User.find({ role: { $ne: 'admin' } })
+      .populate('purchasedCourses', 'title')
+      .select('-password -resetToken -resetTokenExpire -activeSession')
+      .sort({ createdAt: -1 });
+
+    const formattedUsers = users.map(user => ({
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      purchasedCourses: user.purchasedCourses.map(course => course.title),
+      createdAt: user.createdAt,
+      streak: user.streak?.current || 0,
+    }));
+
+    console.log(`📋 Admin fetched ${formattedUsers.length} users`);
+    res.json(formattedUsers);
+  } catch (err) {
+    console.error("❌ Error fetching users:", err.message);
+    res.status(500).json({ error: "Failed to fetch users" });
+  }
+});
+
+/**
+ * DELETE /api/admin/users/:id
+ * Delete a user (cannot delete admins)
+ */
+router.delete("/users/:id", protect, adminOnly, async (req, res) => {
+  try {
+    const userId = req.params.id;
+    
+    // Find the user
+    const user = await User.findById(userId);
+    
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Prevent deleting admin users
+    if (user.role === 'admin') {
+      return res.status(403).json({ error: "Cannot delete admin users" });
+    }
+
+    // Delete the user
+    await User.findByIdAndDelete(userId);
+    
+    console.log(`🗑️ Deleted user: ${user.name} (${user.email})`);
+    res.json({ success: true, message: "User deleted successfully" });
+  } catch (err) {
+    console.error("❌ Error deleting user:", err.message);
+    res.status(500).json({ error: "Failed to delete user" });
+  }
+});
+
 module.exports = router;

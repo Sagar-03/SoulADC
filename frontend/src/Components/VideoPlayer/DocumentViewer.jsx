@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { FaArrowLeft, FaExpand, FaCompress } from "react-icons/fa";
 import StudentLayout from "../student/StudentLayout";
 import { api, getStreamUrl } from "../../Api/api";
+import { setupBlurProtection, additionalProtection } from "../../utils/blurProtection";
 import "./DocumentViewer.css";
 
 const DocumentViewer = () => {
@@ -101,6 +102,68 @@ const DocumentViewer = () => {
             }
         };
     }, [documentData]);
+
+    // Setup blur protection for document viewer
+    useEffect(() => {
+        if (!documentUrl) return;
+
+        // Enhanced Print Screen detection via multiple methods
+        const enhancedPrintScreenDetection = () => {
+            let lastKeyTime = 0;
+            
+            const detectPrintScreen = (e) => {
+                // Method 1: Direct key detection
+                if (e.keyCode === 44 || e.which === 44 || e.code === 'PrintScreen' || e.key === 'PrintScreen') {
+                    e.preventDefault();
+                    console.warn("🚨 Print Screen detected on document viewer");
+                    
+                    // Store in session storage to persist across refresh
+                    sessionStorage.setItem('blurProtectionActive', Date.now().toString());
+                    sessionStorage.setItem('blurProtectionDuration', '30000');
+                    
+                    // Apply blur
+                    const { applyBlur } = require('../../utils/blurProtection');
+                    applyBlur(30000, "⚠️ Screenshot Detected - Document Protected for 30 Seconds");
+                }
+                
+                // Method 2: Detect rapid key sequences
+                const now = Date.now();
+                if (now - lastKeyTime < 100) {
+                    console.warn("Rapid key sequence detected on document");
+                }
+                lastKeyTime = now;
+            };
+
+            // Listen on both keydown and keyup
+            window.addEventListener('keydown', detectPrintScreen, true);
+            window.addEventListener('keyup', detectPrintScreen, true);
+            
+            return () => {
+                window.removeEventListener('keydown', detectPrintScreen, true);
+                window.removeEventListener('keyup', detectPrintScreen, true);
+            };
+        };
+
+        const cleanupEnhanced = enhancedPrintScreenDetection();
+
+        // Setup blur protection with document-specific options
+        const cleanupBlurProtection = setupBlurProtection({
+            allowedKeys: ["Space"], // Only allow Space key for scrolling
+            printScreenDuration: 30000, // 30 seconds for Print Screen
+            defaultDuration: 15000, // 15 seconds for other suspicious keys
+            pauseContent: null, // No content to pause for documents
+            showMessage: true
+        });
+
+        // Setup additional protection (context menu, dev tools detection)
+        const cleanupAdditionalProtection = additionalProtection();
+
+        return () => {
+            cleanupEnhanced();
+            cleanupBlurProtection();
+            cleanupAdditionalProtection();
+        };
+    }, [documentUrl]);
 
     const toggleFullscreen = () => {
         setIsFullscreen(!isFullscreen);

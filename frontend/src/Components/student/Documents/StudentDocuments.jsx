@@ -138,7 +138,7 @@ const StudentDocuments = () => {
                   MODULE {String(selectedModule).padStart(2, "0")} — Notes / Papers
                 </h5>
                 <span className="documents-count-badge">
-                  {documents.length} document{documents.length !== 1 ? "s" : ""}
+                  {documents.length} Note {documents.length !== 1 ? "s" : ""}
                 </span>
               </div>
 

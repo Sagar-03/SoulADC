@@ -69,7 +69,7 @@
 .card-header {
   display: flex;
   align-items: center;
-  justify-content: between;
+  justify-content: space-between;
   margin-bottom: 20px;
 }
 
@@ -244,6 +244,232 @@
 /* Resume Watching (Top Card) */
 .continue-learning {
   grid-column: span 1;
+}
+
+/* Learning Streak Compact Card */
+.learning-streak-card {
+  grid-column: span 1;
+}
+
+.last-login-small {
+  font-size: 0.8rem;
+  color: #9ca3af;
+  font-style: italic;
+  font-weight: 400;
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.streak-compact {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.streak-box {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 12px;
+  border: 1px solid #e9ecef;
+}
+
+.streak-icon-circle {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.streak-icon-circle.current {
+  background: linear-gradient(135deg, #ff7b54, #ff9671);
+}
+
+.streak-icon-circle.best {
+  background: linear-gradient(135deg, #ffc107, #ffd54f);
+}
+
+.streak-fire-icon {
+  font-size: 1.8rem;
+  color: white;
+}
+
+.streak-fire-icon.active {
+  animation: flicker 2s ease-in-out infinite alternate;
+}
+
+.streak-fire-icon.inactive {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.streak-trophy-icon {
+  font-size: 1.8rem;
+  color: white;
+}
+
+.streak-details-compact {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.streak-label {
+  font-size: 0.9rem;
+  color: #6c757d;
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+
+.streak-value {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #5A3825;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.streak-msg {
+  font-size: 0.85rem;
+  color: #8B5E3C;
+  font-style: italic;
+}
+
+.streak-motivation-compact {
+  background: linear-gradient(135deg, #8B5E3C, #b77644);
+  color: white;
+  padding: 14px 18px;
+  border-radius: 10px;
+  text-align: center;
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-top: 6px;
+}
+
+/* Course Progress Compact Card */
+.course-progress-card {
+  grid-column: span 1;
+}
+
+.course-count-badge {
+  background: #8B5E3C;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.course-preview-compact {
+  margin-top: 10px;
+}
+
+.course-card-compact {
+  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+  border-radius: 12px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.course-card-compact:hover {
+  background: linear-gradient(135deg, #e9ecef, #dee2e6);
+  transform: translateY(-2px);
+}
+
+.course-icon-compact {
+  width: 100%;
+  height: 100px;
+  background: linear-gradient(135deg, #8B5E3C, #b77644);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 14px;
+  position: relative;
+}
+
+.course-icon-svg-compact {
+  font-size: 2.5rem;
+  color: white;
+  opacity: 0.9;
+}
+
+.progress-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(255, 255, 255, 0.95);
+  color: #5A3825;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.course-info-compact h4 {
+  color: #5A3825;
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin-bottom: 10px;
+  line-height: 1.4;
+}
+
+.course-stats-compact {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+  font-size: 0.82rem;
+  color: #6c757d;
+}
+
+.course-stats-compact span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.view-course-btn {
+  background: linear-gradient(135deg, #8B5E3C, #b77644);
+  color: white;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 100%;
+  margin-top: 14px;
+}
+
+.view-course-btn:hover {
+  background: linear-gradient(135deg, #5A3825, #8B5E3C);
+  transform: translateY(-1px);
+}
+
+.no-courses-compact {
+  text-align: center;
+  padding: 40px 20px;
+  color: #6c757d;
+}
+
+.no-courses-compact .empty-icon {
+  font-size: 2.5rem;
+  color: #dee2e6;
+  margin-bottom: 12px;
 }
 
 .resume-section {

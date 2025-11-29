@@ -415,203 +415,110 @@ const ProgressDashboard = () => {
               </div>
             )}
           </div>
-        </div>
 
-        {/* Streak Details */}
-        <div className="section-card streak-section">
-          <div className="section-header">
-            <h3><FaFire /> Learning Streak</h3>
-            {streakData.lastLoginDate && (
-              <span className="last-login">
-                Last login: {new Date(streakData.lastLoginDate).toLocaleDateString()}
-              </span>
+          {/* Learning Streak */}
+          <div className="stat-card learning-streak-card">
+            <div className="card-header">
+              <h3><FaFire /> Learning Streak</h3>
+              {streakData.lastLoginDate && (
+                <span className="last-login-small">
+                  {new Date(streakData.lastLoginDate).toLocaleDateString()}
+                </span>
+              )}
+            </div>
+            <div className="streak-compact">
+              <div className="streak-box">
+                <div className="streak-icon-circle current">
+                  <FaFire className={`streak-fire-icon ${streakData.current > 0 ? 'active' : 'inactive'}`} />
+                </div>
+                <div className="streak-details-compact">
+                  <span className="streak-label">Current Streak</span>
+                  <span className="streak-value">{streakData.current} days</span>
+                  <span className="streak-msg">
+                    {streakData.current > 0 ? "Great job! Keep it up! 🎉" : "Start today! 💪"}
+                  </span>
+                </div>
+              </div>
+              <div className="streak-box">
+                <div className="streak-icon-circle best">
+                  <FaTrophy className="streak-trophy-icon" />
+                </div>
+                <div className="streak-details-compact">
+                  <span className="streak-label">Best Streak</span>
+                  <span className="streak-value">{streakData.highest} days</span>
+                  <span className="streak-msg">
+                    {streakData.highest > 0 ? "Your personal record! 🏆" : "Ready to start?"}
+                  </span>
+                </div>
+              </div>
+            </div>
+            {streakData.current > 0 && (
+              <div className="streak-motivation-compact">
+                {streakData.current === 1 && "🔥 Come back tomorrow!"}
+                {streakData.current >= 2 && streakData.current < 7 && `🚀 ${streakData.current} days in a row!`}
+                {streakData.current >= 7 && streakData.current < 30 && `⭐ ${streakData.current} days straight!`}
+                {streakData.current >= 30 && `🏆 ${streakData.current} days! Unstoppable!`}
+              </div>
             )}
           </div>
-          <div className="streak-details">
-            <div className="streak-item current-streak">
-              <div className="streak-icon-large">
-                <FaFire className={`streak-fire ${streakData.current > 0 ? 'active' : 'inactive'}`} />
-              </div>
-              <div className="streak-info">
-                <h4>Current Streak</h4>
-                <span className="streak-number">{streakData.current} days</span>
-                {streakData.current > 0 && (
-                  <p className="streak-message">Great job! Keep it up! 🎉</p>
-                )}
-                {streakData.current === 0 && (
-                  <p className="streak-message">Start your learning journey today! 💪</p>
-                )}
-              </div>
+
+          {/* Course Progress */}
+          <div className="stat-card course-progress-card">
+            <div className="card-header">
+              <h3>Course Progress</h3>
+              <span className="course-count-badge">{purchasedCourses.length} enrolled</span>
             </div>
-            <div className="streak-divider"></div>
-            <div className="streak-item highest-streak">
-              <div className="streak-icon-large">
-                <FaTrophy className="streak-trophy" />
+            {purchasedCourses.length > 0 ? (
+              <div className="course-preview-compact">
+                {(() => {
+                  const course = purchasedCourses[0];
+                  const totalVideos = course.weeks?.reduce((acc, week) => 
+                    acc + (week.days?.reduce((dayAcc, day) => 
+                      dayAcc + (day.contents?.filter(content => content.type === 'video')?.length || 0), 0) || 0), 0
+                  ) || 0;
+                  
+                  const user = getUser();
+                  let courseProgressData = null;
+                  if (user && user.courseProgress) {
+                    courseProgressData = user.courseProgress.find(cp => cp.courseId === course._id);
+                  }
+                  
+                  const completedVideos = courseProgressData?.completedVideos || 0;
+                  const courseProgress = totalVideos > 0 ? Math.round((completedVideos / totalVideos) * 100) : 0;
+                  
+                  return (
+                    <div className="course-card-compact" onClick={() => navigate(`/mycourse/${course._id}`)}>
+                      <div className="course-icon-compact">
+                        <MdVideoLibrary className="course-icon-svg-compact" />
+                        <div className="progress-badge">{courseProgress}%</div>
+                      </div>
+                      <div className="course-info-compact">
+                        <h4>{course.title}</h4>
+                        <div className="course-stats-compact">
+                          <span><FaEye /> {completedVideos}/{totalVideos} videos</span>
+                        </div>
+                        <div className="progress-bar-simple">
+                          <div 
+                            className="progress-fill-simple"
+                            style={{ width: `${courseProgress}%` }}
+                          />
+                        </div>
+                        <button className="view-course-btn">
+                          View Course <FaChevronRight />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
-              <div className="streak-info">
-                <h4>Best Streak</h4>
-                <span className="streak-number">{streakData.highest} days</span>
-                {streakData.highest > 0 && (
-                  <p className="streak-message">Your personal record! 🏆</p>
-                )}
-                {streakData.highest === 0 && (
-                  <p className="streak-message">Ready to set your first record?</p>
-                )}
+            ) : (
+              <div className="no-courses-compact">
+                <MdVideoLibrary className="empty-icon" />
+                <p>No courses enrolled yet!</p>
               </div>
-            </div>
-          </div>
-          {streakData.current > 0 && (
-            <div className="streak-motivation">
-              <p>
-                {streakData.current === 1 && "🔥 You're on fire! Come back tomorrow to keep the streak going!"}
-                {streakData.current >= 2 && streakData.current < 7 && `🚀 Amazing! ${streakData.current} days in a row. You're building a great habit!`}
-                {streakData.current >= 7 && streakData.current < 30 && `⭐ Incredible! ${streakData.current} days straight! You're a learning champion!`}
-                {streakData.current >= 30 && `🏆 LEGENDARY! ${streakData.current} days of consistent learning! You're unstoppable!`}
-              </p>
-            </div>
-          )}
-        </div>
-
-
-
-        {/* Course Progress */}
-        <div className="section-card">
-          <div className="section-header">
-            <h3>Course Progress</h3>
-            <span className="course-count">{purchasedCourses.length} enrolled</span>
-          </div>
-          <div className="courses-grid">
-            {purchasedCourses.map((course) => {
-              // Calculate actual course progress
-              const totalVideos = course.weeks?.reduce((acc, week) => 
-                acc + (week.days?.reduce((dayAcc, day) => 
-                  dayAcc + (day.contents?.filter(content => content.type === 'video')?.length || 0), 0) || 0), 0
-              ) || 0;
-              
-              // Get user's progress for this course from the user data
-              const user = getUser();
-              let courseProgressData = null;
-              if (user && user.courseProgress) {
-                courseProgressData = user.courseProgress.find(cp => cp.courseId === course._id);
-              }
-              
-              const completedVideos = courseProgressData?.completedVideos || 0;
-              const courseProgress = totalVideos > 0 ? Math.round((completedVideos / totalVideos) * 100) : 0;
-              const watchTimeHours = courseProgressData?.totalWatchTime || 0;
-              const remainingHours = Math.max(0, Math.round((totalVideos * 10 - watchTimeHours * 60) / 60 * 10) / 10); // Estimate 10 min per video
-              
-              return (
-                <div key={course._id} className="course-progress-card" onClick={() => navigate(`/mycourse/${course._id}`)}>
-                  <div className="course-header">
-                    <div className="course-icon">
-                      <MdVideoLibrary className="course-icon-svg" />
-                    </div>
-                    <div className="progress-circle-small">
-                      <svg width="60" height="60" className="progress-ring">
-                        <circle
-                          cx="30"
-                          cy="30"
-                          r="25"
-                          stroke="#e6e6e6"
-                          strokeWidth="4"
-                          fill="transparent"
-                        />
-                        <circle
-                          cx="30"
-                          cy="30"
-                          r="25"
-                          stroke="#8B5E3C"
-                          strokeWidth="4"
-                          fill="transparent"
-                          strokeDasharray={`${courseProgress * 1.57} 157`}
-                          strokeLinecap="round"
-                          transform="rotate(-90 30 30)"
-                        />
-                      </svg>
-                      <span className="progress-number">{courseProgress}%</span>
-                    </div>
-                  </div>
-                  <div className="course-info">
-                    <h4>{course.title}</h4>
-                    {course.description && (
-                      <p className="course-description">{course.description}</p>
-                    )}
-                    <div className="course-stats">
-                      <span className="stat">
-                        <FaEye /> {completedVideos}/{totalVideos} videos
-                      </span>
-                      {remainingHours > 0 && (
-                        <span className="stat">
-                          <FaClock /> {remainingHours}h remaining
-                        </span>
-                      )}
-                      {watchTimeHours > 0 && (
-                        <span className="stat">
-                          <MdAccessTime /> {Math.round(watchTimeHours * 10) / 10}h watched
-                        </span>
-                      )}
-                    </div>
-                    <div className="course-actions">
-                      <button className="continue-btn">
-                        {courseProgress > 0 ? 'Continue' : 'Start'} <FaChevronRight />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Recent Activity */}
-        {/* <div className="section-card">
-          <div className="section-header">
-            <h3>Recently Watched</h3>
-            {recentActivity.length > 0 && (
-              <button className="view-all-btn">View All</button>
             )}
           </div>
-          {recentActivity.length > 1 ? (
-            <div className="recent-videos">
-              {recentActivity.slice(1).map((video) => (
-                <div key={video.id} className="recent-video-item">
-                  <div className="video-icon-small">
-                    {video.progress === 1 ? (
-                      <FaCheck className="status-icon completed" />
-                    ) : video.progress > 0 ? (
-                      <FaPlay className="status-icon in-progress" />
-                    ) : (
-                      <FaPlayCircle className="status-icon not-started" />
-                    )}
-                  </div>
-                  <div className="video-details">
-                    <h5>{video.videoTitle}</h5>
-                    <p className="course-name">{video.courseTitle}</p>
-                    <div className="video-meta">
-                      {video.duration && (
-                        <span className="duration"><FaClock /> {video.duration}</span>
-                      )}
-                      <span className="watched-time">
-                        <FaEye /> {formatTime(video.lastWatchedAt)}
-                      </span>
-                      <span className="progress-percent">
-                        {Math.round(video.progress * 100)}% complete
-                      </span>
-                    </div>
-                  </div>
-                  <button className="play-btn-small">
-                    {video.progress === 1 ? <FaPlay /> : video.progress > 0 ? "Resume" : <FaPlay />}
-                  </button>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="no-recent-videos">
-              <FaPlayCircle className="empty-icon" />
-              <p>No recent activity yet. Start watching videos to see your progress!</p>
-            </div>
-          )}
-        </div> */}
+        </div>
 
         {/* Milestones & Achievements */}
         <div className="section-card">

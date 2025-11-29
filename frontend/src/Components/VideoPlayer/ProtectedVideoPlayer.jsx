@@ -1,5 +1,6 @@
   import React, { useEffect, useRef } from "react";
   import VideoPlayer from "./VideoPlayer";
+  import { setupBlurProtection, additionalProtection } from "../../utils/blurProtection";
 
   /**
    * Protected Video Player Wrapper
@@ -7,6 +8,81 @@
    */
   const ProtectedVideoPlayer = (props) => {
     const containerRef = useRef(null);
+    const videoRef = useRef(null);
+
+    // Setup blur protection for keyboard events
+    useEffect(() => {
+      if (!props.show) return;
+
+      // Function to pause video content
+      const pauseVideo = () => {
+        const videos = containerRef.current?.querySelectorAll('video');
+        videos?.forEach(video => {
+          if (!video.paused) {
+            video.pause();
+          }
+        });
+      };
+
+      // Enhanced Print Screen detection via multiple methods
+      const enhancedPrintScreenDetection = () => {
+        let lastKeyTime = 0;
+        
+        const detectPrintScreen = (e) => {
+          // Method 1: Direct key detection
+          if (e.keyCode === 44 || e.which === 44 || e.code === 'PrintScreen' || e.key === 'PrintScreen') {
+            e.preventDefault();
+            pauseVideo();
+            console.warn("🚨 Print Screen detected via keyCode 44");
+            
+            // Store in session storage to persist across refresh
+            sessionStorage.setItem('blurProtectionActive', Date.now().toString());
+            sessionStorage.setItem('blurProtectionDuration', '30000');
+            
+            // Apply blur
+            const { applyBlur } = require('../../utils/blurProtection');
+            applyBlur(30000, "⚠️ Screenshot Detected - Video Paused for 30 Seconds");
+          }
+          
+          // Method 2: Detect rapid key sequences that might hide Print Screen
+          const now = Date.now();
+          if (now - lastKeyTime < 100) {
+            // Very rapid key presses - suspicious
+            console.warn("Rapid key sequence detected");
+          }
+          lastKeyTime = now;
+        };
+
+        // Listen on both keydown and keyup (Print Screen sometimes only triggers keyup)
+        window.addEventListener('keydown', detectPrintScreen, true);
+        window.addEventListener('keyup', detectPrintScreen, true);
+        
+        return () => {
+          window.removeEventListener('keydown', detectPrintScreen, true);
+          window.removeEventListener('keyup', detectPrintScreen, true);
+        };
+      };
+
+      const cleanupEnhanced = enhancedPrintScreenDetection();
+
+      // Setup blur protection with video-specific options
+      const cleanupBlurProtection = setupBlurProtection({
+        allowedKeys: ["Space"], // Only allow Space key for play/pause
+        printScreenDuration: 30000, // 30 seconds for Print Screen
+        defaultDuration: 15000, // 15 seconds for other suspicious keys
+        pauseContent: pauseVideo,
+        showMessage: true
+      });
+
+      // Setup additional protection (context menu, dev tools detection)
+      const cleanupAdditionalProtection = additionalProtection();
+
+      return () => {
+        cleanupEnhanced();
+        cleanupBlurProtection();
+        cleanupAdditionalProtection();
+      };
+    }, [props.show]);
 
     useEffect(() => {
       if (!containerRef.current) return;

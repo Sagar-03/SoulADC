@@ -49,9 +49,9 @@ const DocumentsPage = () => {
         {/* Header */}
         <div className="documents-page-header mb-4">
           <h2 className="fw-bold" style={{ color: "#5A3825" }}>
-            Documents & Mock Papers
+            Notes & Mock Papers
           </h2>
-          <p className="text-muted">Select a course to view its documents and study materials</p>
+          <p className="text-muted">Select a course to view its Notes and study materials</p>
         </div>
 
         {purchasedCourses.length === 0 ? (
@@ -107,7 +107,7 @@ const DocumentsPage = () => {
                     </div>
 
                     <button className="btn btn-primary course-button">
-                      View Documents
+                      View Notes
                     </button>
                   </div>
                 </div>
