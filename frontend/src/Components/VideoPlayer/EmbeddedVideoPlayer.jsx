@@ -480,8 +480,7 @@ const EmbeddedVideoPlayer = () => {
                           {week.days?.map((day, dayIndex) => (
                             <div key={day._id || dayIndex} className="day-item">
                               <div className="day-header">
-                                <small className="day-number"> {day.dayNumber}</small>
-                                <div className="day-title"></div>
+                                <small className="day-number">Day {day.dayNumber}</small>
                               </div>
                               <div className="day-contents">
                                 {day.contents?.map((content, contentIndex) => (
@@ -490,11 +489,22 @@ const EmbeddedVideoPlayer = () => {
                                     className={`content-btn ${content._id === currentVideo.id || content.s3Key === currentVideo.id ? 'active' : ''
                                       } ${content.type === 'video' ? 'video' : 'document'}`}
                                     onClick={() => handleOpenContent(content)}
+                                    title={content.title || `${content.type} content`}
                                   >
                                     <span className="content-icon">
                                       {content.type === 'video' ? '🎬' : '📄'}
                                     </span>
-                                    <span className="content-type">{content.type}</span>
+                                    <span className="content-title" style={{
+                                      fontSize: '0.75rem',
+                                      fontWeight: '500',
+                                      overflow: 'hidden',
+                                      textOverflow: 'ellipsis',
+                                      whiteSpace: 'nowrap',
+                                      maxWidth: '200px',
+                                      display: 'inline-block'
+                                    }}>
+                                      {content.title || content.type}
+                                    </span>
                                   </button>
                                 ))}
                               </div>

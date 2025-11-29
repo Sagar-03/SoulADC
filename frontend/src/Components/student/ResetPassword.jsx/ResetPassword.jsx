@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { toast } from 'react-toastify';
 import { api } from "../Api/api";
 
 const ResetPassword = () => {
@@ -13,15 +14,18 @@ const ResetPassword = () => {
     e.preventDefault();
     if (password !== confirm) {
       setMessage("Passwords do not match!");
+      toast.error("Passwords do not match!");
       return;
     }
 
     try {
       const { data } = await api.post(`/auth/reset-password/${token}`, { password });
-      alert(data.message);
+      toast.success(data.message);
       navigate("/login");
     } catch (err) {
-      setMessage(err.response?.data?.message || "Failed to reset password.");
+      const errorMsg = err.response?.data?.message || "Failed to reset password.";
+      setMessage(errorMsg);
+      toast.error(errorMsg);
     }
   };
 

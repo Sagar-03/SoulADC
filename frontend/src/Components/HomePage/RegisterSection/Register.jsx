@@ -170,30 +170,48 @@ const Register = () => {
           <div
             style={{
               backgroundColor: '#fff',
-              padding: '30px 40px',
+              padding: '35px 45px',
               borderRadius: '15px',
               textAlign: 'center',
-              maxWidth: '400px',
+              maxWidth: '450px',
               boxShadow: '0 10px 40px rgba(0, 0, 0, 0.3)',
+              position: 'relative',
             }}
           >
-            <h3 style={{ marginBottom: '15px', color: '#333' }}>Welcome to SoulADC!</h3>
-            <p style={{ marginBottom: '25px', color: '#666', fontSize: '16px' }}>
-              Click below to explore our courses and start your journey with us.
-            </p>
-            <Button
+            {/* Cross button */}
+            <button
               onClick={handlePopupClick}
-              variant="dark"
-              className="px-4 py-2"
               style={{
-                backgroundColor: '#6B4226',
+                position: 'absolute',
+                top: '15px',
+                right: '15px',
+                background: 'transparent',
                 border: 'none',
-                fontSize: '16px',
-                fontWeight: '500',
+                fontSize: '24px',
+                cursor: 'pointer',
+                color: '#999',
+                width: '30px',
+                height: '30px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'color 0.2s',
               }}
+              onMouseEnter={(e) => e.target.style.color = '#333'}
+              onMouseLeave={(e) => e.target.style.color = '#999'}
             >
-              Browse Courses
-            </Button>
+              ×
+            </button>
+            
+            <h2 style={{ marginBottom: '20px', color: '#6B4226', fontWeight: '600' }}>
+              Welcome, Learner! 🎓
+            </h2>
+            <p style={{ marginBottom: '15px', color: '#555', fontSize: '16px', lineHeight: '1.6' }}>
+              We're thrilled to have you here! Your journey to mastering the ADC Part 1 exam starts now.
+            </p>
+            <p style={{ marginBottom: '0', color: '#666', fontSize: '15px', lineHeight: '1.6' }}>
+              Explore our comprehensive courses, connect with expert mentors, and achieve your dental career goals in Australia.
+            </p>
           </div>
         </div>
       )}

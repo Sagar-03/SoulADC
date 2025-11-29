@@ -377,6 +377,31 @@
   height: 18px;
 }
 
+/* Password Label Row */
+.password-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+/* Forgot Password Button */
+.forgot-password-btn {
+  background: none;
+  border: none;
+  color: #8B5E3C;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.2s ease;
+}
+
+.forgot-password-btn:hover {
+  color: #d97706;
+  text-decoration: underline;
+}
+
 /* Auth Switch */
 .auth-switch {
   text-align: center;

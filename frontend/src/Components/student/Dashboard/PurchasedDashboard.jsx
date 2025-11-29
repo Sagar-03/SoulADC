@@ -28,7 +28,7 @@ const PurchasedDashboard = () => {
 
   return (
     <StudentLayout>
-      <h2 className="mb-4 fw-bold flex-grow-1 p-4" style={{ color: "#5A3825" }}>
+      <h2 className="mb-4 fw-bold" style={{ color: "#5A3825" }}>
         My Purchased Courses
       </h2>
 

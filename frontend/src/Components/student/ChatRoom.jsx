@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
+import { toast } from 'react-toastify';
 import io from "socket.io-client";
 import { getChatById, uploadChatImage, uploadChatAudio, getChatSocketUrl } from "../../Api/api";
 import "./chatstyles.css";
@@ -30,7 +31,7 @@ export default function ChatRoom({ chatId, senderRole, onBack, onDelete }) {
     socketConnection.on("chat_deleted", (data) => {
       if (data.chatId === chatId) {
         // Chat was deleted by admin, go back to chat list
-        alert("This chat has been deleted by an administrator.");
+        toast.info("This chat has been deleted by an administrator.");
         onBack();
       }
     });

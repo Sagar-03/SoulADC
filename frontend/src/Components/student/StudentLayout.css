@@ -1,0 +1,50 @@
+/* Student Layout Styles */
+
+/* Custom scrollbar for sidebar */
+.sidebar-wrapper::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar-wrapper::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.sidebar-wrapper::-webkit-scrollbar-thumb {
+  background: #8B5E3C;
+  border-radius: 10px;
+}
+
+.sidebar-wrapper::-webkit-scrollbar-thumb:hover {
+  background: #5A3825;
+}
+
+/* Custom scrollbar for main content */
+.flex-grow-1::-webkit-scrollbar {
+  width: 8px;
+}
+
+.flex-grow-1::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.flex-grow-1::-webkit-scrollbar-thumb {
+  background: #8B5E3C;
+  border-radius: 10px;
+}
+
+.flex-grow-1::-webkit-scrollbar-thumb:hover {
+  background: #5A3825;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .sidebar-wrapper {
+    width: 80px !important;
+  }
+  
+  .flex-grow-1 {
+    margin-left: 80px !important;
+  }
+}

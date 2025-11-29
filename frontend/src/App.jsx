@@ -1,5 +1,7 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import Home from "./Pages/Home";
 import About from "./Pages/AboutPage/About";
 import CoursesPage from "./Pages/course";
@@ -68,6 +70,18 @@ const ProtectedRoute = ({ children, requirePurchased = false, adminOnly = false 
 function App() {
   return (
     <Router>
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<Navigate to="/Home" replace />} />

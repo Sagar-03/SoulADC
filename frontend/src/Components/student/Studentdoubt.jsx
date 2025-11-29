@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { toast } from 'react-toastify';
 import { createChat, getUserChats, getChatSocketUrl } from "../../Api/api";
 import { getUser, isAuthenticated } from "../../utils/auth";
 import io from "socket.io-client";
@@ -23,7 +24,6 @@ export default function Studentdoubt() {
       const res = await getUserChats();
       setActiveChats(res.data);
     } catch (error) {
-      console.error("Failed to fetch user chats:", error);
       setActiveChats([]);
     }
   };
@@ -74,10 +74,10 @@ export default function Studentdoubt() {
   // ✅ Create new chat
   const createChatHandler = async () => {
     if (!user || !isAuthenticated()) {
-      return alert("Please log in to ask a doubt!");
+      return toast.error("Please log in to ask a doubt!");
     }
     if (!firstMessage.trim()) {
-      return alert("Please enter your doubt before sending!");
+      return toast.warning("Please enter your doubt before sending!");
     }
     try {
       const res = await createChat(firstMessage);
@@ -85,9 +85,9 @@ export default function Studentdoubt() {
       setSelectedChat(chatObj);
       setFirstMessage("");
       fetchUserChats();
+      toast.success("Doubt created successfully!");
     } catch (error) {
-      console.error("Failed to create chat:", error);
-      alert("Failed to create doubt. Please try again.");
+      toast.error("Failed to create doubt. Please try again.");
     }
   };
 

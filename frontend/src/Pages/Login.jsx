@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { toast } from 'react-toastify';
 import "./Auth.css";
 import logo from "../assets/loginlogo.png";
 import { api } from "../Api/api";
@@ -36,13 +37,11 @@ const Login = () => {
           password: formData.password,
         });
 
-        console.log("Login response:", data);
-
         if (data.token) {
           // ✅ Store auth data in cookies
           setAuthData(data.token, data.user, data.role);
 
-          alert("Login successful!");
+          toast.success("Login successful!");
 
           // ✅ Redirect handling
           const redirectUrl = getRedirectAfterLogin();
@@ -57,12 +56,12 @@ const Login = () => {
             navigate("/");
           }
         } else {
-          alert(data.message || "Login failed");
+          toast.error(data.message || "Login failed");
         }
       } else {
         // 📝 SIGNUP
         if (formData.password !== formData.confirmPassword) {
-          alert("Passwords do not match!");
+          toast.error("Passwords do not match!");
           return;
         }
 
@@ -74,15 +73,13 @@ const Login = () => {
         });
 
         if (data) {
-          alert(data.message || "Registered successfully!");
+          toast.success(data.message || "Registered successfully!");
           setIsLogin(true); // Switch to login
         } else {
-          alert("Registration failed");
+          toast.error("Registration failed");
         }
       }
     } catch (err) {
-      console.error("Auth error:", err);
-      
       // Extract error message from server response
       let errorMessage = "Something went wrong, please try again.";
       
@@ -92,7 +89,7 @@ const Login = () => {
         errorMessage = err.message;
       }
       
-      alert(errorMessage);
+      toast.error(errorMessage);
     }
   };
 
@@ -186,7 +183,18 @@ const Login = () => {
               )}
 
               <div className="input-group">
-                <label htmlFor="password">Password</label>
+                <div className="password-label-row">
+                  <label htmlFor="password">Password</label>
+                  {isLogin && (
+                    <button
+                      type="button"
+                      className="forgot-password-btn"
+                      onClick={() => navigate("/forgot-password")}
+                    >
+                      Forgot Password?
+                    </button>
+                  )}
+                </div>
                 <input
                   type="password"
                   id="password"
@@ -197,17 +205,6 @@ const Login = () => {
                   placeholder="Enter password"
                   autoComplete={isLogin ? "current-password" : "new-password"}
                 />
-                {isLogin && (
-                  <div className="forgot-password-link">
-                    <button
-                      type="button"
-                      className="link-btn"
-                      onClick={() => navigate("/forgot-password")}
-                    >
-                      Forgot Password?
-                    </button>
-                  </div>
-                )}
               </div>
 
               {!isLogin && (

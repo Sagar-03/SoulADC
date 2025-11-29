@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from 'react-toastify';
 import "./Auth.css";
 import logo from "../assets/logo.png";
 import { api } from "../Api/api";
@@ -44,13 +45,11 @@ const Auth = ({ isOpen, onClose, defaultTab = "signIn" }) => {
           password: formData.password,
         });
 
-        console.log("Login response:", data);
-
         if (data.token) {
           // ✅ Store in cookies
           setAuthData(data.token, data.user, data.role);
 
-          alert("Login successful!");
+          toast.success("Login successful!");
           onClose();
 
           // ✅ Redirect logic
@@ -66,12 +65,12 @@ const Auth = ({ isOpen, onClose, defaultTab = "signIn" }) => {
             navigate("/courses");
           }
         } else {
-          alert(data.message || "Login failed");
+          toast.error(data.message || "Login failed");
         }
       } else {
         // 📝 SIGNUP
         if (formData.password !== formData.confirmPassword) {
-          alert("Passwords do not match!");
+          toast.error("Passwords do not match!");
           return;
         }
 
@@ -83,15 +82,14 @@ const Auth = ({ isOpen, onClose, defaultTab = "signIn" }) => {
         });
 
         if (data) {
-          alert(data.message || "Registered successfully!");
+          toast.success(data.message || "Registered successfully!");
           setIsLogin(true); // Switch to login
         } else {
-          alert("Registration failed");
+          toast.error("Registration failed");
         }
       }
     } catch (err) {
-      console.error("Auth error:", err);
-      alert("Something went wrong, please try again.");
+      toast.error("Something went wrong, please try again.");
     }
   };
 
