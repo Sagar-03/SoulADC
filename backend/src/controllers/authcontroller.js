@@ -46,18 +46,40 @@ const login = async (req, res) => {
     const { email, password } = req.body;
     console.log("📩 Login request:", { email, password }); // Debug log
 
-    // Check for hardcoded admin credentials
+    // Check for hardcoded admin credentials - create or find admin user
     if (email === "admin@souladc.com" && password === "admin123") {
+      let adminUser = await User.findOne({ email: "admin@souladc.com" });
+      
+      // Create admin user if doesn't exist
+      if (!adminUser) {
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash("admin123", salt);
+        
+        adminUser = new User({
+          name: "Admin",
+          email: "admin@souladc.com",
+          password: hashedPassword,
+          role: "admin"
+        });
+        await adminUser.save();
+        console.log("✅ Admin user created in database");
+      }
+      
       const token = jwt.sign(
-        { id: "admin", email: "admin@souladc.com", role: "admin" },
+        { id: adminUser._id, email: adminUser.email, role: "admin" },
         process.env.JWT_SECRET,
-    
       );
+      
       return res.json({
         message: "Admin login successful",
         token,
         role: "admin",
-        user: { email: "admin@souladc.com", role: "admin" }
+        user: { 
+          id: adminUser._id,
+          email: adminUser.email, 
+          role: "admin",
+          name: adminUser.name
+        }
       });
     }
 

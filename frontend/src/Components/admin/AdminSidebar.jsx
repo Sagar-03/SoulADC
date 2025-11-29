@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { RxDashboard } from "react-icons/rx";
-import { FaBook, FaUsers, FaPlus, FaFilePdf,FaSignOutAlt } from "react-icons/fa";
+import { FaBook, FaUsers, FaPlus, FaFilePdf, FaSignOutAlt, FaClipboardList } from "react-icons/fa";
 import { FiMessageCircle } from "react-icons/fi";
 import logo from "../../assets/logo.png";
 import { logout } from "../../utils/auth"; 
@@ -67,6 +67,12 @@ const AdminSidebar = () => {
                     text="Documents Section"
                     active={location.pathname === "/admin/documents"}
                     onClick={() => navigate("/admin/documents")}
+                />
+                <SidebarItem
+                    icon={<FaClipboardList />}
+                    text="Mock Exams"
+                    active={location.pathname.startsWith("/admin/manage-mocks") || location.pathname.startsWith("/admin/create-mock") || location.pathname.startsWith("/admin/edit-mock")}
+                    onClick={() => navigate("/admin/manage-mocks")}
                 />
                 <SidebarItem
                     icon={<FaSignOutAlt />}

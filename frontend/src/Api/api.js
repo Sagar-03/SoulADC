@@ -222,3 +222,26 @@ export const getCourseProgress = (courseId) => api.get(`/user/progress/course/${
 export const deleteDocument = (id) => {
   return api.delete(`/admin/documents/${id}`);
 };
+
+// ============================
+// Mock Exam APIs
+// ============================
+
+// Admin Mock APIs
+export const createMock = (mockData) => api.post("/mocks/create", mockData);
+export const getAllMocks = () => api.get("/mocks/all");
+export const getMockById = (id) => api.get(`/mocks/admin/${id}`);
+export const updateMock = (id, mockData) => api.put(`/mocks/update/${id}`, mockData);
+export const deleteMock = (id) => api.delete(`/mocks/delete/${id}`);
+export const makeMockLive = (id) => api.patch(`/mocks/live/${id}`);
+export const endMock = (id) => api.patch(`/mocks/end/${id}`);
+export const getMockStatistics = (id) => api.get(`/mocks/statistics/${id}`);
+
+// Student Mock APIs
+export const getLiveMocks = () => api.get("/mocks/live");
+export const getPastMocks = () => api.get("/mocks/past");
+export const getMissedMocks = () => api.get("/mocks/missed");
+export const startMockAttempt = (mockId) => api.post(`/mocks/start/${mockId}`);
+export const submitMockAttempt = (attemptId, answers) => api.post(`/mocks/submit/${attemptId}`, answers);
+export const updateFullscreenExit = (attemptId) => api.patch(`/mocks/fullscreen-exit/${attemptId}`);
+export const getMockResult = (attemptId) => api.get(`/mocks/result/${attemptId}`);

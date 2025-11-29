@@ -253,11 +253,13 @@
   font-weight: 600;
   cursor: pointer;
   color: #6b7280;
+  transition: all 0.2s ease;
 }
 
 .tab-btn.active {
   background: #8B5E3C !important;
-  color: white;
+  color: #000000 !important;
+  font-weight: 700;
 }
 
 /* Form */

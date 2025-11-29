@@ -43,6 +43,14 @@ import BulkPdfUpload from "./Components/admin/BulkPdfUpload";
 import AdminDoubtDashboard from "./Components/admin/AdminDoubtPanel";
 import AdminDocuments from "./Components/admin/admindocument";
 
+// Mock Exam Components
+import ManageMocks from "./Components/admin/ManageMocks";
+import CreateMock from "./Components/admin/CreateMock";
+import EditMock from "./Components/admin/EditMock";
+import StudentMocks from "./Components/student/StudentMocks";
+import MockAttempt from "./Components/student/MockAttempt";
+import MockResult from "./Components/student/MockResult";
+
 // 🔹 Protected Route Wrapper
 const ProtectedRoute = ({ children, requirePurchased = false, adminOnly = false }) => {
   const user = getUser();          // comes from cookie
@@ -295,6 +303,56 @@ function App() {
           element={
             <ProtectedRoute adminOnly={true}>
               <AdminDocuments />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/manage-mocks"
+          element={
+            <ProtectedRoute adminOnly={true}>
+              <ManageMocks />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/create-mock"
+          element={
+            <ProtectedRoute adminOnly={true}>
+              <CreateMock />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/edit-mock/:id"
+          element={
+            <ProtectedRoute adminOnly={true}>
+              <EditMock />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Student Mock Routes */}
+        <Route
+          path="/student/mocks"
+          element={
+            <ProtectedRoute requirePurchased={true}>
+              <StudentMocks />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/student/mock-attempt/:mockId"
+          element={
+            <ProtectedRoute requirePurchased={true}>
+              <MockAttempt />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/student/mock-result/:attemptId"
+          element={
+            <ProtectedRoute requirePurchased={true}>
+              <MockResult />
             </ProtectedRoute>
           }
         />

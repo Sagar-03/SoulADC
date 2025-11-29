@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { RxDashboard } from "react-icons/rx";
-import { FaBook, FaSignOutAlt, FaFileAlt, FaChartLine } from "react-icons/fa";
+import { FaBook, FaSignOutAlt, FaFileAlt, FaChartLine, FaClipboardList } from "react-icons/fa";
 import { FiMessageCircle } from "react-icons/fi";
 
 import { CgProfile } from "react-icons/cg";
@@ -60,6 +60,13 @@ const Leftsidebar = () => {
           text="Doubts Section"
           active={location.pathname === "/studentdashboard/doubtpanel"}
           onClick={() => navigate("/studentdashboard/doubtpanel")}
+           hoverColor="#8B5E3C"
+        />
+        <SidebarItem
+          icon={<FaClipboardList />}
+          text="Mock Exams"
+          active={location.pathname.startsWith("/student/mock")}
+          onClick={() => navigate("/student/mocks")}
            hoverColor="#8B5E3C"
         />
         {/* <SidebarItem

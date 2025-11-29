@@ -15,6 +15,7 @@ const paymentRoutes = require("./routes/paymentRoutes");
 const uploadRoutes = require("./routes/upload.js");
 const streamRoutes = require("./routes/stream.js");
 const multipartUploadRoutes = require("./routes/multipartUpload.js");
+const mockRoutes = require("./routes/mockRoutes.js");
 // const doubtRoutes = require("./routes/doubtRoutes.js");
 // const Doubt = require("./models/Chat.js");
 
@@ -79,6 +80,7 @@ app.use("/api/payment", paymentRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/stream", streamRoutes);
 app.use("/api/multipart-upload", multipartUploadRoutes);
+app.use("/api/mocks", mockRoutes);
 // app.use("/api/doubts", doubtRoutes);
 
 // ===================== CHAT SOCKET.IO =====================
