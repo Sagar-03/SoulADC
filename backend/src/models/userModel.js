@@ -24,6 +24,40 @@ const userSchema = new mongoose.Schema(
       loginAt: { type: Date },       // last login time
       logoutAt: { type: Date },      // last logout time
     },
+
+    // ✅ Streak tracking
+    streak: {
+      current: { type: Number, default: 0 },
+      highest: { type: Number, default: 0 },
+      lastLoginDate: { type: Date },
+      loginDates: [{ type: Date }] // Store all login dates for streak calculation
+    },
+
+    // ✅ Video progress tracking
+    videoProgress: [{
+      courseId: { type: mongoose.Schema.Types.ObjectId, ref: 'Course' },
+      weekId: { type: mongoose.Schema.Types.ObjectId },
+      dayId: { type: mongoose.Schema.Types.ObjectId },
+      contentId: { type: mongoose.Schema.Types.ObjectId },
+      videoTitle: { type: String },
+      progress: { type: Number, default: 0, min: 0, max: 1 }, // 0 to 1 (0% to 100%)
+      watchTime: { type: Number, default: 0 }, // in seconds
+      totalDuration: { type: Number, default: 0 }, // in seconds
+      completed: { type: Boolean, default: false },
+      lastWatchedAt: { type: Date, default: Date.now },
+      firstWatchedAt: { type: Date, default: Date.now }
+    }],
+
+    // ✅ Course progress summary
+    courseProgress: [{
+      courseId: { type: mongoose.Schema.Types.ObjectId, ref: 'Course' },
+      totalVideos: { type: Number, default: 0 },
+      completedVideos: { type: Number, default: 0 },
+      totalWatchTime: { type: Number, default: 0 }, // in hours
+      overallProgress: { type: Number, default: 0, min: 0, max: 1 }, // 0 to 1
+      lastAccessedAt: { type: Date, default: Date.now },
+      enrolledAt: { type: Date, default: Date.now }
+    }],
   },
   { timestamps: true }
 );

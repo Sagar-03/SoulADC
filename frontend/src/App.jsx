@@ -16,6 +16,7 @@ import ContactUs from "./Components/ContactUs/ContactUs";
 import Studentdashboard from "./Components/student/Studentdashboard";
 import Mycourse from "./Components/student/Mycourse/mycourse";
 import Dashboard from "./Components/student/Dashboard/PurchasedDashboard";
+import ProgressDashboard from "./Components/student/Dashboard/ProgressDashboard";
 import EmbeddedVideoPlayer from "./Components/VideoPlayer/EmbeddedVideoPlayer";
 import StudentDoubtPanel from "./Components/student/Studentdoubt";
 import StudentProfile from "./Components/student/Profile/StudentProfile";
@@ -98,6 +99,14 @@ function App() {
           element={
             <ProtectedRoute requirePurchased={true}>
               <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/progress"
+          element={
+            <ProtectedRoute requirePurchased={true}>
+              <ProgressDashboard />
             </ProtectedRoute>
           }
         />

@@ -75,6 +75,66 @@ const login = async (req, res) => {
       return res.status(400).json({ message: "Invalid email or password" });
     }
 
+    // Update streak data
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Set to start of day for accurate comparison
+    
+    let currentStreak = user.streak?.current || 0;
+    let highestStreak = user.streak?.highest || 0;
+    const lastLoginDate = user.streak?.lastLoginDate;
+    let loginDates = user.streak?.loginDates || [];
+    
+    // Check if user logged in today already
+    const todayLogin = loginDates.find(date => {
+      const loginDate = new Date(date);
+      loginDate.setHours(0, 0, 0, 0);
+      return loginDate.getTime() === today.getTime();
+    });
+    
+    if (!todayLogin) {
+      // Add today's login
+      loginDates.push(today);
+      
+      if (lastLoginDate) {
+        const lastLogin = new Date(lastLoginDate);
+        lastLogin.setHours(0, 0, 0, 0);
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+        
+        if (lastLogin.getTime() === yesterday.getTime()) {
+          // Consecutive day - increment streak
+          currentStreak += 1;
+        } else if (lastLogin.getTime() < yesterday.getTime()) {
+          // Missed days - reset streak
+          currentStreak = 1;
+        }
+        // If logged in same day, don't change streak
+      } else {
+        // First login ever
+        currentStreak = 1;
+      }
+      
+      // Update highest streak if current is higher
+      if (currentStreak > highestStreak) {
+        highestStreak = currentStreak;
+      }
+      
+      // Keep only last 30 days of login dates to prevent excessive storage
+      const thirtyDaysAgo = new Date(today);
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      loginDates = loginDates.filter(date => new Date(date) >= thirtyDaysAgo);
+      
+      // Update user streak data
+      user.streak = {
+        current: currentStreak,
+        highest: highestStreak,
+        lastLoginDate: today,
+        loginDates: loginDates
+      };
+      
+      await user.save();
+    }
+
     // Generate JWT for regular user
     const token = jwt.sign(
       { id: user._id, email: user.email, role: user.role || "user" },
@@ -91,7 +151,12 @@ const login = async (req, res) => {
         email: user.email,
         role: user.role || "user",
         name: user.name,
-        purchasedCourses: user.purchasedCourses || []
+        purchasedCourses: user.purchasedCourses || [],
+        streak: {
+          current: user.streak?.current || 0,
+          highest: user.streak?.highest || 0,
+          lastLoginDate: user.streak?.lastLoginDate
+        }
       }
       });
   } catch (error) {

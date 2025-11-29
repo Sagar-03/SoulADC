@@ -133,7 +133,7 @@ const Mycourse = () => {
                 onClick={() => navigate(`/documents/${courseId}`)}
               >
                 <FaFileAlt className="me-2" />
-                View Documents
+                View Notes
               </button>
             </div>
           </div>

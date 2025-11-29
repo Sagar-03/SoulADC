@@ -59,6 +59,8 @@ export const fetchcourse = () => api.patch(`/admin/courses/${courseId}/toggle-li
 // ============================
 export const getStudents = () => api.get("/admin/students"); // assume you add this route later
 export const getPurchasedCourses = () => api.get("/user/purchased-courses");
+export const getUserStreak = () => api.get("/user/streak");
+export const getProgressDashboard = () => api.get("/user/progress-dashboard");
 
 // ============================
 // export const getStreamUrl = (s3Key) => `http://localhost:7001/api/stream/${s3Key}`;
@@ -205,6 +207,16 @@ export const updateUserProfile = (profileData) => api.put("/user/profile", profi
 export const getDocuments = () => {
   return api.get("/admin/documents");
 };
+
+// ============================
+// Progress Tracking APIs
+// ============================
+export const updateVideoProgress = (progressData) => api.post("/user/video-progress", progressData);
+export const getStudentProgress = () => api.get("/user/progress");
+export const getWeeklyWatchTime = () => api.get("/user/progress/weekly");
+export const getStudentMilestones = () => api.get("/user/milestones");
+export const getRecentActivity = () => api.get("/user/activity/recent");
+export const getCourseProgress = (courseId) => api.get(`/user/progress/course/${courseId}`);
 
 // 🗑️ Delete a document
 export const deleteDocument = (id) => {

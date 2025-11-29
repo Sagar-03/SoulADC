@@ -5,6 +5,13 @@ import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import "./EmbeddedVideoPlayer.css";
 import StudentLayout from "../student/StudentLayout";
 import { api, getStreamUrl } from "../../Api/api";
+import {
+  saveVideoProgress,
+  getVideoProgress,
+  markVideoCompleted,
+  throttledSaveProgress,
+  cleanupOldProgress
+} from "../../utils/videoProgress";
 
 // Static data for fallback
 const staticWeeks = Array.from({ length: 7 }, (_, w) => ({
@@ -38,6 +45,9 @@ const EmbeddedVideoPlayer = () => {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isBlurred, setIsBlurred] = useState(false);
+  const [showResumeNotification, setShowResumeNotification] = useState(false);
+  const [savedProgress, setSavedProgress] = useState(null);
+  const [hasResumed, setHasResumed] = useState(false);
 
   // Fetch course data and video info
   useEffect(() => {
@@ -68,7 +78,8 @@ const EmbeddedVideoPlayer = () => {
       } catch (err) {
         console.error("Error fetching data:", err);
         setError(err.response?.data?.message || err.message);
-
+        
+        // Fallback to demo data
         setCourse({
           title: "ADC Part 1 Course",
           weeks: staticWeeks.map(w => ({
@@ -100,7 +111,44 @@ const EmbeddedVideoPlayer = () => {
     };
 
     fetchCourseAndVideo();
+    
+    // Cleanup old progress on component mount
+    cleanupOldProgress();
   }, [courseId, videoId]);
+
+  // Check for saved progress when video is ready
+  useEffect(() => {
+    if (courseId && videoId && !hasResumed) {
+      const progress = getVideoProgress(courseId, videoId);
+      if (progress && progress.currentTime > 30) {
+        setSavedProgress(progress);
+        setShowResumeNotification(true);
+      }
+    }
+  }, [courseId, videoId, hasResumed]);
+
+  // Handle resume from saved position
+  const handleResumeVideo = () => {
+    const video = videoRef.current;
+    if (video && savedProgress) {
+      video.currentTime = savedProgress.currentTime;
+      setHasResumed(true);
+      setShowResumeNotification(false);
+      setSavedProgress(null);
+    }
+  };
+
+  // Handle start from beginning
+  const handleStartFromBeginning = () => {
+    const video = videoRef.current;
+    if (video) {
+      video.currentTime = 0;
+      setHasResumed(true);
+      setShowResumeNotification(false);
+      setSavedProgress(null);
+    }
+  };
+
 
   // Anti-screenshot mechanism: Blur only on non-alphanumeric key press
   useEffect(() => {
@@ -170,15 +218,55 @@ const EmbeddedVideoPlayer = () => {
     video.addEventListener('contextmenu', preventRightClick);
     video.addEventListener('dragstart', preventDrag);
 
-    const handleTimeUpdate = () => setCurrentTime(video.currentTime);
-    const handleLoadedData = () => setDuration(video.duration);
+    const handleTimeUpdate = () => {
+      const currentVideoTime = video.currentTime;
+      const videoDuration = video.duration;
+      setCurrentTime(currentVideoTime);
+      
+      // Save progress periodically (throttled)
+      if (courseId && videoId && videoDuration > 0) {
+        throttledSaveProgress(courseId, videoId, currentVideoTime, videoDuration);
+        
+        // Mark as completed if watched 95% or more
+        if ((currentVideoTime / videoDuration) >= 0.95) {
+          markVideoCompleted(courseId, videoId, videoDuration);
+        }
+      }
+    };
+
+    const handleLoadedData = () => {
+      setDuration(video.duration);
+      
+      // Auto-resume if there's saved progress and user hasn't made a choice yet
+      if (savedProgress && !hasResumed && !showResumeNotification) {
+        setTimeout(() => {
+          setShowResumeNotification(true);
+        }, 1000); // Show notification after 1 second
+      }
+    };
+
     const handlePlay = () => setIsPlaying(true);
-    const handlePause = () => setIsPlaying(false);
+    const handlePause = () => {
+      setIsPlaying(false);
+      
+      // Save progress when video is paused
+      if (courseId && videoId && video.duration > 0) {
+        saveVideoProgress(courseId, videoId, video.currentTime, video.duration);
+      }
+    };
+
+    // Save progress when user leaves the page
+    const handleBeforeUnload = () => {
+      if (courseId && videoId && video.duration > 0) {
+        saveVideoProgress(courseId, videoId, video.currentTime, video.duration);
+      }
+    };
 
     video.addEventListener("timeupdate", handleTimeUpdate);
     video.addEventListener("loadeddata", handleLoadedData);
     video.addEventListener("play", handlePlay);
     video.addEventListener("pause", handlePause);
+    window.addEventListener("beforeunload", handleBeforeUnload);
 
     return () => {
       video.removeEventListener('contextmenu', preventRightClick);
@@ -187,8 +275,9 @@ const EmbeddedVideoPlayer = () => {
       video.removeEventListener("loadeddata", handleLoadedData);
       video.removeEventListener("play", handlePlay);
       video.removeEventListener("pause", handlePause);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
     };
-  }, [currentVideo.src]);
+  }, [currentVideo.src, courseId, videoId, savedProgress, hasResumed, showResumeNotification]);
 
   const handleOpenContent = (content) => {
     const id = content._id || content.s3Key;
@@ -246,6 +335,34 @@ const EmbeddedVideoPlayer = () => {
           {error && (
             <div className="alert alert-warning mb-4" role="alert">
               <small>⚠️ Using demo data. {error}</small>
+            </div>
+          )}
+
+          {/* Resume Video Notification */}
+          {showResumeNotification && savedProgress && (
+            <div className="alert alert-info mb-4 d-flex justify-content-between align-items-center" role="alert">
+              <div>
+                <strong>🕐 Resume watching?</strong>
+                <br />
+                <small>
+                  You were at {Math.floor(savedProgress.currentTime / 60)}:{(savedProgress.currentTime % 60).toFixed(0).padStart(2, '0')} 
+                  ({savedProgress.percentage.toFixed(1)}% completed)
+                </small>
+              </div>
+              <div className="d-flex gap-2">
+                <button 
+                  className="btn btn-sm btn-success"
+                  onClick={handleResumeVideo}
+                >
+                  Resume
+                </button>
+                <button 
+                  className="btn btn-sm btn-outline-secondary"
+                  onClick={handleStartFromBeginning}
+                >
+                  Start Over
+                </button>
+              </div>
             </div>
           )}
 
@@ -312,6 +429,9 @@ const EmbeddedVideoPlayer = () => {
                     <span>Duration: {formatTime(duration)}</span>
                     <span>Current: {formatTime(currentTime)}</span>
                     <span>Status: {isPlaying ? 'Playing' : 'Paused'}</span>
+                    {duration > 0 && (
+                      <span>Progress: {((currentTime / duration) * 100).toFixed(1)}%</span>
+                    )}
                   </div>
                   <div className="mt-2">
                     <small className="text-warning">

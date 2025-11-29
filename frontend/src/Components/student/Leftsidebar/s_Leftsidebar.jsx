@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { RxDashboard } from "react-icons/rx";
-import { FaBook, FaSignOutAlt, FaFileAlt } from "react-icons/fa";
+import { FaBook, FaSignOutAlt, FaFileAlt, FaChartLine } from "react-icons/fa";
 import { FiMessageCircle } from "react-icons/fi";
 
 import { CgProfile } from "react-icons/cg";
@@ -34,9 +34,16 @@ const Leftsidebar = () => {
 
       {/* Top Section */}
       <div className="nav flex-column w-100 mt-4 fs-5">
+         <SidebarItem
+          icon={<FaChartLine />}
+          text="Dashboard"
+          active={location.pathname === "/progress"}
+          onClick={() => navigate("/progress")}
+          hoverColor="#8B5E3C"
+        />
         <SidebarItem
           icon={<RxDashboard />}
-          text="Dashboard"
+          text="My Courses"
           active={location.pathname === "/Dashboard"}
           onClick={() => navigate("/Dashboard")}
           hoverColor="#8B5E3C"

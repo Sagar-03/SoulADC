@@ -8,6 +8,7 @@ const Register = () => {
   const videoRef = useRef(null);
   const [muted, setMuted] = useState(true);
   const [hasInteracted, setHasInteracted] = useState(false);
+  const [showPopup, setShowPopup] = useState(true);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -23,7 +24,6 @@ const Register = () => {
         console.log("Video started playing muted");
       } catch (err) {
         console.log("Muted autoplay blocked - waiting for user interaction:", err);
-        // Don't worry if autoplay fails, user interaction will handle it
       }
     };
 
@@ -42,7 +42,6 @@ const Register = () => {
 
     const handleLoadedData = () => {
       console.log("Video loaded - Volume:", video.volume, "Muted:", video.muted);
-      // Ensure our state matches the video element
       setMuted(video.muted);
     };
 
@@ -67,58 +66,45 @@ const Register = () => {
     video.addEventListener('pause', handlePause);
     video.addEventListener('play', handlePlay);
 
-    // Simple and reliable user interaction handler
-    const handleFirstInteraction = async () => {
-      if (hasInteracted) return; // Prevent multiple triggers
-      
-      setHasInteracted(true);
-      
-      try {
-        // Restart video from the beginning with sound
-        video.currentTime = 0; // Reset to start
-        video.muted = false;
-        video.volume = 0.7; // Set to comfortable volume level
-        setMuted(false);
-        
-        // Play the video from the beginning with sound
-        await video.play();
-        console.log("Video restarted from beginning with sound after user interaction");
-        
-        console.log("Video unmuted successfully with volume:", video.volume);
-        console.log("Video muted state:", video.muted);
-        console.log("Video paused state:", video.paused);
-        console.log("Video current time:", video.currentTime);
-      } catch (err) {
-        console.log("Failed to restart video with sound:", err);
-      }
-      
-      // Clean up listeners
-      document.removeEventListener("click", handleFirstInteraction);
-      document.removeEventListener("scroll", handleFirstInteraction);
-      document.removeEventListener("mousemove", handleFirstInteraction);
-      document.removeEventListener("touchstart", handleFirstInteraction);
-    };
-
-    // Add event listeners to document for better coverage
-    document.addEventListener("click", handleFirstInteraction, { passive: true });
-    document.addEventListener("scroll", handleFirstInteraction, { passive: true });
-    document.addEventListener("mousemove", handleFirstInteraction, { passive: true });
-    document.addEventListener("touchstart", handleFirstInteraction, { passive: true });
-
     return () => {
       // Clean up video event listeners
       video.removeEventListener('volumechange', handleVolumeChange);
       video.removeEventListener('loadeddata', handleLoadedData);
       video.removeEventListener('pause', handlePause);
       video.removeEventListener('play', handlePlay);
-      
-      // Clean up document event listeners
-      document.removeEventListener("click", handleFirstInteraction);
-      document.removeEventListener("scroll", handleFirstInteraction);
-      document.removeEventListener("mousemove", handleFirstInteraction);
-      document.removeEventListener("touchstart", handleFirstInteraction);
     };
-  }, []); // Remove hasInteracted dependency to prevent re-running
+  }, [hasInteracted]);
+
+  // Handle popup interaction
+  const handlePopupClick = async () => {
+    const video = videoRef.current;
+    if (!video) return;
+    
+    // First, close the popup and mark as interacted
+    setShowPopup(false);
+    setHasInteracted(true);
+    
+    // Small delay to ensure state updates
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    try {
+      // Keep current playback position, just unmute
+      const wasPlaying = !video.paused;
+      
+      video.muted = false;
+      video.volume = 0.7;
+      setMuted(false);
+      
+      // Ensure video continues playing
+      if (!wasPlaying || video.paused) {
+        await video.play();
+      }
+      
+      console.log("Video unmuted with sound after popup interaction");
+    } catch (err) {
+      console.log("Failed to unmute video:", err);
+    }
+  };
 
   // Toggle button (manual)
   const toggleSound = async () => {
@@ -165,6 +151,53 @@ const Register = () => {
 
   return (
     <Container fluid className="register-section-container p-5">
+      {/* Popup for user interaction - only closes when clicked */}
+      {showPopup && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 9999,
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: '#fff',
+              padding: '30px 40px',
+              borderRadius: '15px',
+              textAlign: 'center',
+              maxWidth: '400px',
+              boxShadow: '0 10px 40px rgba(0, 0, 0, 0.3)',
+            }}
+          >
+            <h3 style={{ marginBottom: '15px', color: '#333' }}>Welcome to SoulADC!</h3>
+            <p style={{ marginBottom: '25px', color: '#666', fontSize: '16px' }}>
+              Click below to explore our courses and start your journey with us.
+            </p>
+            <Button
+              onClick={handlePopupClick}
+              variant="dark"
+              className="px-4 py-2"
+              style={{
+                backgroundColor: '#6B4226',
+                border: 'none',
+                fontSize: '16px',
+                fontWeight: '500',
+              }}
+            >
+              Browse Courses
+            </Button>
+          </div>
+        </div>
+      )}
+      
       <Row className="g-5 align-items-center">
         <Col
           md={6}
