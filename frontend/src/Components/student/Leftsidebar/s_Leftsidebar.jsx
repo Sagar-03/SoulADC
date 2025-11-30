@@ -50,10 +50,10 @@ const Leftsidebar = () => {
         />
         <SidebarItem
           icon={<FaFileAlt />}
-          text="Notes"
+          text="Documents"
           active={location.pathname.includes("/documents")}
           onClick={() => navigate("/documents")}
-          hoverColor="#8B5E3C"
+          hoverColor="linear-gradient(135deg, #8B5E3C, #A98C6A)"
         />
          <SidebarItem
           icon={<FiMessageCircle />}

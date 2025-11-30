@@ -82,13 +82,13 @@ const Login = () => {
     } catch (err) {
       // Extract error message from server response
       let errorMessage = "Something went wrong, please try again.";
-      
+
       if (err.response && err.response.data && err.response.data.message) {
         errorMessage = err.response.data.message;
       } else if (err.message) {
         errorMessage = err.message;
       }
-      
+
       toast.error(errorMessage);
     }
   };
@@ -104,9 +104,9 @@ const Login = () => {
         <div className="auth-left-panel">
           <div className="brand-content">
             <img src={logo} alt="Logo" className="auth-logo" />
-            <h1 className="brand-title">
+            {/* <h1 className="brand-title">
               Crack your<span className="highlight"> ADC Part 1</span> with Soul ADC
-            </h1>
+            </h1> */}
             <p className="brand-subtitle">
               Ignite your dental future with us
             </p>
@@ -118,7 +118,10 @@ const Login = () => {
           <div className="auth-form-container">
             <div className="form-header">
               <h2>{isLogin ? "Welcome Back!" : "Create Account"}</h2>
-              <p>{isLogin ? "Sign in to continue" : "Join dental professionals"}</p>
+              <p>{isLogin ? "Crack your ADC Part 1 with Soul ADC" : "Crack your ADC Part 1 with Soul ADC"}</p>
+
+              {/* <p>{isLogin ? "Sign in to continue" : "Join dental professionals"}</p> */}
+              {/* Crack your<span className="highlight"> ADC Part 1</span> with Soul ADC */}
             </div>
 
             <div className="auth-tabs">
@@ -234,7 +237,7 @@ const Login = () => {
                       required
                     />
                     <span className="checkmark"></span>
-                     I agree to <Link to="/tnc">Terms & Conditions</Link>
+                    I agree to <Link to="/tnc">Terms & Conditions</Link>
 
                   </label>
                 </div>

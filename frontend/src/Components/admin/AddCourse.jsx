@@ -171,7 +171,7 @@ const AddCourse = () => {
         {/* Price Section */}
         <div className="row">
           <div className="col-md-6 mb-3">
-            <label className="form-label">Actual Price ($)</label>
+            <label className="form-label">Discounted Price ($)</label>
             <input
               type="number"
               name="price"
@@ -185,7 +185,7 @@ const AddCourse = () => {
             <div className="form-text">This is the price customers will pay</div>
           </div>
           <div className="col-md-6 mb-3">
-            <label className="form-label">Cut Price ($) - Optional</label>
+            <label className="form-label">Actual Price ($) - Optional</label>
             <input
               type="number"
               name="cutPrice"
