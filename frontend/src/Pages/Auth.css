@@ -289,20 +289,81 @@
   margin-bottom: 6px;
 }
 
-.input-group input {
+.input-group input,
+.input-group input[type="email"],
+.input-group input[type="password"],
+.input-group input[type="text"] {
   padding: 14px 18px;
   border: 2px solid #e5e7eb;
   border-radius: 10px;
   font-size: 15px;
-  background: #ffffff;
-  color: #111827;
+  background-color: #ffffff !important;
+  background: #ffffff !important;
+  color: #111827 !important;
+  -webkit-text-fill-color: #111827 !important;
   transition: all 0.2s ease;
+  font-weight: 400;
+  caret-color: #111827 !important;
+}
+
+.input-group input::placeholder,
+.input-group input[type="email"]::placeholder,
+.input-group input[type="password"]::placeholder,
+.input-group input[type="text"]::placeholder {
+  color: #9ca3af !important;
+  opacity: 1;
+  -webkit-text-fill-color: #9ca3af !important;
+}
+
+/* Make phone input + country dropdown match other inputs */
+.input-group select,
+.input-group input[type="tel"] {
+  padding: 14px 18px;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  background-color: #ffffff !important;
+  background: #ffffff !important;
+  font-size: 15px;
+  color: #111827 !important;
+  -webkit-text-fill-color: #111827 !important;
+  transition: all 0.2s ease;
+  width: 100%;
+  outline: none;
+  font-weight: 400;
+  caret-color: #111827 !important;
+}
+
+.input-group select option {
+  color: #111827 !important;
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+}
+
+.input-group select:focus,
+.input-group input[type="tel"]:focus {
+  border-color: #d97706;
+  box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.15);
 }
 
 .input-group input:focus {
   outline: none;
   border-color: #d97706;
   box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.15);
+}
+
+/* Prevent browser autofill from changing input colors */
+.input-group input:-webkit-autofill,
+.input-group input:-webkit-autofill:hover,
+.input-group input:-webkit-autofill:focus,
+.input-group input:-webkit-autofill:active,
+.input-group input[type="email"]:-webkit-autofill,
+.input-group input[type="password"]:-webkit-autofill,
+.input-group input[type="text"]:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 30px white inset !important;
+  -webkit-text-fill-color: #111827 !important;
+  background-color: white !important;
+  color: #111827 !important;
+  transition: background-color 5000s ease-in-out 0s;
 }
 
 /* Submit Button */

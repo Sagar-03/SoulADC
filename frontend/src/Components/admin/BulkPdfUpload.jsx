@@ -20,7 +20,7 @@ const BulkPdfUpload = () => {
     const fetchCourses = async () => {
       try {
         const { data } = await getCourses();
-        setCourses(data);
+        setCourses(data.courses || []);
       } catch (err) {
         setError("Failed to fetch courses");
         console.error(err);

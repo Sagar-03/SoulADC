@@ -22,3 +22,19 @@
 .btn-primary:hover {
   background-color: #5A3825;
 }
+
+.course-btn {
+  background: linear-gradient(145deg, #A98C6A, #7B563D) !important;
+  color: white !important;
+  border: none !important;
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 15px;
+  transition: all 0.2s ease;
+}
+
+.course-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(171, 131, 94, 0.3);
+}

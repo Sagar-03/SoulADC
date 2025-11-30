@@ -223,6 +223,11 @@ export const deleteDocument = (id) => {
   return api.delete(`/admin/documents/${id}`);
 };
 
+// 🧹 Cleanup orphaned documents
+export const cleanupOrphanedDocuments = () => {
+  return api.post("/admin/documents/cleanup-orphaned");
+};
+
 // ============================
 // Mock Exam APIs
 // ============================

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import AdminLayout from "./AdminLayout";
-import { getDocuments, deleteDocument, api } from "../../Api/api";
+import { getDocuments, deleteDocument, cleanupOrphanedDocuments, api } from "../../Api/api";
 import { FaFileAlt, FaFilePdf } from "react-icons/fa";
 import "../student/Documents/StudentDocuments.css";
 import "./AdminDocuments.css";
@@ -91,13 +91,61 @@ const AdminDocuments = () => {
 
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this document?")) return;
+    
+    const docToDelete = documents.find(doc => doc._id === id);
+    console.log("🗑️ Attempting to delete document:", {
+      id,
+      title: docToDelete?.title,
+      totalDocsBefore: documents.length
+    });
+    
     try {
       await deleteDocument(id);
-      setDocuments((prev) => prev.filter((doc) => doc._id !== id));
+      
+      // Update state to remove the deleted document
+      setDocuments((prev) => {
+        const updated = prev.filter((doc) => doc._id !== id);
+        console.log("✅ Document deleted from state:", {
+          deletedTitle: docToDelete?.title,
+          remainingDocs: updated.length,
+          totalDocsBefore: prev.length
+        });
+        return updated;
+      });
+      
       alert("🗑️ Document deleted successfully!");
     } catch (err) {
-      console.error("Delete failed:", err);
-      alert("Failed to delete document.");
+      console.error("❌ Delete failed:", err);
+      alert("Failed to delete document: " + (err.response?.data?.error || err.message));
+    }
+  };
+
+  const handleCleanupOrphaned = async () => {
+    if (!window.confirm("🧹 This will remove all document entries whose files no longer exist in S3. Continue?")) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      console.log("🧹 Starting cleanup of orphaned documents...");
+      
+      const response = await cleanupOrphanedDocuments();
+      const { stats } = response.data;
+      
+      console.log("✅ Cleanup complete:", stats);
+      
+      // Refresh documents list
+      await fetchDocuments();
+      
+      alert(`🧹 Cleanup complete!\n\nChecked: ${stats.totalChecked} documents\nRemoved: ${stats.totalRemoved} orphaned entries\n\nThe page will now refresh.`);
+      
+      // Refresh the page to show updated list
+      window.location.reload();
+    } catch (err) {
+      console.error("❌ Cleanup failed:", err);
+      alert("Failed to cleanup orphaned documents: " + (err.response?.data?.error || err.message));
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -207,11 +255,21 @@ const AdminDocuments = () => {
     <AdminLayout>
       <div className="documents-container">
         {/* Header */}
-        <div className="documents-header mb-4">
-          <h2 className="fw-bold" style={{ color: "#5A3825" }}>
-            Manage Notes & Mock Papers
-          </h2>
-          <p className="text-muted">Organize and manage course Notes by modules</p>
+        <div className="documents-header mb-4 d-flex justify-content-between align-items-start">
+          <div>
+            <h2 className="fw-bold" style={{ color: "#5A3825" }}>
+              Manage Notes & Mock Papers
+            </h2>
+            <p className="text-muted mb-0">Organize and manage course Notes by modules</p>
+          </div>
+          <button
+            className="btn btn-warning"
+            onClick={handleCleanupOrphaned}
+            disabled={loading}
+            title="Remove document entries whose files don't exist in S3"
+          >
+            🧹 Cleanup Orphaned Docs
+          </button>
         </div>
 
         {coursesLoading ? (

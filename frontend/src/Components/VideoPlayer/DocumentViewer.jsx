@@ -3,7 +3,6 @@ import { useParams, useNavigate } from "react-router-dom";
 import { FaArrowLeft, FaExpand, FaCompress } from "react-icons/fa";
 import StudentLayout from "../student/StudentLayout";
 import { api, getStreamUrl } from "../../Api/api";
-import { setupBlurProtection, additionalProtection } from "../../utils/blurProtection";
 import "./DocumentViewer.css";
 
 const DocumentViewer = () => {
@@ -21,6 +20,8 @@ const DocumentViewer = () => {
 
         const fetchDocumentInfo = async () => {
             try {
+                console.log('📄 Fetching document info for:', { courseId, documentId });
+                
                 // Fetch course info first
                 const courseResponse = await api.get(`/user/courses/${courseId}`);
                 setCourse(courseResponse.data);
@@ -35,6 +36,13 @@ const DocumentViewer = () => {
                         if (foundDocument) {
                             foundDocument.weekNumber = week.weekNumber;
                             foundDocument.weekTitle = week.title;
+                            console.log('✅ Found document:', {
+                                title: foundDocument.title,
+                                id: foundDocument._id || foundDocument.id,
+                                s3Key: foundDocument.s3Key,
+                                url: foundDocument.url,
+                                type: foundDocument.type
+                            });
                             break;
                         }
                     }
@@ -43,7 +51,8 @@ const DocumentViewer = () => {
                 if (foundDocument) {
                     setDocumentData(foundDocument);
                 } else {
-                    setError("Document not found");
+                    console.error('❌ Document not found in course data');
+                    setError("Document not found in course");
                 }
             } catch (err) {
                 console.error("Error fetching document:", err);
@@ -68,27 +77,64 @@ const DocumentViewer = () => {
         const fetchDocumentBlob = async () => {
             if (!documentData) return;
             
+            const docId = documentData._id || documentData.id;
+            console.log('🔄 Fetching document blob for ID:', docId);
+            console.log('📦 Document data:', {
+                title: documentData.title,
+                s3Key: documentData.s3Key,
+                url: documentData.url,
+                type: documentData.type
+            });
+            
             try {
                 setFetchingDoc(true);
-                const response = await api.get(`/stream/${documentData._id || documentData.id}`, {
+                
+                // Try fetching via stream endpoint
+                const response = await api.get(`/stream/${docId}`, {
                     responseType: 'blob'
                 });
                 
+                console.log('✅ Document fetched successfully');
                 const blob = new Blob([response.data], { type: 'application/pdf' });
                 const url = URL.createObjectURL(blob);
                 setDocumentUrl(url);
+                setFetchingDoc(false);
             } catch (error) {
-                console.error('Error fetching document:', error);
+                console.error('❌ Error fetching document blob:', error);
+                console.error('Response:', error.response?.data);
+                console.error('Status:', error.response?.status);
+                
+                // Try fallback to direct URL if available
+                if (documentData.url) {
+                    console.log('🔄 Trying fallback URL:', documentData.url);
+                    try {
+                        const fallbackResponse = await fetch(documentData.url);
+                        if (fallbackResponse.ok) {
+                            const blob = await fallbackResponse.blob();
+                            const url = URL.createObjectURL(blob);
+                            setDocumentUrl(url);
+                            console.log('✅ Loaded document via fallback URL');
+                            setFetchingDoc(false);
+                            return;
+                        }
+                    } catch (fallbackError) {
+                        console.error('❌ Fallback URL also failed:', fallbackError);
+                    }
+                }
+                
+                // Set appropriate error message
                 if (error.response?.status === 404) {
-                    setError('Document file not found. The file may have been moved or deleted.');
+                    const errorData = error.response?.data;
+                    const s3Key = errorData?.s3Key || documentData.s3Key || 'unknown';
+                    setError(`Document file not found in storage.\n\nS3 Key: ${s3Key}\nDocument ID: ${docId}\n\nThe file may have been moved or deleted.`);
                 } else if (error.response?.status === 401) {
                     setError('You are not authorized to view this document.');
                 } else if (error.response?.status === 403) {
                     setError('Access denied. You do not have permission to view this document.');
                 } else {
-                    setError(`Failed to load document: ${error.response?.data?.message || error.message}`);
+                    const errorMsg = error.response?.data?.error || error.response?.data?.message || error.message;
+                    setError(`Failed to load document: ${errorMsg}\n\nDocument ID: ${docId}\nS3 Key: ${documentData.s3Key || 'unknown'}`);
                 }
-            } finally {
                 setFetchingDoc(false);
             }
         };
@@ -103,67 +149,11 @@ const DocumentViewer = () => {
         };
     }, [documentData]);
 
-    // Setup blur protection for document viewer
-    useEffect(() => {
-        if (!documentUrl) return;
-
-        // Enhanced Print Screen detection via multiple methods
-        const enhancedPrintScreenDetection = () => {
-            let lastKeyTime = 0;
-            
-            const detectPrintScreen = (e) => {
-                // Method 1: Direct key detection
-                if (e.keyCode === 44 || e.which === 44 || e.code === 'PrintScreen' || e.key === 'PrintScreen') {
-                    e.preventDefault();
-                    console.warn("🚨 Print Screen detected on document viewer");
-                    
-                    // Store in session storage to persist across refresh
-                    sessionStorage.setItem('blurProtectionActive', Date.now().toString());
-                    sessionStorage.setItem('blurProtectionDuration', '30000');
-                    
-                    // Apply blur
-                    const { applyBlur } = require('../../utils/blurProtection');
-                    applyBlur(30000, "⚠️ Screenshot Detected - Document Protected for 30 Seconds");
-                }
-                
-                // Method 2: Detect rapid key sequences
-                const now = Date.now();
-                if (now - lastKeyTime < 100) {
-                    console.warn("Rapid key sequence detected on document");
-                }
-                lastKeyTime = now;
-            };
-
-            // Listen on both keydown and keyup
-            window.addEventListener('keydown', detectPrintScreen, true);
-            window.addEventListener('keyup', detectPrintScreen, true);
-            
-            return () => {
-                window.removeEventListener('keydown', detectPrintScreen, true);
-                window.removeEventListener('keyup', detectPrintScreen, true);
-            };
-        };
-
-        const cleanupEnhanced = enhancedPrintScreenDetection();
-
-        // Setup blur protection with document-specific options
-        const cleanupBlurProtection = setupBlurProtection({
-            allowedKeys: ["Space"], // Only allow Space key for scrolling
-            printScreenDuration: 30000, // 30 seconds for Print Screen
-            defaultDuration: 15000, // 15 seconds for other suspicious keys
-            pauseContent: null, // No content to pause for documents
-            showMessage: true
-        });
-
-        // Setup additional protection (context menu, dev tools detection)
-        const cleanupAdditionalProtection = additionalProtection();
-
-        return () => {
-            cleanupEnhanced();
-            cleanupBlurProtection();
-            cleanupAdditionalProtection();
-        };
-    }, [documentUrl]);
+    // DRM protection will be implemented later
+    // useEffect(() => {
+    //     if (!documentUrl) return;
+    //     // Protection logic removed for now
+    // }, [documentUrl]);
 
     const toggleFullscreen = () => {
         setIsFullscreen(!isFullscreen);
@@ -192,7 +182,7 @@ const DocumentViewer = () => {
                 <div className="document-viewer-error">
                     <div className="text-center py-5">
                         <h3 className="text-muted mb-3">Document Not Available</h3>
-                        <p className="text-muted mb-4">{error}</p>
+                        <p className="text-muted mb-4" style={{ whiteSpace: 'pre-line' }}>{error || 'Document data not found.'}</p>
                         <button
                             className="btn btn-primary"
                             onClick={() => navigate(`/documents/${courseId}`)}

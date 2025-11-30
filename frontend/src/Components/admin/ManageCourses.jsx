@@ -11,7 +11,7 @@ const ManageCourses = () => {
     const fetchCourses = async () => {
       try {
         const { data } = await getCourses(); // Axios handles JSON parsing
-        setCourses(data);
+        setCourses(data.courses || []);
       } catch (err) {
         console.error("Error fetching courses:", err);
       } finally {

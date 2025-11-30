@@ -137,7 +137,9 @@ const PurchasedDashboard = () => {
                             <strong>{course.daysRemaining} days remaining</strong>
                           </p>
                         )}
-                        <button className="btn mt-auto" style={{ backgroundColor: "#5A3825", color: "white", border: "none" }}>
+                        <button
+                          className="btn mt-auto course-btn"
+                        >
                           <i className="bi bi-play-circle me-2"></i>
                           Go to Course
                         </button>

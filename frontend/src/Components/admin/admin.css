@@ -262,11 +262,24 @@ video {
   border: 1px solid #e0d4c7;
   border-radius: 8px;
   transition: all 0.2s ease;
+  overflow: hidden;
 }
 
 .file-list-item:hover {
   border-color: #8B5E3C;
   box-shadow: 0 2px 8px rgba(139, 94, 60, 0.1);
+}
+
+.file-list-item .flex-grow-1 {
+  overflow: hidden;
+  min-width: 0;
+}
+
+.file-list-item strong {
+  word-break: break-word;
+  overflow-wrap: break-word;
+  display: block;
+  line-height: 1.4;
 }
 
 .upload-summary-card {
@@ -302,11 +315,21 @@ video {
 .result-item-success {
   background: linear-gradient(135deg, #e8f5e8 0%, #d4f4d4 100%);
   border-color: #98d982 !important;
+  overflow: hidden;
 }
 
 .result-item-error {
   background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
   border-color: #f48fb1 !important;
+  overflow: hidden;
+}
+
+.result-item-success .text-truncate,
+.result-item-error .text-truncate {
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: normal !important;
+  line-height: 1.4;
 }
 
 /* Enhanced form controls */

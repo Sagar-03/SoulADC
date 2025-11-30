@@ -165,25 +165,68 @@ router.post("/courses/:courseId/weeks/:weekId/days", protect, adminOnly, async (
 
 /**
  * POST /api/admin/courses/:courseId/weeks/:weekId/documents
- * Add document to module/week level
+ * Add document to module/week level (supports both direct and shared content)
  */
 router.post("/courses/:courseId/weeks/:weekId/documents", protect, adminOnly, async (req, res) => {
   try {
     const { type, title, s3Key } = req.body;
-    const course = await Course.findById(req.params.courseId);
+    console.log(`📄 Adding document to week: courseId=${req.params.courseId}, weekId=${req.params.weekId}`);
+    console.log(`📦 Document data: type="${type}", title="${title}", s3Key="${s3Key}"`);
+    
+    const course = await Course.findById(req.params.courseId).populate('sharedContentId');
     if (!course) return res.status(404).json({ error: "Course not found" });
 
-    const week = course.weeks.id(req.params.weekId);
-    if (!week) return res.status(404).json({ error: "Week not found" });
+    // Check if course uses shared content
+    if (course.sharedContentId && course.sharedContentId.weeks) {
+      const SharedContent = require("../models/SharedContent");
+      const sharedContent = await SharedContent.findById(course.sharedContentId._id);
+      
+      if (!sharedContent) {
+        return res.status(404).json({ error: "SharedContent not found" });
+      }
 
-    if (!week.documents) {
-      week.documents = [];
+      const week = sharedContent.weeks.id(req.params.weekId);
+      if (!week) return res.status(404).json({ error: "Week not found in SharedContent" });
+
+      if (!week.documents) {
+        week.documents = [];
+      }
+
+      week.documents.push({ type, title, s3Key });
+      await sharedContent.save();
+      
+      // Fetch the saved document to get its auto-generated _id
+      const updatedSharedContent = await SharedContent.findById(course.sharedContentId._id);
+      const updatedWeek = updatedSharedContent.weeks.id(req.params.weekId);
+      const savedDoc = updatedWeek.documents[updatedWeek.documents.length - 1];
+      
+      console.log(`✅ Document "${title}" added to SharedContent week ${week.weekNumber}`);
+      console.log(`📌 New document ID: ${savedDoc._id}, s3Key: ${savedDoc.s3Key}`);
+      res.json({ success: true, message: "Document added to SharedContent", document: savedDoc });
+    } else {
+      // Course has direct content
+      const week = course.weeks.id(req.params.weekId);
+      if (!week) return res.status(404).json({ error: "Week not found" });
+
+      if (!week.documents) {
+        week.documents = [];
+      }
+
+      const newDoc = { type, title, s3Key };
+      week.documents.push(newDoc);
+      await course.save();
+      
+      // Fetch the saved document to get its auto-generated _id
+      const savedCourse = await Course.findById(req.params.courseId);
+      const savedWeek = savedCourse.weeks.id(req.params.weekId);
+      const savedDoc = savedWeek.documents[savedWeek.documents.length - 1];
+      
+      console.log(`✅ Document "${title}" added to Course week ${week.weekNumber}`);
+      console.log(`📌 New document ID: ${savedDoc._id}, s3Key: ${savedDoc.s3Key}`);
+      res.json({ success: true, message: "Document added to Course", document: savedDoc, course });
     }
-
-    week.documents.push({ type, title, s3Key });
-    await course.save();
-    res.json(course);
   } catch (err) {
+    console.error("❌ Error adding week document:", err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -707,27 +750,52 @@ router.delete("/documents/:id", protect, adminOnly, async (req, res) => {
     let documentFound = false;
     let documentToDelete = null;
 
+    console.log(`🔍 Searching for document ID: ${documentId}`);
+
     // Find the document in courses
-    const courses = await Course.find({});
+    const courses = await Course.find({}).populate('sharedContentId');
     
     for (const course of courses) {
-      for (const week of course.weeks) {
+      console.log(`📚 Checking course: ${course.title}`);
+      
+      // Determine which weeks to use (direct or from shared content)
+      let weeks = [];
+      if (course.sharedContentId && course.sharedContentId.weeks) {
+        console.log(`  Using shared content weeks`);
+        weeks = course.sharedContentId.weeks;
+      } else if (course.weeks) {
+        console.log(`  Using direct course weeks`);
+        weeks = course.weeks;
+      }
+
+      for (const week of weeks) {
         // Check week-level documents
-        if (week.documents) {
+        if (week.documents && week.documents.length > 0) {
           const docIndex = week.documents.findIndex(doc => doc._id.toString() === documentId);
           if (docIndex !== -1) {
             documentToDelete = week.documents[docIndex];
             week.documents.splice(docIndex, 1);
-            await course.save();
+            
+            // Save to the appropriate model
+            if (course.sharedContentId && course.sharedContentId.weeks) {
+              const SharedContent = require("../models/SharedContent");
+              await SharedContent.findByIdAndUpdate(course.sharedContentId._id, {
+                weeks: course.sharedContentId.weeks
+              });
+              console.log(`✅ Found and deleted from SharedContent week ${week.weekNumber}`);
+            } else {
+              await course.save();
+              console.log(`✅ Found and deleted from Course week ${week.weekNumber}`);
+            }
             documentFound = true;
             break;
           }
         }
 
         // Check day-level contents
-        if (!documentFound) {
+        if (!documentFound && week.days && week.days.length > 0) {
           for (const day of week.days) {
-            if (day.contents) {
+            if (day.contents && day.contents.length > 0) {
               const contentIndex = day.contents.findIndex(content => 
                 content._id.toString() === documentId && 
                 (content.type === 'document' || content.type === 'pdf')
@@ -735,7 +803,18 @@ router.delete("/documents/:id", protect, adminOnly, async (req, res) => {
               if (contentIndex !== -1) {
                 documentToDelete = day.contents[contentIndex];
                 day.contents.splice(contentIndex, 1);
-                await course.save();
+                
+                // Save to the appropriate model
+                if (course.sharedContentId && course.sharedContentId.weeks) {
+                  const SharedContent = require("../models/SharedContent");
+                  await SharedContent.findByIdAndUpdate(course.sharedContentId._id, {
+                    weeks: course.sharedContentId.weeks
+                  });
+                  console.log(`✅ Found and deleted from SharedContent day ${day.dayNumber}`);
+                } else {
+                  await course.save();
+                  console.log(`✅ Found and deleted from Course day ${day.dayNumber}`);
+                }
                 documentFound = true;
                 break;
               }
@@ -749,7 +828,12 @@ router.delete("/documents/:id", protect, adminOnly, async (req, res) => {
     }
 
     if (!documentFound) {
-      return res.status(404).json({ error: "Document not found" });
+      console.error(`❌ Document ${documentId} not found in any course`);
+      return res.status(404).json({ 
+        error: "Document not found in database",
+        documentId: documentId,
+        suggestion: "The document may have already been deleted or the ID is incorrect"
+      });
     }
 
     // Delete from S3 if s3Key exists
@@ -775,6 +859,170 @@ router.delete("/documents/:id", protect, adminOnly, async (req, res) => {
     res.json({ success: true, message: "Document deleted successfully" });
   } catch (err) {
     console.error("❌ Delete document error:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * POST /api/admin/documents/cleanup-orphaned
+ * Remove all document entries that don't have valid S3 files
+ */
+router.post("/documents/cleanup-orphaned", protect, adminOnly, async (req, res) => {
+  try {
+    const s3 = require("../config/s3");
+    const { HeadObjectCommand } = require("@aws-sdk/client-s3");
+    const SharedContent = require("../models/SharedContent");
+    
+    let totalChecked = 0;
+    let totalRemoved = 0;
+    const removedDocs = [];
+
+    console.log("🧹 Starting orphaned documents cleanup...");
+
+    const courses = await Course.find({}).populate('sharedContentId');
+    
+    for (const course of courses) {
+      let courseModified = false;
+      let sharedContentModified = false;
+      
+      // Determine which weeks to use
+      let weeks = [];
+      let isSharedContent = false;
+      
+      if (course.sharedContentId && course.sharedContentId.weeks) {
+        weeks = course.sharedContentId.weeks;
+        isSharedContent = true;
+      } else if (course.weeks) {
+        weeks = course.weeks;
+      }
+
+      for (const week of weeks) {
+        // Check week-level documents
+        if (week.documents && week.documents.length > 0) {
+          const validDocs = [];
+          
+          for (const doc of week.documents) {
+            totalChecked++;
+            
+            if (doc.s3Key) {
+              try {
+                await s3.send(new HeadObjectCommand({
+                  Bucket: process.env.AWS_S3_BUCKET,
+                  Key: doc.s3Key,
+                }));
+                // File exists, keep it
+                validDocs.push(doc);
+              } catch (s3Error) {
+                // File doesn't exist in S3, mark for removal
+                console.log(`❌ Orphaned document found: ${doc.title} (${doc.s3Key})`);
+                totalRemoved++;
+                removedDocs.push({
+                  title: doc.title,
+                  s3Key: doc.s3Key,
+                  course: course.title,
+                  week: week.weekNumber
+                });
+                if (isSharedContent) {
+                  sharedContentModified = true;
+                } else {
+                  courseModified = true;
+                }
+              }
+            } else {
+              // No s3Key, remove it
+              console.log(`❌ Document with no s3Key: ${doc.title}`);
+              totalRemoved++;
+              removedDocs.push({
+                title: doc.title,
+                s3Key: 'none',
+                course: course.title,
+                week: week.weekNumber
+              });
+              if (isSharedContent) {
+                sharedContentModified = true;
+              } else {
+                courseModified = true;
+              }
+            }
+          }
+          
+          week.documents = validDocs;
+        }
+
+        // Check day-level contents
+        if (week.days && week.days.length > 0) {
+          for (const day of week.days) {
+            if (day.contents && day.contents.length > 0) {
+              const validContents = [];
+              
+              for (const content of day.contents) {
+                if (content.type === 'document' || content.type === 'pdf') {
+                  totalChecked++;
+                  
+                  if (content.s3Key) {
+                    try {
+                      await s3.send(new HeadObjectCommand({
+                        Bucket: process.env.AWS_S3_BUCKET,
+                        Key: content.s3Key,
+                      }));
+                      // File exists, keep it
+                      validContents.push(content);
+                    } catch (s3Error) {
+                      // File doesn't exist in S3, mark for removal
+                      console.log(`❌ Orphaned content found: ${content.title} (${content.s3Key})`);
+                      totalRemoved++;
+                      removedDocs.push({
+                        title: content.title,
+                        s3Key: content.s3Key,
+                        course: course.title,
+                        week: week.weekNumber,
+                        day: day.dayNumber
+                      });
+                      if (isSharedContent) {
+                        sharedContentModified = true;
+                      } else {
+                        courseModified = true;
+                      }
+                    }
+                  } else {
+                    validContents.push(content);
+                  }
+                } else {
+                  validContents.push(content);
+                }
+              }
+              
+              day.contents = validContents;
+            }
+          }
+        }
+      }
+
+      // Save changes
+      if (sharedContentModified) {
+        await SharedContent.findByIdAndUpdate(course.sharedContentId._id, {
+          weeks: course.sharedContentId.weeks
+        });
+        console.log(`✅ Updated SharedContent: ${course.title}`);
+      } else if (courseModified) {
+        await course.save();
+        console.log(`✅ Updated Course: ${course.title}`);
+      }
+    }
+
+    console.log(`🧹 Cleanup complete: ${totalRemoved}/${totalChecked} documents removed`);
+    
+    res.json({
+      success: true,
+      message: `Cleanup completed successfully`,
+      stats: {
+        totalChecked,
+        totalRemoved,
+        removedDocuments: removedDocs
+      }
+    });
+  } catch (err) {
+    console.error("❌ Cleanup error:", err.message);
     res.status(500).json({ error: err.message });
   }
 });

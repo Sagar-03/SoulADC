@@ -134,7 +134,10 @@ router.get("/:identifier", protectStream, async (req, res) => {
 
     // Check if identifier is a MongoDB ObjectId
     if (mongoose.Types.ObjectId.isValid(identifier)) {
-      const course = await Course.findOne({
+      console.log(`🔍 Searching for content with ID: ${identifier}`);
+      
+      // First, try to find in direct course content
+      let course = await Course.findOne({
         $or: [
           { "weeks.contents._id": identifier }, // Old structure support
           { "weeks.days.contents._id": identifier }, // New day-based structure
@@ -142,42 +145,114 @@ router.get("/:identifier", protectStream, async (req, res) => {
         ]
       }).lean();
 
-      if (!course) return res.status(404).send("Content not found");
+      // If not found in course, try SharedContent
+      if (!course) {
+        console.log(`🔍 Not found in Course, checking SharedContent...`);
+        const SharedContent = require("../models/SharedContent");
+        
+        const sharedContent = await SharedContent.findOne({
+          $or: [
+            { "weeks.contents._id": identifier },
+            { "weeks.days.contents._id": identifier },
+            { "weeks.documents._id": identifier }
+          ]
+        }).lean();
 
-      // Check old structure first (weeks.contents)
-      outer: for (const w of course.weeks) {
-        if (w.contents) {
-          for (const c of w.contents) {
-            if (String(c._id) === String(identifier)) {
-              s3Key = c.s3Key;
-              mime = c.type === "video" ? "video/mp4" : "application/pdf";
-              break outer;
-            }
-          }
-        }
-
-        // Check new day-based structure (weeks.days.contents)
-        if (w.days) {
-          for (const d of w.days) {
-            if (d.contents) {
-              for (const c of d.contents) {
+        if (sharedContent) {
+          console.log(`✅ Found in SharedContent: ${sharedContent.title || 'Shared Content'}`);
+          
+          // Search in SharedContent structure
+          outer: for (const w of sharedContent.weeks || []) {
+            if (w.contents) {
+              for (const c of w.contents) {
                 if (String(c._id) === String(identifier)) {
                   s3Key = c.s3Key;
                   mime = c.type === "video" ? "video/mp4" : "application/pdf";
+                  console.log(`✅ Found content in SharedContent weeks.contents: ${c.title}, s3Key: ${s3Key}`);
+                  break outer;
+                }
+              }
+            }
+
+            if (w.days) {
+              for (const d of w.days) {
+                if (d.contents) {
+                  for (const c of d.contents) {
+                    if (String(c._id) === String(identifier)) {
+                      s3Key = c.s3Key;
+                      mime = c.type === "video" ? "video/mp4" : "application/pdf";
+                      console.log(`✅ Found content in SharedContent weeks.days.contents: ${c.title}, s3Key: ${s3Key}`);
+                      break outer;
+                    }
+                  }
+                }
+              }
+            }
+
+            if (w.documents) {
+              for (const doc of w.documents) {
+                if (String(doc._id) === String(identifier)) {
+                  s3Key = doc.s3Key;
+                  mime = doc.type === "pdf" ? "application/pdf" : "application/octet-stream";
+                  console.log(`✅ Found document in SharedContent weeks.documents: ${doc.title}, s3Key: ${s3Key}`);
                   break outer;
                 }
               }
             }
           }
         }
+      }
 
-        // Check module-level documents (weeks.documents)
-        if (w.documents) {
-          for (const doc of w.documents) {
-            if (String(doc._id) === String(identifier)) {
-              s3Key = doc.s3Key;
-              mime = doc.type === "pdf" ? "application/pdf" : "application/octet-stream";
-              break outer;
+      if (!course && !s3Key) {
+        console.error(`❌ No course or SharedContent found containing content ID: ${identifier}`);
+        return res.status(404).json({
+          error: "Content not found",
+          message: "No course or shared content contains a document/content with this ID",
+          identifier: identifier
+        });
+      }
+      
+      if (course) {
+        console.log(`✅ Found course: ${course.title} (${course._id})`);
+
+        // Check old structure first (weeks.contents)
+        outer: for (const w of course.weeks) {
+          if (w.contents) {
+            for (const c of w.contents) {
+              if (String(c._id) === String(identifier)) {
+                s3Key = c.s3Key;
+                mime = c.type === "video" ? "video/mp4" : "application/pdf";
+                console.log(`✅ Found content in weeks.contents: ${c.title}, s3Key: ${s3Key}`);
+                break outer;
+              }
+            }
+          }
+
+          // Check new day-based structure (weeks.days.contents)
+          if (w.days) {
+            for (const d of w.days) {
+              if (d.contents) {
+                for (const c of d.contents) {
+                  if (String(c._id) === String(identifier)) {
+                    s3Key = c.s3Key;
+                    mime = c.type === "video" ? "video/mp4" : "application/pdf";
+                    console.log(`✅ Found content in weeks.days.contents: ${c.title}, s3Key: ${s3Key}`);
+                    break outer;
+                  }
+                }
+              }
+            }
+          }
+
+          // Check module-level documents (weeks.documents)
+          if (w.documents) {
+            for (const doc of w.documents) {
+              if (String(doc._id) === String(identifier)) {
+                s3Key = doc.s3Key;
+                mime = doc.type === "pdf" ? "application/pdf" : "application/octet-stream";
+                console.log(`✅ Found document in weeks.documents: ${doc.title}, s3Key: ${s3Key}`);
+                break outer;
+              }
             }
           }
         }
@@ -186,7 +261,14 @@ router.get("/:identifier", protectStream, async (req, res) => {
       s3Key = identifier;
     }
 
-    if (!s3Key) return res.status(404).send("S3 key missing");
+    if (!s3Key) {
+      console.error(`❌ S3 key not found for identifier: ${identifier}`);
+      return res.status(404).json({
+        error: "S3 key missing",
+        message: "Content found but S3 key is missing",
+        identifier: identifier
+      });
+    }
 
     // Get metadata from S3 with proper error handling
     let head, fileSize;
@@ -197,30 +279,44 @@ router.get("/:identifier", protectStream, async (req, res) => {
       }));
       fileSize = head.ContentLength;
     } catch (s3Error) {
-      console.error(`S3 file not found: ${s3Key}`, s3Error.message);
+      console.error(`❌ S3 file not found: ${s3Key}`, s3Error.message);
+      console.error(`📍 Requested identifier: ${identifier}`);
+      
+      // Extract prefix from s3Key for better debugging
+      const keyParts = s3Key.split('/');
+      const prefix = keyParts.slice(0, -1).join('/') + '/';
       
       // List available files for debugging
-      console.log(`Available S3 files in documents/week-1/:`);
+      console.log(`🔍 Checking available S3 files in ${prefix}:`);
       try {
         const listCommand = new ListObjectsV2Command({
           Bucket: process.env.AWS_S3_BUCKET,
-          Prefix: 'documents/week-1/',
+          Prefix: prefix,
           MaxKeys: 20
         });
         const listResult = await s3.send(listCommand);
-        if (listResult.Contents) {
+        if (listResult.Contents && listResult.Contents.length > 0) {
+          console.log(`📂 Found ${listResult.Contents.length} files:`);
           listResult.Contents.forEach(obj => {
             console.log(`  - ${obj.Key}`);
           });
+        } else {
+          console.log(`⚠️ No files found in ${prefix}`);
         }
       } catch (listError) {
-        console.error('Error listing S3 objects:', listError.message);
+        console.error('❌ Error listing S3 objects:', listError.message);
       }
       
       return res.status(404).json({
         error: "File not found in storage",
+        message: "The requested document file does not exist in our storage system",
         s3Key: s3Key,
-        details: "The requested file does not exist in our storage system"
+        identifier: identifier,
+        // details: {
+        //   bucket: process.env.AWS_S3_BUCKET,
+        //   key: s3Key,
+        //   suggestion: "The file may have been moved, renamed, or deleted from S3"
+        // }
       });
     }
     mime = head.ContentType || mime;
@@ -362,43 +458,64 @@ router.get("/debug/db-keys", async (req, res) => {
       course.weeks?.forEach(week => {
         // Check old structure (weeks.contents)
         week.contents?.forEach(content => {
-          if (content.s3Key) {
-            allKeys.push({
-              courseId: course._id,
-              courseTitle: course.title,
-              contentId: content._id,
-              contentTitle: content.title,
-              s3Key: content.s3Key,
-              type: content.type,
-              structure: 'old'
-            });
-          }
+          allKeys.push({
+            courseId: course._id,
+            courseTitle: course.title,
+            weekNumber: week.weekNumber,
+            contentId: content._id,
+            contentTitle: content.title,
+            s3Key: content.s3Key || 'MISSING',
+            type: content.type,
+            structure: 'old-weeks.contents'
+          });
         });
 
         // Check new day-based structure (weeks.days.contents)
         week.days?.forEach(day => {
           day.contents?.forEach(content => {
-            if (content.s3Key) {
-              allKeys.push({
-                courseId: course._id,
-                courseTitle: course.title,
-                weekNumber: week.weekNumber,
-                dayNumber: day.dayNumber,
-                contentId: content._id,
-                contentTitle: content.title,
-                s3Key: content.s3Key,
-                type: content.type,
-                structure: 'new'
-              });
-            }
+            allKeys.push({
+              courseId: course._id,
+              courseTitle: course.title,
+              weekNumber: week.weekNumber,
+              dayNumber: day.dayNumber,
+              contentId: content._id,
+              contentTitle: content.title,
+              s3Key: content.s3Key || 'MISSING',
+              type: content.type,
+              structure: 'new-weeks.days.contents'
+            });
+          });
+        });
+
+        // Check week-level documents (weeks.documents)
+        week.documents?.forEach(doc => {
+          allKeys.push({
+            courseId: course._id,
+            courseTitle: course.title,
+            weekNumber: week.weekNumber,
+            documentId: doc._id,
+            documentTitle: doc.title,
+            s3Key: doc.s3Key || 'MISSING',
+            type: doc.type,
+            structure: 'weeks.documents'
           });
         });
       });
     });
 
+    // Find the specific document the user is trying to access
+    const searchDocId = '692c95d148220552d7cbeaff';
+    const foundDoc = allKeys.find(k => 
+      (k.documentId && k.documentId.toString() === searchDocId) ||
+      (k.contentId && k.contentId.toString() === searchDocId)
+    );
+
     res.json({
       totalKeys: allKeys.length,
-      keys: allKeys
+      keys: allKeys,
+      missingS3Keys: allKeys.filter(k => k.s3Key === 'MISSING').length,
+      searchedDocId: searchDocId,
+      foundDocument: foundDoc || 'NOT FOUND IN DATABASE'
     });
   } catch (err) {
     console.error("DB keys debug error:", err);
