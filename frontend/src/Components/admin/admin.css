@@ -11,7 +11,7 @@
 }
 
 .admin-sidebar-wrapper::-webkit-scrollbar-thumb {
-  background: #8B5E3C;
+  background: linear-gradient(145deg, #A98C6A, #7B563D);
   border-radius: 10px;
 }
 
@@ -30,7 +30,7 @@
 }
 
 .flex-grow-1::-webkit-scrollbar-thumb {
-  background: #8B5E3C;
+  background: linear-gradient(145deg, #A98C6A, #7B563D);
   border-radius: 10px;
 }
 
@@ -50,13 +50,13 @@
 }
 
 .active-sidebar {
-  background-color: #8B5E3C !important;
+  background-color: linear-gradient(145deg, #A98C6A, #7B563D) !important;
   color: white !important;
   font-weight: 600;
 }
 
 .btn-primary {
-  background-color: #8B5E3C;
+  background-color: linear-gradient(145deg, #A98C6A, #7B563D);
   border: none;
 }
 
@@ -71,11 +71,11 @@
 
 .accordion-button:focus {
   box-shadow: none;
-  border-color: #8B5E3C;
+  border-color: linear-gradient(145deg, #A98C6A, #7B563D);
 }
 
 .accordion-button:not(.collapsed) {
-  background-color: #8B5E3C;
+  background-color: linear-gradient(145deg, #A98C6A, #7B563D);
   color: white;
 }
 
@@ -90,7 +90,7 @@
 
 /* Enhanced Upload Interface Styles */
 .border-left-primary {
-  border-left: 4px solid #8B5E3C;
+  border-left: 4px solid linear-gradient(145deg, #A98C6A, #7B563D);
 }
 
 .upload-progress {
@@ -103,7 +103,7 @@
 }
 
 .upload-zone {
-  border: 2px dashed #8B5E3C;
+  border: 2px dashed linear-gradient(145deg, #A98C6A, #7B563D);
   border-radius: 8px;
   padding: 2rem;
   transition: all 0.3s ease;
@@ -132,7 +132,7 @@
 }
 
 .week-header {
-  background: linear-gradient(135deg, #8B5E3C 0%, #5A3825 100%);
+  background: linear-gradient(135deg, linear-gradient(145deg, #A98C6A, #7B563D) 0%, #5A3825 100%);
   color: white;
 }
 
@@ -145,7 +145,7 @@
 }
 
 .progress-bar-custom {
-  background: linear-gradient(90deg, #8B5E3C 0%, #5A3825 100%);
+  background: linear-gradient(90deg, linear-gradient(145deg, #A98C6A, #7B563D) 0%, #5A3825 100%);
 }
 
 /* Delete button styles */
@@ -178,7 +178,7 @@
 }
 
 .card.h-100.border-2:hover {
-  border-color: #8B5E3C !important;
+  border-color: linear-gradient(145deg, #A98C6A, #7B563D) !important;
   box-shadow: 0 4px 12px rgba(139, 94, 60, 0.15);
   transform: translateY(-2px);
 }
@@ -235,7 +235,7 @@ video {
 }
 
 .file-drop-zone {
-  border: 3px dashed #8B5E3C;
+  border: 3px dashed linear-gradient(145deg, #A98C6A, #7B563D);
   border-radius: 12px;
   padding: 3rem 2rem;
   text-align: center;
@@ -265,7 +265,7 @@ video {
 }
 
 .file-list-item:hover {
-  border-color: #8B5E3C;
+  border-color: linear-gradient(145deg, #A98C6A, #7B563D);
   box-shadow: 0 2px 8px rgba(139, 94, 60, 0.1);
 }
 
@@ -289,7 +289,7 @@ video {
 }
 
 .bulk-upload-header {
-  background: linear-gradient(135deg, #8B5E3C 0%, #5A3825 100%);
+  background: linear-gradient(135deg, linear-gradient(145deg, #A98C6A, #7B563D) 0%, #5A3825 100%);
   color: white;
   border-radius: 8px 8px 0 0;
 }
@@ -311,12 +311,12 @@ video {
 
 /* Enhanced form controls */
 .form-select:focus {
-  border-color: #8B5E3C;
+  border-color: linear-gradient(145deg, #A98C6A, #7B563D);
   box-shadow: 0 0 0 0.2rem rgba(139, 94, 60, 0.25);
 }
 
 .form-control:focus {
-  border-color: #8B5E3C;
+  border-color: linear-gradient(145deg, #A98C6A, #7B563D);
   box-shadow: 0 0 0 0.2rem rgba(139, 94, 60, 0.25);
 }
 
@@ -379,13 +379,13 @@ video {
 }
 
 .document-card .btn-outline-primary {
-  border-color: #8B5E3C;
-  color: #8B5E3C;
+  border-color: linear-gradient(145deg, #A98C6A, #7B563D);
+  color: linear-gradient(145deg, #A98C6A, #7B563D);
 }
 
 .document-card .btn-outline-primary:hover {
-  background-color: #8B5E3C;
-  border-color: #8B5E3C;
+  background-color: linear-gradient(145deg, #A98C6A, #7B563D);
+  border-color: linear-gradient(145deg, #A98C6A, #7B563D);
   color: white;
 }
 
@@ -476,7 +476,7 @@ video {
 }
 
 .admin-doubt-header {
-  background: linear-gradient(135deg, #8B5E3C 0%, #5A3825 100%);
+  background: linear-gradient(135deg, linear-gradient(145deg, #A98C6A, #7B563D) 0%, #5A3825 100%);
   color: white;
   padding: 2rem 2.5rem;
   border-radius: 16px;
@@ -586,13 +586,13 @@ video {
   left: 0;
   width: 4px;
   height: 100%;
-  background: linear-gradient(135deg, #8B5E3C 0%, #5A3825 100%);
+  background: linear-gradient(135deg, linear-gradient(145deg, #A98C6A, #7B563D) 0%, #5A3825 100%);
   opacity: 0;
   transition: opacity 0.3s ease;
 }
 
 .admin-chat-card:hover {
-  border-color: #8B5E3C;
+  border-color: linear-gradient(145deg, #A98C6A, #7B563D);
   transform: translateY(-4px);
   box-shadow: 0 8px 24px rgba(139, 94, 60, 0.15);
 }
@@ -624,7 +624,7 @@ video {
   width: 48px;
   height: 48px;
   border-radius: 12px;
-  background: linear-gradient(135deg, #8B5E3C 0%, #5A3825 100%);
+  background: linear-gradient(135deg, linear-gradient(145deg, #A98C6A, #7B563D) 0%, #5A3825 100%);
   color: white;
   display: flex;
   align-items: center;

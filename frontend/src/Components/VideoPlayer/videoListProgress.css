@@ -43,7 +43,7 @@
 
 .control-select:focus {
   outline: none;
-  border-color: #8B5E3C;
+  border-color: linear-gradient(145deg, #A98C6A, #7B563D);
 }
 
 /* Video List */
@@ -73,7 +73,7 @@
 }
 
 .video-item.active {
-  border-color: #8B5E3C;
+  border-color: linear-gradient(145deg, #A98C6A, #7B563D);
   background: #fff3e6;
 }
 
@@ -106,7 +106,7 @@
 
 .video-icon-large {
   font-size: 2.5rem;
-  color: #8B5E3C;
+  color: linear-gradient(145deg, #A98C6A, #7B563D);
 }
 
 .thumbnail-overlay {
@@ -157,7 +157,7 @@
 
 .progress-fill {
   height: 100%;
-  background: #8B5E3C;
+  background: linear-gradient(145deg, #A98C6A, #7B563D);
   transition: width 0.3s ease;
 }
 
@@ -232,7 +232,7 @@
 
 .video-number {
   font-weight: 500;
-  color: #8B5E3C;
+  color: linear-gradient(145deg, #A98C6A, #7B563D);
 }
 
 .meta-separator {
@@ -247,7 +247,7 @@
 
 .progress-text {
   font-weight: 500;
-  color: #8B5E3C;
+  color: linear-gradient(145deg, #A98C6A, #7B563D);
 }
 
 .video-description {
@@ -267,7 +267,7 @@
   align-items: center;
   gap: 6px;
   font-size: 0.8rem;
-  color: #8B5E3C;
+  color: linear-gradient(145deg, #A98C6A, #7B563D);
   margin-bottom: 8px;
 }
 
@@ -288,7 +288,7 @@
 
 .progress-fill-detailed {
   height: 100%;
-  background: linear-gradient(90deg, #8B5E3C, #b77644);
+  background: linear-gradient(90deg, linear-gradient(145deg, #A98C6A, #7B563D), #b77644);
   border-radius: 3px;
   transition: width 0.3s ease;
 }
@@ -306,7 +306,7 @@
 }
 
 .play-button {
-  background: linear-gradient(135deg, #8B5E3C, #b77644);
+  background: linear-gradient(135deg, linear-gradient(145deg, #A98C6A, #7B563D), #b77644);
   color: white;
   border: none;
   padding: 10px 20px;
@@ -322,7 +322,7 @@
 }
 
 .play-button:hover {
-  background: linear-gradient(135deg, #5A3825, #8B5E3C);
+  background: linear-gradient(135deg, #5A3825, linear-gradient(145deg, #A98C6A, #7B563D));
   transform: translateY(-1px);
 }
 

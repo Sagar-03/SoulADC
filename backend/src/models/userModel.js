@@ -6,23 +6,25 @@ const userSchema = new mongoose.Schema(
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
+    countryCode: { type: String, required: false },
     phone: { type: String, required: false },
     role: { type: String, enum: ["user", "admin"], default: "user" },
     resetToken: String,
     resetTokenExpire: Date,
-    // ✅ Purchased courses
-    purchasedCourses: [{
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Course'
-    }],
+    purchasedCourses: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Course",
+      }
+    ],
 
-    // ✅ One active session per user
+    //  One active session per user
     activeSession: {
-      token: { type: String },       // store latest JWT or sessionId
-      deviceInfo: { type: String },  // browser / OS (user-agent)
-      ipAddress: { type: String },   // optional: track login IP
-      loginAt: { type: Date },       // last login time
-      logoutAt: { type: Date },      // last logout time
+      token: { type: String },       
+      deviceInfo: { type: String },  
+      ipAddress: { type: String },   
+      loginAt: { type: Date },       
+      logoutAt: { type: Date },      
     },
 
     // ✅ Streak tracking
@@ -30,7 +32,7 @@ const userSchema = new mongoose.Schema(
       current: { type: Number, default: 0 },
       highest: { type: Number, default: 0 },
       lastLoginDate: { type: Date },
-      loginDates: [{ type: Date }] // Store all login dates for streak calculation
+      loginDates: [{ type: Date }]
     },
 
     // ✅ Video progress tracking

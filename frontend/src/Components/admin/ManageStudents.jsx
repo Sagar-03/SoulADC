@@ -56,7 +56,7 @@ const ManageStudents = () => {
 
       {loading ? (
         <div className="text-center py-5">
-          <div className="spinner-border" role="status" style={{ color: "#8B5E3C" }}>
+          <div className="spinner-border" role="status" style={{ color: "linear-gradient(145deg, #A98C6A, #7B563D)" }}>
             <span className="visually-hidden">Loading...</span>
           </div>
         </div>
@@ -65,7 +65,7 @@ const ManageStudents = () => {
       ) : (
         <div className="table-responsive">
           <table className="table table-striped shadow-sm bg-white">
-            <thead style={{ background: "#8B5E3C", color: "white" }}>
+            <thead style={{ background: "linear-gradient(145deg, #A98C6A, #7B563D)", color: "white" }}>
               <tr>
                 <th>Name</th>
                 <th>Email</th>

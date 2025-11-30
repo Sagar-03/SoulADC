@@ -39,42 +39,42 @@ const Leftsidebar = () => {
           text="Dashboard"
           active={location.pathname === "/progress"}
           onClick={() => navigate("/progress")}
-          hoverColor="#8B5E3C"
+          hoverColor="linear-gradient(145deg, #A98C6A, #7B563D)"
         />
         <SidebarItem
           icon={<RxDashboard />}
           text="My Courses"
           active={location.pathname === "/Dashboard"}
           onClick={() => navigate("/Dashboard")}
-          hoverColor="#8B5E3C"
+          hoverColor="linear-gradient(145deg, #A98C6A, #7B563D)"
         />
         <SidebarItem
           icon={<FaFileAlt />}
           text="Documents"
           active={location.pathname.includes("/documents")}
           onClick={() => navigate("/documents")}
-          hoverColor="linear-gradient(135deg, #8B5E3C, #A98C6A)"
+          hoverColor="linear-gradient(135deg, linear-gradient(145deg, #A98C6A, #7B563D), #A98C6A)"
         />
          <SidebarItem
           icon={<FiMessageCircle />}
           text="Doubts Section"
           active={location.pathname === "/studentdashboard/doubtpanel"}
           onClick={() => navigate("/studentdashboard/doubtpanel")}
-           hoverColor="#8B5E3C"
+           hoverColor="linear-gradient(145deg, #A98C6A, #7B563D)"
         />
         <SidebarItem
           icon={<FaClipboardList />}
           text="Mock Exams"
           active={location.pathname.startsWith("/student/mock")}
           onClick={() => navigate("/student/mocks")}
-           hoverColor="#8B5E3C"
+           hoverColor="linear-gradient(145deg, #A98C6A, #7B563D)"
         />
         {/* <SidebarItem
           icon={<FaBook />}
           text="Courses"
           active={location.pathname === "/mycourse"}
           onClick={() => navigate("/mycourse")}
-          hoverColor="#8B5E3C"
+          hoverColor="linear-gradient(145deg, #A98C6A, #7B563D)"
         /> */}
       </div>
 

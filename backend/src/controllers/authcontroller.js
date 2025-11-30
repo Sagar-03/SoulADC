@@ -21,13 +21,11 @@ const register = async (req, res) => {
       return res.status(400).json({ message: "User already exists" });
     }
 
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
+    // No need to hash here - the pre-save hook in userModel will handle it
     const user = new User({
       name,
       email,
-      password: hashedPassword,
+      password: password, // Pass plain password - will be hashed by pre-save hook
       phone: phone || "", // phone is optional
       role: "user" // default role
     });

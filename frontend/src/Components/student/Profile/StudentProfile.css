@@ -22,7 +22,7 @@
 .profile-avatar {
   width: 100px;
   height: 100px;
-  background: linear-gradient(135deg, #8B5E3C, #A0724A);
+  background: linear-gradient(135deg, linear-gradient(145deg, #A98C6A, #7B563D), #A0724A);
   border: 4px solid #ffffff;
   box-shadow: 0 4px 15px rgba(139, 94, 60, 0.3);
   font-size: 2.5rem;
@@ -38,7 +38,7 @@
 }
 
 .profile-field:focus-within {
-  border-color: #8B5E3C;
+  border-color: linear-gradient(145deg, #A98C6A, #7B563D);
   box-shadow: 0 0 0 0.2rem rgba(139, 94, 60, 0.25);
 }
 
@@ -72,7 +72,7 @@
 }
 
 .profile-btn-primary {
-  background: linear-gradient(135deg, #8B5E3C, #A0724A);
+  background: linear-gradient(135deg, linear-gradient(145deg, #A98C6A, #7B563D), #A0724A);
   color: white;
 }
 
@@ -117,7 +117,7 @@
 }
 
 .profile-icon {
-  color: #8B5E3C;
+  color: linear-gradient(145deg, #A98C6A, #7B563D);
   margin-right: 8px;
 }
 

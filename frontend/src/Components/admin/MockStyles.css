@@ -17,7 +17,7 @@
 
 .create-mock-header h2,
 .manage-mocks-header h2 {
-  color: #8E5B3C;
+  color: linear-gradient(145deg, #A98C6A, #7B563D);
   font-size: 28px;
   margin: 0;
 }
@@ -25,7 +25,7 @@
 .back-btn,
 .create-btn {
   padding: 10px 20px;
-  background: #8E5B3C;
+  background: linear-gradient(145deg, #A98C6A, #7B563D);
   color: white;
   border: none;
   border-radius: 8px;
@@ -37,7 +37,7 @@
 
 .back-btn:hover,
 .create-btn:hover {
-  background: #8E5B3C;
+  background: linear-gradient(145deg, #A98C6A, #7B563D);
   transform: translateY(-2px);
   /* box-shadow: 0 4px 12px rgba(106, 13, 173, 0.3); */
 }
@@ -61,7 +61,7 @@
 }
 
 .form-section h3 {
-  color: #8E5B3C;
+  color: linear-gradient(145deg, #A98C6A, #7B563D);
   font-size: 20px;
   margin-bottom: 20px;
 }
@@ -94,7 +94,7 @@
 .form-group textarea:focus,
 .form-group select:focus {
   outline: none;
-  border-color: #8E5B3C;
+  border-color: linear-gradient(145deg, #A98C6A, #7B563D);
 }
 
 .option-input {
@@ -158,7 +158,7 @@
 }
 
 .question-card.editing {
-  border-color: #8E5B3C;
+  border-color: linear-gradient(145deg, #A98C6A, #7B563D);
   background: #f5f0ff;
 }
 
@@ -229,7 +229,7 @@
 }
 
 .question-type {
-  background: #8E5B3C;
+  background: linear-gradient(145deg, #A98C6A, #7B563D);
   color: white;
 }
 
@@ -275,7 +275,7 @@
 
 .submit-btn {
   padding: 15px 40px;
-  background: #8E5B3C;
+  background: linear-gradient(145deg, #A98C6A, #7B563D);
   color: white;
   border: none;
   border-radius: 8px;
@@ -374,7 +374,7 @@
   display: block;
   font-size: 18px;
   font-weight: 700;
-  color: #8E5B3C;
+  color: linear-gradient(145deg, #A98C6A, #7B563D);
 }
 
 .mock-timestamp {
@@ -498,7 +498,7 @@
 }
 
 .modal-header h3 {
-  color: #8E5B3C;
+  color: linear-gradient(145deg, #A98C6A, #7B563D);
   font-size: 22px;
   margin: 0;
 }
@@ -528,7 +528,7 @@
 }
 
 .stat-card {
-  background: linear-gradient(135deg, #8E5B3C 0%, #8B4FC4 100%);
+  background: linear-gradient(135deg, linear-gradient(145deg, #A98C6A, #7B563D) 0%, #8B4FC4 100%);
   padding: 20px;
   border-radius: 12px;
   text-align: center;
@@ -558,7 +558,7 @@
 }
 
 .attempts-table th {
-  background: #8E5B3C;
+  background: linear-gradient(145deg, #A98C6A, #7B563D);
   color: white;
   padding: 12px;
   text-align: left;
@@ -602,7 +602,7 @@
   align-items: center;
   min-height: 400px;
   font-size: 18px;
-  color: #8E5B3C;
+  color: linear-gradient(145deg, #A98C6A, #7B563D);
 }
 
 /* Responsive */

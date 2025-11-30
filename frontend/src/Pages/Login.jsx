@@ -1,21 +1,37 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { toast } from 'react-toastify';
+import { toast } from "react-toastify";
 import "./Auth.css";
 import logo from "../assets/loginlogo.png";
 import { api } from "../Api/api";
-import { setAuthData, getRedirectAfterLogin, clearRedirectAfterLogin } from "../utils/auth";
+import {
+  setAuthData,
+  getRedirectAfterLogin,
+  clearRedirectAfterLogin,
+} from "../utils/auth";
+
+const countryCodes = [
+  { code: "+1", country: "USA" },
+  { code: "+44", country: "UK" },
+  { code: "+61", country: "Australia" },
+  { code: "+91", country: "India" },
+  { code: "+971", country: "UAE" },
+  { code: "+974", country: "Qatar" },
+];
 
 const Login = () => {
   const [isLogin, setIsLogin] = useState(true);
+
   const [formData, setFormData] = useState({
     email: "",
     password: "",
     confirmPassword: "",
     name: "",
     phone: "",
+    countryCode: "+61", // Default for ADC Australia users
     agreeTerms: false,
   });
+
   const navigate = useNavigate();
 
   const handleInputChange = (e) => {
@@ -31,19 +47,16 @@ const Login = () => {
 
     try {
       if (isLogin) {
-        // 🟢 LOGIN
+        // 🔵 LOGIN
         const { data } = await api.post("/auth/login", {
           email: formData.email,
           password: formData.password,
         });
 
         if (data.token) {
-          // ✅ Store auth data in cookies
           setAuthData(data.token, data.user, data.role);
-
           toast.success("Login successful!");
 
-          // ✅ Redirect handling
           const redirectUrl = getRedirectAfterLogin();
           if (redirectUrl) {
             clearRedirectAfterLogin();
@@ -59,7 +72,7 @@ const Login = () => {
           toast.error(data.message || "Login failed");
         }
       } else {
-        // 📝 SIGNUP
+        // 🟢 SIGNUP
         if (formData.password !== formData.confirmPassword) {
           toast.error("Passwords do not match!");
           return;
@@ -69,21 +82,21 @@ const Login = () => {
           name: formData.name,
           email: formData.email,
           password: formData.password,
-          phone: formData.phone,
+          countryCode: formData.countryCode,
+          phone: formData.countryCode + formData.phone,
         });
 
         if (data) {
           toast.success(data.message || "Registered successfully!");
-          setIsLogin(true); // Switch to login
+          setIsLogin(true);
         } else {
           toast.error("Registration failed");
         }
       }
     } catch (err) {
-      // Extract error message from server response
       let errorMessage = "Something went wrong, please try again.";
 
-      if (err.response && err.response.data && err.response.data.message) {
+      if (err.response?.data?.message) {
         errorMessage = err.response.data.message;
       } else if (err.message) {
         errorMessage = err.message;
@@ -100,30 +113,27 @@ const Login = () => {
           ×
         </button>
 
-        {/* Left Panel */}
+        {/* LEFT PANEL */}
         <div className="auth-left-panel">
           <div className="brand-content">
             <img src={logo} alt="Logo" className="auth-logo" />
-            {/* <h1 className="brand-title">
-              Crack your<span className="highlight"> ADC Part 1</span> with Soul ADC
-            </h1> */}
-            <p className="brand-subtitle">
-              Ignite your dental future with us
-            </p>
+            <p className="brand-subtitle">Ignite your dental future with us</p>
           </div>
         </div>
 
-        {/* Right Panel */}
+        {/* RIGHT PANEL */}
         <div className="auth-right-panel">
           <div className="auth-form-container">
             <div className="form-header">
               <h2>{isLogin ? "Welcome Back!" : "Create Account"}</h2>
-              <p>{isLogin ? "Crack your ADC Part 1 with Soul ADC" : "Crack your ADC Part 1 with Soul ADC"}</p>
-
-              {/* <p>{isLogin ? "Sign in to continue" : "Join dental professionals"}</p> */}
-              {/* Crack your<span className="highlight"> ADC Part 1</span> with Soul ADC */}
+              <p>
+                {isLogin
+                  ? "Crack your ADC Part 1 with Soul ADC"
+                  : "Join dental professionals"}
+              </p>
             </div>
 
+            {/* TABS */}
             <div className="auth-tabs">
               <button
                 type="button"
@@ -141,7 +151,9 @@ const Login = () => {
               </button>
             </div>
 
+            {/* FORM */}
             <form onSubmit={handleSubmit} className="auth-form">
+              {/* FULL NAME */}
               {!isLogin && (
                 <div className="input-group">
                   <label htmlFor="name">Full Name</label>
@@ -157,6 +169,7 @@ const Login = () => {
                 </div>
               )}
 
+              {/* EMAIL */}
               <div className="input-group">
                 <label htmlFor="email">Email Address</label>
                 <input
@@ -170,21 +183,48 @@ const Login = () => {
                 />
               </div>
 
+              {/* PHONE WITH COUNTRY CODE */}
               {!isLogin && (
                 <div className="input-group">
                   <label htmlFor="phone">Phone Number</label>
-                  <input
-                    type="tel"
-                    id="phone"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleInputChange}
-                    required
-                    placeholder="Enter phone"
-                  />
+
+                  <div style={{ display: "flex", gap: "10px" }}>
+                    <select
+                      name="countryCode"
+                      value={formData.countryCode}
+                      onChange={handleInputChange}
+                      required
+                      style={{
+                        padding: "14px",
+                        borderRadius: "10px",
+                        border: "2px solid #e5e7eb",
+                        background: "white",
+                        fontSize: "15px",
+                        width: "110px",
+                      }}
+                    >
+                      {countryCodes.map((item) => (
+                        <option key={item.code} value={item.code}>
+                          {item.code} ({item.country})
+                        </option>
+                      ))}
+                    </select>
+
+                    <input
+                      type="tel"
+                      id="phone"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleInputChange}
+                      required
+                      placeholder="Phone number"
+                      style={{ flex: 1 }}
+                    />
+                  </div>
                 </div>
               )}
 
+              {/* PASSWORD */}
               <div className="input-group">
                 <div className="password-label-row">
                   <label htmlFor="password">Password</label>
@@ -210,6 +250,7 @@ const Login = () => {
                 />
               </div>
 
+              {/* CONFIRM PASSWORD */}
               {!isLogin && (
                 <div className="input-group">
                   <label htmlFor="confirmPassword">Confirm Password</label>
@@ -220,12 +261,13 @@ const Login = () => {
                     value={formData.confirmPassword}
                     onChange={handleInputChange}
                     required
-                    autoComplete="new-password"
                     placeholder="Confirm password"
+                    autoComplete="new-password"
                   />
                 </div>
               )}
 
+              {/* TERMS CHECKBOX */}
               {!isLogin && (
                 <div className="checkbox-group">
                   <label className="checkbox-container">
@@ -238,19 +280,22 @@ const Login = () => {
                     />
                     <span className="checkmark"></span>
                     I agree to <Link to="/tnc">Terms & Conditions</Link>
-
                   </label>
                 </div>
               )}
 
+              {/* SUBMIT BUTTON */}
               <button type="submit" className="submit-btn">
                 {isLogin ? "Sign In" : "Create Account"}
               </button>
             </form>
 
+            {/* SWITCH */}
             <div className="auth-switch">
               <p>
-                {isLogin ? "Don't have an account? " : "Already have an account? "}
+                {isLogin
+                  ? "Don't have an account? "
+                  : "Already have an account? "}
                 <button
                   type="button"
                   className="switch-btn"

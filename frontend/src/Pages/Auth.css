@@ -229,7 +229,7 @@
 }
 
 .form-header p {
-  color: #8b5e3c;
+  color: #8e5b3c;
   font-size: 17px;
   font-weight: 700;
   margin: 0;
@@ -259,7 +259,7 @@
 }
 
 .tab-btn.active {
-  background: #8B5E3C !important;
+  background: linear-gradient(145deg, #A98C6A, #7B563D);
   color: #FFFFFF !important;
   font-weight: 700;
 }
@@ -283,9 +283,9 @@
 }
 
 .input-group label {
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 600;
-  color: #374151;
+  color: #000000;
   margin-bottom: 6px;
 }
 
@@ -307,7 +307,7 @@
 
 /* Submit Button */
 .submit-btn {
-  background: #8B5E3C !important;
+  background: linear-gradient(145deg, #A98C6A, #7B563D) !important;
   color: white;
   border: none;
   padding: 14px 20px;
@@ -393,7 +393,7 @@
 .forgot-password-btn {
   background: none;
   border: none;
-  color: #8B5E3C;
+  color: linear-gradient(145deg, #A98C6A, #7B563D);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -429,6 +429,19 @@
 .switch-btn:hover {
   color: #92400e;
   text-decoration: underline;
+}
+
+.checkbox-container {
+  display: flex;
+  align-items: center;
+  gap: 8px; /* space between checkbox and text */
+  font-size: 14px;
+  color: #111;
+}
+
+.checkbox-container input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
 }
 
 /* Responsive Design */

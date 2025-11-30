@@ -4,7 +4,7 @@
 }
 
 .banner {
-  background: linear-gradient(90deg, #8B5E3C, #5A3825);
+  background: linear-gradient(90deg, linear-gradient(145deg, #A98C6A, #7B563D), #5A3825);
 }
 
 .accordion-button {
@@ -14,13 +14,13 @@
 }
 
 .accordion-button:not(.collapsed) {
-  background-color: #8B5E3C;
+  background-color: linear-gradient(145deg, #A98C6A, #7B563D);
   color: #fff;
 }
 
 /* ==== Content Boxes inside Dropdown ==== */
 .content-box {
-  background: #8B5E3C;
+  background: linear-gradient(145deg, #A98C6A, #7B563D);
   color: #fff;
   padding: 20px;
   border-radius: 12px;
@@ -50,7 +50,7 @@
 
 /* Different colors for types */
 .content-box.video {
-  background: #8B5E3C;
+  background: linear-gradient(145deg, #A98C6A, #7B563D);
 }
 
 .content-box.quiz {

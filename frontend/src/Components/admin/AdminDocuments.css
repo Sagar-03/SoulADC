@@ -24,7 +24,7 @@
 }
 
 .admin-course-selector .form-select:focus {
-  border-color: #8B5E3C;
+  border-color: linear-gradient(145deg, #A98C6A, #7B563D);
   box-shadow: 0 0 0 0.2rem rgba(139, 94, 60, 0.25);
 }
 
@@ -39,7 +39,7 @@
 }
 
 .admin-document-card:hover .document-card {
-  border-color: #8B5E3C;
+  border-color: linear-gradient(145deg, #A98C6A, #7B563D);
   box-shadow: 0 4px 15px rgba(139, 94, 60, 0.15);
   transform: translateY(-2px);
 }

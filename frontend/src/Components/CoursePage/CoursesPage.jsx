@@ -50,7 +50,7 @@ export default function CoursesPage() {
     );
   }
 
-  
+
 
   return (
     <>
@@ -59,7 +59,7 @@ export default function CoursesPage() {
         <div className="container">
           <div className="row align-items-center g-4">
             <div className="col-12 col-lg-7">
-                {/* <span className="hero-kicker mb-3">
+              {/* <span className="hero-kicker mb-3">
                   <span>✅</span> ADC Part 1 Specialists
                 </span> */}
               <h1
@@ -70,17 +70,23 @@ export default function CoursesPage() {
                 with Expert-Led Course
               </h1>
               <p className="lead text-muted mb-4">
-                Choose from our carefully designed courses with expert mentors. 
+                Choose from our carefully designed courses with expert mentors.
                 All programs include comprehensive coverage, practice tests, and personalized guidance.
               </p>
               {courses.length > 0 && (
                 <div className="d-flex gap-2">
-                  <a href="#courses" className="btn btn-dark">
+                  <a href="#courses" className="btn btn-gradient">
                     View Courses
                   </a>
-                  <a href="https://wa.me/" className="btn btn-outline-dark">
-                    Talk to a Mentor
+                  <a
+                    href="https://wa.me/"
+                    className="btn btn-gradient-outline"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Talk to Mentor
                   </a>
+
                 </div>
               )}
             </div>

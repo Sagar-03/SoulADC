@@ -5,7 +5,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
-  --chat-brown: #8B5E3C;
+  --chat-brown: linear-gradient(145deg, #A98C6A, #7B563D);
   --chat-brown-dark: #70482e;
   --chat-gray-bg: #f9f9f9;
   --chat-border: #e5e7eb;

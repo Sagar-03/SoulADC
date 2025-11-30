@@ -102,7 +102,7 @@ const Dashboard = () => {
               <h5 className="fw-bold" style={{ color: "#5A3825" }}>
                 {s.label}
               </h5>
-              <h3 style={{ color: "#8B5E3C" }}>{s.value}</h3>
+              <h3 style={{ color: "linear-gradient(145deg, #A98C6A, #7B563D)" }}>{s.value}</h3>
             </div>
           </div>
         ))}
@@ -122,7 +122,7 @@ const Dashboard = () => {
                   <XAxis dataKey="month" />
                   <YAxis />
                   <Tooltip />
-                  <Line type="monotone" dataKey="enrollments" stroke="#8B5E3C" />
+                  <Line type="monotone" dataKey="enrollments" stroke="linear-gradient(145deg, #A98C6A, #7B563D)" />
                 </LineChart>
               </ResponsiveContainer>
             ) : (
@@ -145,7 +145,7 @@ const Dashboard = () => {
                   <XAxis dataKey="month" />
                   <YAxis />
                   <Tooltip />
-                  <Bar dataKey="revenue" fill="#8B5E3C" />
+                  <Bar dataKey="revenue" fill="linear-gradient(145deg, #A98C6A, #7B563D)" />
                 </BarChart>
               </ResponsiveContainer>
             ) : (

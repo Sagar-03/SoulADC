@@ -16,7 +16,7 @@ const Footer = () => {
               src={logo}
               alt="Soul ADC Logo"
               className="img-fluid mb-3"
-              style={{ maxWidth: '200px', height: 'auto' }}
+              style={{ maxWidth: '320px', height: 'auto', marginRight: '20px' }}
             />
             <p className="text-secondary fs-7">
               Empowering future Australian dentists with expert ADC Part 1 preparation. Your success is our mission.

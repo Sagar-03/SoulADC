@@ -50,14 +50,14 @@
 }
 
 .module-button:hover {
-  border-color: #8B5E3C;
+  border-color: linear-gradient(145deg, #A98C6A, #7B563D);
   box-shadow: 0 2px 8px rgba(139, 94, 60, 0.15);
   transform: translateY(-2px);
 }
 
 .module-button.active {
-  background: linear-gradient(135deg, #8B5E3C, #A98C6A);
-  border-color: #8B5E3C;
+  background: linear-gradient(135deg, linear-gradient(145deg, #A98C6A, #7B563D), #A98C6A);
+  border-color: linear-gradient(145deg, #A98C6A, #7B563D);
   color: white;
   box-shadow: 0 4px 12px rgba(139, 94, 60, 0.3);
 }
@@ -82,7 +82,7 @@
   top: 8px;
   right: 8px;
   background: rgba(139, 94, 60, 0.1);
-  color: #8B5E3C;
+  color: linear-gradient(145deg, #A98C6A, #7B563D);
   font-size: 0.75rem;
   font-weight: 600;
   padding: 2px 8px;
@@ -132,7 +132,7 @@
 }
 
 .document-card:hover {
-  border-color: #8B5E3C;
+  border-color: linear-gradient(145deg, #A98C6A, #7B563D);
   box-shadow: 0 4px 15px rgba(139, 94, 60, 0.15);
   transform: translateY(-3px);
 }
@@ -179,7 +179,7 @@
 }
 
 .document-button {
-  background: linear-gradient(135deg, #8B5E3C, #A98C6A);
+  background: linear-gradient(135deg, linear-gradient(145deg, #A98C6A, #7B563D), #A98C6A);
   border: none;
   border-radius: 8px;
   padding: 8px 16px;
@@ -189,7 +189,7 @@
 }
 
 .document-button:hover {
-  background: linear-gradient(135deg, #7B563D, #8B5E3C);
+  background: linear-gradient(135deg, #7B563D, linear-gradient(145deg, #A98C6A, #7B563D));
   transform: translateY(-1px);
   box-shadow: 0 2px 8px rgba(139, 94, 60, 0.3);
 }

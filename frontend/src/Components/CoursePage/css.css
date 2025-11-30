@@ -56,6 +56,45 @@
   color: #888;
 }
 
+/* Gradient button */
+.btn-gradient {
+  background: linear-gradient(145deg, #A98C6A, #7B563D) !important;
+  border: none !important;
+  color: #ffffff !important;
+  font-weight: 600;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  transition: 0.3s ease;
+}
+
+.btn-gradient:hover {
+  opacity: 0.9;
+  transform: translateY(-2px);
+}
+
+
+/* Gradient outline button */
+.btn-gradient-outline {
+  border: 2px solid #A98C6A !important;
+  color: #000000 !important;
+  font-weight: 600;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  transition: 0.3s ease;
+  background: transparent !important;
+}
+
+.btn-gradient-outline:hover {
+  background: linear-gradient(145deg, #A98C6A, #7B563D) !important;
+  color: #ffffff !important;
+  border-color: #A98C6A !important;
+  transform: translateY(-2px);
+}
+/* .btn-gradient:hover {
+  opacity: 0.9;
+  transform: translateY(-2px);
+} */
+
 
 /* Course thumbnail styles */
 .course-thumbnail-container {

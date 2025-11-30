@@ -262,7 +262,7 @@ const ProgressDashboard = () => {
             cx={size / 2}
             cy={size / 2}
             r={radius}
-            stroke="#8B5E3C"
+            stroke="linear-gradient(145deg, #A98C6A, #7B563D)"
             strokeWidth={strokeWidth}
             fill="transparent"
             strokeDasharray={strokeDasharray}

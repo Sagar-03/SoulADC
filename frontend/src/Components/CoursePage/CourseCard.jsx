@@ -32,8 +32,8 @@ export default function CourseCard({ course }) {
       course.weeks?.length > 10
         ? "Comprehensive"
         : course.weeks?.length > 5
-        ? "Popular"
-        : null,
+          ? "Popular"
+          : null,
   };
 
   const handleEnroll = () => {
@@ -150,17 +150,18 @@ export default function CourseCard({ course }) {
           </div>
 
           <div className="mt-4 d-flex gap-2">
-            <button onClick={handleEnroll} className="btn btn-dark">
+            <button onClick={handleEnroll} className="btn btn-gradient">
               Enroll Now
             </button>
             <a
-              href="https://wa.me/0000000000"
-              className="btn btn-outline-dark"
+              href="https://wa.me/"
+              className="btn btn-gradient-outline"
               target="_blank"
               rel="noopener noreferrer"
             >
               Talk to Mentor
             </a>
+
           </div>
         </div>
       </div>

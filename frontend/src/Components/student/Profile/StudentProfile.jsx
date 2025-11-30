@@ -101,7 +101,7 @@ const StudentProfile = () => {
     return (
       <StudentLayout>
         <div className="loading-container">
-          <div className="spinner-border" style={{ color: "#8B5E3C" }} role="status">
+          <div className="spinner-border" style={{ color: "linear-gradient(145deg, #A98C6A, #7B563D)" }} role="status">
             <span className="visually-hidden">Loading...</span>
           </div>
         </div>
@@ -118,7 +118,7 @@ const StudentProfile = () => {
               <div className="card-body p-4">
                 {/* Header */}
                 <div className="d-flex justify-content-between align-items-center mb-4">
-                  <h2 className="card-title mb-0" style={{ color: "#8B5E3C", fontWeight: "600" }}>
+                  <h2 className="card-title mb-0" style={{ color: "linear-gradient(145deg, #A98C6A, #7B563D)", fontWeight: "600" }}>
                     <FaUser className="me-2" />
                     My Profile
                   </h2>
