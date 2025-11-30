@@ -34,7 +34,7 @@ const Leftsidebar = () => {
 
       {/* Top Section */}
       <div className="nav flex-column w-100 mt-4 fs-5">
-         <SidebarItem
+        <SidebarItem
           icon={<FaChartLine />}
           text="Dashboard"
           active={location.pathname === "/progress"}
@@ -53,21 +53,20 @@ const Leftsidebar = () => {
           text="Documents"
           active={location.pathname.includes("/documents")}
           onClick={() => navigate("/documents")}
-          hoverColor="linear-gradient(135deg, linear-gradient(145deg, #A98C6A, #7B563D), #A98C6A)"
-        />
-         <SidebarItem
+          hoverColor="linear-gradient(145deg, #A98C6A, #7B563D)" />
+        <SidebarItem
           icon={<FiMessageCircle />}
           text="Doubts Section"
           active={location.pathname === "/studentdashboard/doubtpanel"}
           onClick={() => navigate("/studentdashboard/doubtpanel")}
-           hoverColor="linear-gradient(145deg, #A98C6A, #7B563D)"
+          hoverColor="linear-gradient(145deg, #A98C6A, #7B563D)"
         />
         <SidebarItem
           icon={<FaClipboardList />}
           text="Mock Exams"
           active={location.pathname.startsWith("/student/mock")}
           onClick={() => navigate("/student/mocks")}
-           hoverColor="linear-gradient(145deg, #A98C6A, #7B563D)"
+          hoverColor="linear-gradient(145deg, #A98C6A, #7B563D)"
         />
         {/* <SidebarItem
           icon={<FaBook />}
@@ -95,7 +94,7 @@ const Leftsidebar = () => {
           onClick={handleSignOut}
           hoverColor="red"
         />
-       
+
       </div>
     </div>
   );

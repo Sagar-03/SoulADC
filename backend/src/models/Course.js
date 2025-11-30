@@ -27,7 +27,16 @@ const courseSchema = new mongoose.Schema({
   price: Number,
   cutPrice: { type: Number, required: false }, // Original/discounted price
   thumbnail: { type: String , required: false},
-  weeks: [weekSchema],
+  durationMonths: { type: Number, required: true, min: 1 }, // Course validity duration
+  
+  // Content can be stored directly OR reference shared content
+  weeks: [weekSchema], // Direct content (legacy/standalone courses)
+  sharedContentId: { 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: 'SharedContent',
+    default: null 
+  }, // Reference to shared content
+  
   isLive: { type: Boolean, default: false },
 });
 

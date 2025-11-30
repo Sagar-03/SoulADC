@@ -13,19 +13,25 @@ const User = require("../models/userModel");
 
 router.post("/courses", protect, adminOnly, async (req, res) => {
   try {
-    const { title, description, durationMonths, weeks, price, cutPrice, thumbnail } = req.body;
+    const { title, description, durationMonths, weeks, price, cutPrice, thumbnail, sharedContentId } = req.body;
 
-    if (!title || !durationMonths || !weeks || !price) {
-      return res.status(400).json({ error: "Missing required fields" });
+    if (!title || !durationMonths || !price) {
+      return res.status(400).json({ error: "Missing required fields: title, durationMonths, and price are required" });
+    }
+
+    if (durationMonths < 1) {
+      return res.status(400).json({ error: "Duration must be at least 1 month" });
     }
 
     const newCourse = new Course({
       title,
       description,
+      durationMonths: parseInt(durationMonths),
       price,
       cutPrice: cutPrice || null, // Optional cut price
       thumbnail: thumbnail || "", // store S3 key or URL
-      weeks: [], // start empty
+      weeks: [], // start empty (used if not using shared content)
+      sharedContentId: sharedContentId || null, // Link to shared content if provided
     });
 
     await newCourse.save();
@@ -38,11 +44,11 @@ router.post("/courses", protect, adminOnly, async (req, res) => {
 
 /**
  * GET /api/admin/courses
- * Fetch all courses
+ * Fetch all courses with shared content info
  */
 router.get("/courses", protect, adminOnly, async (req, res) => {
   try {
-    const courses = await Course.find();
+    const courses = await Course.find().populate('sharedContentId', 'name description');
     res.json(courses);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -51,12 +57,25 @@ router.get("/courses", protect, adminOnly, async (req, res) => {
 
 /**
  * GET /api/admin/courses/:id
- * Fetch a single course
+ * Fetch a single course with its content (direct or shared)
  */
 router.get("/courses/:id", protect, adminOnly, async (req, res) => {
   try {
-    const course = await Course.findById(req.params.id);
+    const course = await Course.findById(req.params.id).populate('sharedContentId');
     if (!course) return res.status(404).json({ error: "Course not found" });
+    
+    // If course uses shared content, merge it with course data
+    if (course.sharedContentId) {
+      const courseObj = course.toObject();
+      courseObj.weeks = course.sharedContentId.weeks; // Use shared content weeks
+      courseObj.sharedContent = {
+        _id: course.sharedContentId._id,
+        name: course.sharedContentId.name,
+        description: course.sharedContentId.description
+      };
+      return res.json(courseObj);
+    }
+    
     res.json(course);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -345,11 +364,11 @@ router.put("/courses/:courseId/weeks/:weekId/days/:dayId/contents/:contentId", p
 
 /**
  * PUT /api/admin/courses/:id
- * Update course details (title, description, price, thumbnail)
+ * Update course details (title, description, price, thumbnail, durationMonths)
  */
 router.put("/courses/:id", protect, adminOnly, async (req, res) => {
   try {
-    const { title, description, price, cutPrice, thumbnail } = req.body;
+    const { title, description, price, cutPrice, thumbnail, durationMonths } = req.body;
     const course = await Course.findById(req.params.id);
 
     if (!course) return res.status(404).json({ error: "Course not found" });
@@ -360,6 +379,12 @@ router.put("/courses/:id", protect, adminOnly, async (req, res) => {
     if (price !== undefined) course.price = price;
     if (cutPrice !== undefined) course.cutPrice = cutPrice;
     if (thumbnail !== undefined) course.thumbnail = thumbnail;
+    if (durationMonths !== undefined) {
+      if (durationMonths < 1) {
+        return res.status(400).json({ error: "Duration must be at least 1 month" });
+      }
+      course.durationMonths = parseInt(durationMonths);
+    }
 
     await course.save();
     res.json({ message: "Course updated successfully", course });

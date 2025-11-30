@@ -1,5 +1,6 @@
 const express = require('express');
 const { protect } = require("../middleware/authMiddleware");
+const { checkCourseAccess } = require("../middleware/courseAccessMiddleware");
 const Course = require("../models/Course");
 const User = require("../models/userModel");
 const { updateProfile } = require("../controllers/authcontroller");
@@ -21,26 +22,28 @@ router.get('/courses/live', async (req, res) => {
 /**
  * GET /api/user/courses/:id
  * Get full course details including weeks and content (for enrolled students only)
+ * Now uses checkCourseAccess middleware to validate expiry and supports shared content
  */
-router.get('/courses/:id', protect, async (req, res) => {
+router.get('/courses/:id', protect, checkCourseAccess, async (req, res) => {
   try {
-    const course = await Course.findById(req.params.id);
+    const course = await Course.findById(req.params.id).populate('sharedContentId');
     if (!course) {
       return res.status(404).json({ error: 'Course not found' });
     }
     
-    // Check if user has purchased this course
-    const user = await User.findById(req.user.id);
-    const hasPurchased = user.purchasedCourses.includes(req.params.id);
+    // Prepare response data
+    const courseData = course.toObject();
     
-    if (!hasPurchased) {
-      return res.status(403).json({ 
-        error: 'Access denied. You need to purchase this course to view its content.' 
-      });
+    // If course uses shared content, use its weeks
+    if (course.sharedContentId) {
+      courseData.weeks = course.sharedContentId.weeks;
     }
     
-    // Return full course data if user has purchased it
-    res.json(course);
+    // Return full course data with access info
+    res.json({
+      ...courseData,
+      accessInfo: req.courseAccess // Contains purchaseDate, expiryDate, daysRemaining
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -48,12 +51,66 @@ router.get('/courses/:id', protect, async (req, res) => {
 
 /**
  * GET /api/user/purchased-courses
- * Get courses purchased by the authenticated user
+ * Get courses purchased by the authenticated user with expiry info
  */
 router.get('/purchased-courses', protect, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).populate('purchasedCourses');
-    res.json(user.purchasedCourses || []);
+    const user = await User.findById(req.user.id).populate('purchasedCourses.courseId');
+    
+    // Map courses with expiry information
+    const coursesWithExpiry = user.purchasedCourses.map(pc => {
+      const now = new Date();
+      const daysRemaining = Math.ceil((pc.expiryDate - now) / (1000 * 60 * 60 * 24));
+      
+      return {
+        ...pc.courseId.toObject(),
+        purchaseDate: pc.purchaseDate,
+        expiryDate: pc.expiryDate,
+        isExpired: pc.isExpired || pc.expiryDate < now,
+        daysRemaining: daysRemaining > 0 ? daysRemaining : 0
+      };
+    });
+    
+    res.json(coursesWithExpiry);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * GET /api/user/courses/:id/access
+ * Check if user has valid access to a specific course
+ */
+router.get('/courses/:id/access', protect, async (req, res) => {
+  try {
+    const courseId = req.params.id;
+    const user = await User.findById(req.user.id);
+    
+    const purchasedCourse = user.purchasedCourses.find(
+      pc => pc.courseId.toString() === courseId.toString()
+    );
+    
+    if (!purchasedCourse) {
+      return res.json({
+        hasAccess: false,
+        reason: 'not_purchased',
+        message: 'You have not purchased this course'
+      });
+    }
+    
+    const now = new Date();
+    const isExpired = purchasedCourse.expiryDate < now;
+    const daysRemaining = Math.ceil((purchasedCourse.expiryDate - now) / (1000 * 60 * 60 * 24));
+    
+    res.json({
+      hasAccess: !isExpired,
+      reason: isExpired ? 'expired' : 'valid',
+      purchaseDate: purchasedCourse.purchaseDate,
+      expiryDate: purchasedCourse.expiryDate,
+      daysRemaining: daysRemaining > 0 ? daysRemaining : 0,
+      isExpired: isExpired,
+      message: isExpired ? 'Your access to this course has expired' : 'You have active access to this course'
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -120,12 +177,30 @@ router.get('/streak', protect, async (req, res) => {
 /**
  * POST /api/user/video-progress
  * Update video watching progress
+ * Now checks if user has valid access to the course
  */
 router.post('/video-progress', protect, async (req, res) => {
   try {
     const { courseId, weekId, dayId, contentId, videoTitle, progress, watchTime, totalDuration } = req.body;
     
     const user = await User.findById(req.user.id);
+    
+    // Check if user has valid access to this course
+    const purchasedCourse = user.purchasedCourses.find(
+      pc => pc.courseId.toString() === courseId.toString()
+    );
+    
+    if (!purchasedCourse) {
+      return res.status(403).json({ error: 'You do not have access to this course' });
+    }
+    
+    const now = new Date();
+    if (purchasedCourse.expiryDate < now) {
+      return res.status(403).json({ 
+        error: 'Your access to this course has expired',
+        expiryDate: purchasedCourse.expiryDate
+      });
+    }
     
     // Find existing video progress or create new
     let videoProgressIndex = user.videoProgress.findIndex(vp => 
@@ -174,7 +249,7 @@ router.post('/video-progress', protect, async (req, res) => {
  */
 router.get('/progress-dashboard', protect, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).populate('purchasedCourses');
+    const user = await User.findById(req.user.id).populate('purchasedCourses.courseId');
     
     // Calculate overall statistics
     let totalVideosCompleted = 0;
@@ -187,14 +262,17 @@ router.get('/progress-dashboard', protect, async (req, res) => {
     const recentActivity = user.videoProgress
       .sort((a, b) => new Date(b.lastWatchedAt) - new Date(a.lastWatchedAt))
       .slice(0, 10)
-      .map(vp => ({
-        id: vp._id,
-        videoTitle: vp.videoTitle,
-        courseTitle: user.purchasedCourses.find(c => c._id.toString() === vp.courseId.toString())?.title || 'Unknown Course',
-        progress: vp.progress,
-        duration: vp.totalDuration ? `${Math.ceil(vp.totalDuration / 60)}min` : null,
-        lastWatchedAt: vp.lastWatchedAt
-      }));
+      .map(vp => {
+        const course = user.purchasedCourses.find(pc => pc.courseId._id.toString() === vp.courseId.toString());
+        return {
+          id: vp._id,
+          videoTitle: vp.videoTitle,
+          courseTitle: course?.courseId?.title || 'Unknown Course',
+          progress: vp.progress,
+          duration: vp.totalDuration ? `${Math.ceil(vp.totalDuration / 60)}min` : null,
+          lastWatchedAt: vp.lastWatchedAt
+        };
+      });
     
     // Calculate weekly watch time (last 7 days)
     const weeklyWatchTime = [];
@@ -219,7 +297,10 @@ router.get('/progress-dashboard', protect, async (req, res) => {
     }
     
     // Calculate course progress
-    for (const course of user.purchasedCourses) {
+    for (const pc of user.purchasedCourses) {
+      const course = pc.courseId;
+      if (!course) continue;
+      
       const courseVideos = [];
       
       // Count all videos in the course

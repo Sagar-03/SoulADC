@@ -13,8 +13,23 @@ const userSchema = new mongoose.Schema(
     resetTokenExpire: Date,
     purchasedCourses: [
       {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Course",
+        courseId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Course",
+          required: true
+        },
+        purchaseDate: {
+          type: Date,
+          default: Date.now
+        },
+        expiryDate: {
+          type: Date,
+          required: true
+        },
+        isExpired: {
+          type: Boolean,
+          default: false
+        }
       }
     ],
 

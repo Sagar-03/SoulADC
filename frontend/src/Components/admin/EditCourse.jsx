@@ -10,6 +10,7 @@ const EditCourse = () => {
   const [form, setForm] = useState({
     title: "",
     description: "",
+    durationMonths: "",
     price: "",
     cutPrice: "",
     thumbnail: null,
@@ -28,6 +29,7 @@ const EditCourse = () => {
         setForm({
           title: data.title || "",
           description: data.description || "",
+          durationMonths: data.durationMonths || "",
           price: data.price || "",
           cutPrice: data.cutPrice || "",
           thumbnail: null,
@@ -107,6 +109,7 @@ const EditCourse = () => {
       const updateData = {
         title: form.title,
         description: form.description,
+        durationMonths: parseInt(form.durationMonths),
         price: parseFloat(form.price),
         cutPrice: form.cutPrice ? parseFloat(form.cutPrice) : null,
         thumbnail: thumbnailKey,
@@ -181,6 +184,23 @@ const EditCourse = () => {
             rows="4"
             disabled={updating}
           />
+        </div>
+
+        {/* Duration */}
+        <div className="mb-3">
+          <label className="form-label">Course Duration (Months)</label>
+          <input
+            type="number"
+            name="durationMonths"
+            value={form.durationMonths}
+            onChange={handleChange}
+            className="form-control"
+            required
+            min="1"
+            disabled={updating}
+            placeholder="Enter course validity duration in months"
+          />
+          <div className="form-text">Students will have access for this duration from purchase date</div>
         </div>
 
         {/* Price Section */}

@@ -16,6 +16,7 @@ const uploadRoutes = require("./routes/upload.js");
 const streamRoutes = require("./routes/stream.js");
 const multipartUploadRoutes = require("./routes/multipartUpload.js");
 const mockRoutes = require("./routes/mockRoutes.js");
+const sharedContentRoutes = require("./routes/sharedContentRoutes.js");
 // const doubtRoutes = require("./routes/doubtRoutes.js");
 // const Doubt = require("./models/Chat.js");
 
@@ -76,6 +77,7 @@ app.use(
 app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/admin/shared-content", sharedContentRoutes);
 app.use("/api/payment", paymentRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/stream", streamRoutes);

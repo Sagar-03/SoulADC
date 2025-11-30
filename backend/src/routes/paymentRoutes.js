@@ -97,10 +97,36 @@ router.post(
         const { courseId, userId } = session.metadata;
 
         try {
-          await User.findByIdAndUpdate(userId, {
-            $addToSet: { purchasedCourses: courseId },
-          });
-          console.log(`✅ Payment successful for course ${courseId} by user ${userId}`);
+          // Get course to fetch duration
+          const course = await Course.findById(courseId);
+          if (!course) {
+            console.error(`❌ Course ${courseId} not found during webhook`);
+            break;
+          }
+
+          // Calculate expiry date based on course duration
+          const purchaseDate = new Date();
+          const expiryDate = new Date(purchaseDate);
+          expiryDate.setMonth(expiryDate.getMonth() + course.durationMonths);
+
+          // Check if user already has this course
+          const user = await User.findById(userId);
+          const existingCourse = user.purchasedCourses.find(
+            pc => pc.courseId.toString() === courseId.toString()
+          );
+
+          if (!existingCourse) {
+            // Add new course with expiry date
+            user.purchasedCourses.push({
+              courseId: courseId,
+              purchaseDate: purchaseDate,
+              expiryDate: expiryDate,
+              isExpired: false
+            });
+            await user.save();
+          }
+
+          console.log(`✅ Payment successful for course ${courseId} by user ${userId}, expires on ${expiryDate.toDateString()}`);
         } catch (dbErr) {
           console.error("❌ DB update error:", dbErr);
         }
@@ -130,23 +156,46 @@ router.get("/success", protect, async (req, res) => {
       return res.json({ success: false, message: "Payment not verified." });
     }
 
-    // Update user's purchased courses
-    if (course_id) {
-      await User.findByIdAndUpdate(userId, {
-        $addToSet: { purchasedCourses: course_id },
-      });
+    // Get course to fetch duration
+    const course = await Course.findById(course_id);
+    if (!course) {
+      return res.status(404).json({ error: "Course not found" });
     }
 
-    console.log(` Verified payment success - User: ${userId}, Course: ${course_id}`);
+    // Calculate expiry date based on course duration
+    const purchaseDate = new Date();
+    const expiryDate = new Date(purchaseDate);
+    expiryDate.setMonth(expiryDate.getMonth() + course.durationMonths);
+
+    // Update user's purchased courses with expiry tracking
+    if (course_id) {
+      const user = await User.findById(userId);
+      const existingCourse = user.purchasedCourses.find(
+        pc => pc.courseId && pc.courseId.toString() === course_id.toString()
+      );
+
+      if (!existingCourse) {
+        user.purchasedCourses.push({
+          courseId: course_id,
+          purchaseDate: purchaseDate,
+          expiryDate: expiryDate,
+          isExpired: false
+        });
+        await user.save();
+      }
+    }
+
+    console.log(`✅ Verified payment success - User: ${userId}, Course: ${course_id}, Expires: ${expiryDate.toDateString()}`);
 
     res.json({
       success: true,
       message: "Payment successful! Course added to account.",
       courseId: course_id,
+      expiryDate: expiryDate,
       redirectUrl: `/mycourse/${course_id}`,
     });
   } catch (error) {
-    console.error(" Payment success handling error:", error);
+    console.error("❌ Payment success handling error:", error);
     res.status(500).json({ error: "Failed to process payment success" });
   }
 });
