@@ -33,6 +33,71 @@ const userSchema = new mongoose.Schema(
       }
     ],
 
+    // ✅ Pending payment approvals (awaiting admin approval)
+    pendingApprovals: [
+      {
+        courseId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Course",
+          required: true
+        },
+        paymentSessionId: {
+          type: String,
+          required: true
+        },
+        paymentAmount: {
+          type: Number,
+          required: true
+        },
+        paymentDate: {
+          type: Date,
+          default: Date.now
+        },
+        status: {
+          type: String,
+          enum: ["pending", "approved", "rejected"],
+          default: "pending"
+        },
+        approvedBy: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User"
+        },
+        approvedAt: {
+          type: Date
+        },
+        rejectionReason: {
+          type: String
+        }
+      }
+    ],
+
+    // ✅ Notifications for newly approved courses
+    notifications: [
+      {
+        type: {
+          type: String,
+          enum: ["course_approved", "course_rejected", "course_expiring"],
+          required: true
+        },
+        courseId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Course"
+        },
+        message: {
+          type: String,
+          required: true
+        },
+        isRead: {
+          type: Boolean,
+          default: false
+        },
+        createdAt: {
+          type: Date,
+          default: Date.now
+        }
+      }
+    ],
+
     //  One active session per user
     activeSession: {
       token: { type: String },       

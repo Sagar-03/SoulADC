@@ -51,11 +51,13 @@ router.get('/courses/:id', protect, checkCourseAccess, async (req, res) => {
 
 /**
  * GET /api/user/purchased-courses
- * Get courses purchased by the authenticated user with expiry info
+ * Get courses purchased by the authenticated user with expiry info and pending approvals
  */
 router.get('/purchased-courses', protect, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).populate('purchasedCourses.courseId');
+    const user = await User.findById(req.user.id)
+      .populate('purchasedCourses.courseId')
+      .populate('pendingApprovals.courseId');
     
     // Map courses with expiry information
     const coursesWithExpiry = user.purchasedCourses.map(pc => {
@@ -67,11 +69,27 @@ router.get('/purchased-courses', protect, async (req, res) => {
         purchaseDate: pc.purchaseDate,
         expiryDate: pc.expiryDate,
         isExpired: pc.isExpired || pc.expiryDate < now,
-        daysRemaining: daysRemaining > 0 ? daysRemaining : 0
+        daysRemaining: daysRemaining > 0 ? daysRemaining : 0,
+        status: 'approved'
       };
     });
+
+    // Add pending approvals as courses with pending status
+    const pendingCourses = user.pendingApprovals
+      .filter(pa => pa.status === 'pending')
+      .map(pa => ({
+        ...pa.courseId.toObject(),
+        paymentDate: pa.paymentDate,
+        paymentAmount: pa.paymentAmount,
+        status: 'pending',
+        isPendingApproval: true
+      }));
     
-    res.json(coursesWithExpiry);
+    res.json({
+      approvedCourses: coursesWithExpiry,
+      pendingCourses: pendingCourses,
+      allCourses: [...coursesWithExpiry, ...pendingCourses]
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -422,5 +440,50 @@ async function updateCourseProgress(user, courseId) {
     console.error('Error updating course progress:', err);
   }
 }
+
+/**
+ * GET /api/user/notifications
+ * Get user notifications
+ */
+router.get('/notifications', protect, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id)
+      .populate('notifications.courseId', 'title thumbnail');
+    
+    res.json(user.notifications || []);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * POST /api/user/notifications/mark-read
+ * Mark notifications as read
+ */
+router.post('/notifications/mark-read', protect, async (req, res) => {
+  try {
+    const { notificationIds } = req.body;
+    const user = await User.findById(req.user.id);
+    
+    if (notificationIds && notificationIds.length > 0) {
+      // Mark specific notifications as read
+      user.notifications.forEach(notification => {
+        if (notificationIds.includes(notification._id.toString())) {
+          notification.isRead = true;
+        }
+      });
+    } else {
+      // Mark all as read
+      user.notifications.forEach(notification => {
+        notification.isRead = true;
+      });
+    }
+    
+    await user.save();
+    res.json({ message: 'Notifications marked as read' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 module.exports = router;

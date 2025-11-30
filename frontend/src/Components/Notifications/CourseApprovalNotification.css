@@ -1,0 +1,234 @@
+/* Backdrop */
+.notification-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  z-index: 9998;
+  animation: fadeIn 0.3s ease;
+}
+
+/* Modal Container */
+.notification-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  padding: 40px;
+  max-width: 500px;
+  width: 90%;
+  z-index: 9999;
+  animation: slideUp 0.4s ease;
+  border: 3px solid #28a745;
+  text-align: center;
+}
+
+.notification-modal.closing {
+  animation: slideDown 0.3s ease;
+}
+
+/* Close Button */
+.notification-close-btn {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: transparent;
+  border: none;
+  font-size: 24px;
+  color: #6c757d;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 35px;
+  height: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.notification-close-btn:hover {
+  background-color: #f8f9fa;
+  color: #343a40;
+  transform: rotate(90deg);
+}
+
+/* Success Icon */
+.notification-icon {
+  font-size: 80px;
+  color: #28a745;
+  margin-bottom: 20px;
+  animation: scaleIn 0.5s ease;
+}
+
+/* Content */
+.notification-content {
+  margin-bottom: 30px;
+}
+
+.notification-title {
+  font-size: 28px;
+  font-weight: bold;
+  color: #28a745;
+  margin-bottom: 15px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.notification-message {
+  font-size: 16px;
+  color: #495057;
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+
+.notification-course-info {
+  background-color: #e7f5ec;
+  padding: 15px;
+  border-radius: 10px;
+  border-left: 4px solid #28a745;
+  text-align: left;
+  font-size: 15px;
+  color: #155724;
+}
+
+/* Actions */
+.notification-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.btn-access-course {
+  background: linear-gradient(135deg, #28a745, #20c997);
+  color: white;
+  border: none;
+  padding: 15px 30px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+}
+
+.btn-access-course:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+  background: linear-gradient(135deg, #20c997, #28a745);
+}
+
+.btn-secondary-action {
+  background-color: transparent;
+  color: #6c757d;
+  border: 2px solid #dee2e6;
+  padding: 12px 30px;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-secondary-action:hover {
+  background-color: #f8f9fa;
+  border-color: #adb5bd;
+  color: #495057;
+}
+
+/* Progress Indicator */
+.notification-progress {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.progress-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: #dee2e6;
+  transition: all 0.3s ease;
+}
+
+.progress-dot.active {
+  width: 30px;
+  border-radius: 5px;
+  background: linear-gradient(135deg, #28a745, #20c997);
+}
+
+.progress-dot.completed {
+  background-color: #28a745;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translate(-50%, 100%);
+    opacity: 0;
+  }
+  to {
+    transform: translate(-50%, -50%);
+    opacity: 1;
+  }
+}
+
+@keyframes slideDown {
+  from {
+    transform: translate(-50%, -50%);
+    opacity: 1;
+  }
+  to {
+    transform: translate(-50%, 100%);
+    opacity: 0;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Responsive */
+@media (max-width: 576px) {
+  .notification-modal {
+    padding: 30px 20px;
+    max-width: 95%;
+  }
+
+  .notification-icon {
+    font-size: 60px;
+  }
+
+  .notification-title {
+    font-size: 24px;
+  }
+
+  .notification-message {
+    font-size: 14px;
+  }
+
+  .btn-access-course {
+    padding: 12px 20px;
+    font-size: 14px;
+  }
+}

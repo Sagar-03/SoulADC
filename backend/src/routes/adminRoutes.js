@@ -764,10 +764,10 @@ router.get("/users", protect, adminOnly, async (req, res) => {
       streak: user.streak?.current || 0,
     }));
 
-    console.log(`📋 Admin fetched ${formattedUsers.length} users`);
+    console.log(` Admin fetched ${formattedUsers.length} users`);
     res.json(formattedUsers);
   } catch (err) {
-    console.error("❌ Error fetching users:", err.message);
+    console.error(" Error fetching users:", err.message);
     res.status(500).json({ error: "Failed to fetch users" });
   }
 });
@@ -795,11 +795,175 @@ router.delete("/users/:id", protect, adminOnly, async (req, res) => {
     // Delete the user
     await User.findByIdAndDelete(userId);
     
-    console.log(`🗑️ Deleted user: ${user.name} (${user.email})`);
+    console.log(` Deleted user: ${user.name} (${user.email})`);
     res.json({ success: true, message: "User deleted successfully" });
   } catch (err) {
-    console.error("❌ Error deleting user:", err.message);
+    console.error(" Error deleting user:", err.message);
     res.status(500).json({ error: "Failed to delete user" });
+  }
+});
+
+/**
+ * GET /api/admin/pending-approvals
+ * Fetch all pending payment approvals with complete student data
+ */
+router.get("/pending-approvals", protect, adminOnly, async (req, res) => {
+  try {
+    const usersWithPendingApprovals = await User.find({
+      'pendingApprovals': { $exists: true, $ne: [] }
+    })
+    .populate('pendingApprovals.courseId', 'title price')
+    .select('name email phone countryCode pendingApprovals')
+    .sort({ 'pendingApprovals.paymentDate': -1 });
+
+    // Flatten and format the data
+    const approvals = [];
+    usersWithPendingApprovals.forEach(user => {
+      user.pendingApprovals.forEach(approval => {
+        if (approval.status === 'pending') {
+          approvals.push({
+            approvalId: approval._id,
+            userId: user._id,
+            userName: user.name,
+            userEmail: user.email,
+            userPhone: user.phone ? `${user.countryCode || ''} ${user.phone}` : 'N/A',
+            courseId: approval.courseId._id,
+            courseTitle: approval.courseId.title,
+            coursePrice: approval.courseId.price,
+            paymentAmount: approval.paymentAmount,
+            paymentDate: approval.paymentDate,
+            paymentSessionId: approval.paymentSessionId,
+            status: approval.status
+          });
+        }
+      });
+    });
+
+    console.log(`📋 Fetched ${approvals.length} pending approvals`);
+    res.json(approvals);
+  } catch (err) {
+    console.error("❌ Error fetching pending approvals:", err.message);
+    res.status(500).json({ error: "Failed to fetch pending approvals" });
+  }
+});
+
+/**
+ * POST /api/admin/approve-payment/:userId/:approvalId
+ * Approve a pending payment and grant course access
+ */
+router.post("/approve-payment/:userId/:approvalId", protect, adminOnly, async (req, res) => {
+  try {
+    const { userId, approvalId } = req.params;
+    
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const approval = user.pendingApprovals.id(approvalId);
+    if (!approval) {
+      return res.status(404).json({ error: "Approval request not found" });
+    }
+
+    if (approval.status !== 'pending') {
+      return res.status(400).json({ error: "This approval has already been processed" });
+    }
+
+    // Get course to calculate expiry
+    const course = await Course.findById(approval.courseId);
+    if (!course) {
+      return res.status(404).json({ error: "Course not found" });
+    }
+
+    // Calculate expiry date
+    const purchaseDate = approval.paymentDate;
+    const expiryDate = new Date(purchaseDate);
+    expiryDate.setMonth(expiryDate.getMonth() + course.durationMonths);
+
+    // Check if user already has this course
+    const existingCourse = user.purchasedCourses.find(
+      pc => pc.courseId.toString() === approval.courseId.toString()
+    );
+
+    if (!existingCourse) {
+      // Grant course access
+      user.purchasedCourses.push({
+        courseId: approval.courseId,
+        purchaseDate: purchaseDate,
+        expiryDate: expiryDate,
+        isExpired: false
+      });
+    }
+
+    // Update approval status
+    approval.status = 'approved';
+    approval.approvedBy = req.user.id;
+    approval.approvedAt = new Date();
+
+    // Create notification for the student
+    user.notifications.push({
+      type: 'course_approved',
+      courseId: approval.courseId,
+      message: `Your access to "${course.title}" has been approved! You can now access your course content.`,
+      isRead: false,
+      createdAt: new Date()
+    });
+
+    await user.save();
+
+    console.log(`✅ Admin ${req.user.email} approved payment for user ${user.email}, course: ${course.title}`);
+    res.json({ 
+      success: true, 
+      message: "Payment approved and course access granted",
+      courseTitle: course.title,
+      userName: user.name
+    });
+  } catch (err) {
+    console.error("❌ Error approving payment:", err.message);
+    res.status(500).json({ error: "Failed to approve payment" });
+  }
+});
+
+/**
+ * POST /api/admin/reject-payment/:userId/:approvalId
+ * Reject a pending payment request
+ */
+router.post("/reject-payment/:userId/:approvalId", protect, adminOnly, async (req, res) => {
+  try {
+    const { userId, approvalId } = req.params;
+    const { reason } = req.body;
+    
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const approval = user.pendingApprovals.id(approvalId);
+    if (!approval) {
+      return res.status(404).json({ error: "Approval request not found" });
+    }
+
+    if (approval.status !== 'pending') {
+      return res.status(400).json({ error: "This approval has already been processed" });
+    }
+
+    // Update approval status
+    approval.status = 'rejected';
+    approval.approvedBy = req.user.id;
+    approval.approvedAt = new Date();
+    approval.rejectionReason = reason || 'No reason provided';
+
+    await user.save();
+
+    console.log(`❌ Admin ${req.user.email} rejected payment for user ${user.email}`);
+    res.json({ 
+      success: true, 
+      message: "Payment rejected",
+      userName: user.name
+    });
+  } catch (err) {
+    console.error("❌ Error rejecting payment:", err.message);
+    res.status(500).json({ error: "Failed to reject payment" });
   }
 });
 

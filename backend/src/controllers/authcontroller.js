@@ -162,6 +162,10 @@ const login = async (req, res) => {
     );
 
     console.log("User login successful:", email);
+    
+    // Get unread notifications
+    const unreadNotifications = user.notifications?.filter(n => !n.isRead) || [];
+    
     res.json({
       message: "Login successful",
       token,
@@ -177,7 +181,8 @@ const login = async (req, res) => {
           highest: user.streak?.highest || 0,
           lastLoginDate: user.streak?.lastLoginDate
         }
-      }
+      },
+      notifications: unreadNotifications
       });
   } catch (error) {
     console.error("❌ Login error:", error);

@@ -142,7 +142,12 @@ const ProgressDashboard = () => {
           progress: progressResponse.data
         });
         
-        setPurchasedCourses(coursesResponse.data || []);
+        // Handle both old and new API response formats
+        const coursesData = coursesResponse.data?.approvedCourses || 
+                           coursesResponse.data?.allCourses || 
+                           (Array.isArray(coursesResponse.data) ? coursesResponse.data : []);
+        
+        setPurchasedCourses(coursesData);
         setStreakData(streakResponse.data || { current: 0, highest: 0, lastLoginDate: null });
         
         // Set real progress data
@@ -165,7 +170,7 @@ const ProgressDashboard = () => {
         const allVideoProgress = {};
         const resumableVideosList = [];
         
-        for (const course of (coursesResponse.data || [])) {
+        for (const course of coursesData) {
           const courseProgress = getCourseVideoProgress(course._id);
           allVideoProgress[course._id] = courseProgress;
           

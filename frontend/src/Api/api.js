@@ -245,3 +245,16 @@ export const startMockAttempt = (mockId) => api.post(`/mocks/start/${mockId}`);
 export const submitMockAttempt = (attemptId, answers) => api.post(`/mocks/submit/${attemptId}`, answers);
 export const updateFullscreenExit = (attemptId) => api.patch(`/mocks/fullscreen-exit/${attemptId}`);
 export const getMockResult = (attemptId) => api.get(`/mocks/result/${attemptId}`);
+
+// ============================
+// Payment Approval APIs
+// ============================
+export const getPendingApprovals = () => api.get("/admin/pending-approvals");
+export const approvePayment = (userId, approvalId) => api.post(`/admin/approve-payment/${userId}/${approvalId}`);
+export const rejectPayment = (userId, approvalId, reason) => api.post(`/admin/reject-payment/${userId}/${approvalId}`, { reason });
+
+// ============================
+// Notification APIs
+// ============================
+export const getNotifications = () => api.get("/user/notifications");
+export const markNotificationsRead = (notificationIds) => api.post("/user/notifications/mark-read", { notificationIds });

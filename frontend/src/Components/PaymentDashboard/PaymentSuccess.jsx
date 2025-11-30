@@ -11,6 +11,8 @@ const PaymentSuccess = () => {
   const [success, setSuccess] = useState(false);
   const [courseId, setCourseId] = useState(null);
 
+  const [isPending, setIsPending] = useState(false);
+
   useEffect(() => {
 const handlePaymentSuccess = async () => {
   const sessionId = searchParams.get('session_id');
@@ -27,6 +29,10 @@ const handlePaymentSuccess = async () => {
     if (data.success) {
       setSuccess(true);
       setCourseId(courseIdParam);
+      // Check if approval is pending
+      if (data.approvalPending) {
+        setIsPending(true);
+      }
     }
   } catch (error) {
     console.error('Error handling payment success:', error);
@@ -53,27 +59,55 @@ const handlePaymentSuccess = async () => {
         <Card.Body className="p-5">
           {success ? (
             <>
-              <div className="text-success mb-4">
-                <i className="bi bi-check-circle" style={{ fontSize: '4rem' }}></i>
-              </div>
-              <h2 className="text-success mb-3">Payment Successful!</h2>
-              <p className="text-muted mb-4">
-                Thank you for your purchase. You now have access to your course content.
-              </p>
-              <div className="d-flex gap-3 justify-content-center">
-                <Button 
-                  variant="success" 
-                  onClick={() => navigate(courseId ? `/mycourse/${courseId}` : '/studentdashboard')}
-                >
-                  Access Course
-                </Button>
-                <Button 
-                  variant="outline-secondary" 
-                  onClick={() => navigate('/studentdashboard')}
-                >
-                  Dashboard
-                </Button>
-              </div>
+              {isPending ? (
+                // Pending Approval UI
+                <>
+                  <div className="text-warning mb-4">
+                    <i className="bi bi-clock-history" style={{ fontSize: '4rem' }}></i>
+                  </div>
+                  <h2 className="text-warning mb-3">Payment Received!</h2>
+                  <p className="text-muted mb-4">
+                    Thank you for your payment. Your course access is pending admin approval.
+                    You will be notified once your access is granted.
+                  </p>
+                  <div className="alert alert-info">
+                    <i className="bi bi-info-circle me-2"></i>
+                    <strong>What's next?</strong><br/>
+                    Our team is reviewing your payment. You'll receive course access within 24 hours.
+                  </div>
+                  <Button 
+                    variant="primary" 
+                    onClick={() => navigate('/courses')}
+                  >
+                    Return to Courses
+                  </Button>
+                </>
+              ) : (
+                // Immediate Access UI (for backward compatibility)
+                <>
+                  <div className="text-success mb-4">
+                    <i className="bi bi-check-circle" style={{ fontSize: '4rem' }}></i>
+                  </div>
+                  <h2 className="text-success mb-3">Payment Successful!</h2>
+                  <p className="text-muted mb-4">
+                    Thank you for your purchase. You now have access to your course content.
+                  </p>
+                  <div className="d-flex gap-3 justify-content-center">
+                    <Button 
+                      variant="success" 
+                      onClick={() => navigate(courseId ? `/mycourse/${courseId}` : '/studentdashboard')}
+                    >
+                      Access Course
+                    </Button>
+                    <Button 
+                      variant="outline-secondary" 
+                      onClick={() => navigate('/studentdashboard')}
+                    >
+                      Dashboard
+                    </Button>
+                  </div>
+                </>
+              )}
             </>
           ) : (
             <>

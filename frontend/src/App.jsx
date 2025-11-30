@@ -36,6 +36,7 @@ import Admindashboard from "./Components/admin/Admindashboard";
 import A_Dashboard from "./Components/admin/Dashboard";
 import ManageCourses from "./Components/admin/ManageCourses";
 import ManageStudents from "./Components/admin/ManageStudents";
+import PendingApprovals from "./Components/admin/PendingApprovals";
 import AddCourse from "./Components/admin/AddCourse";
 import EditCourse from "./Components/admin/EditCourse";
 import CourseContentManager from "./Components/admin/CourseContentManager";
@@ -247,6 +248,14 @@ function App() {
           element={
             <ProtectedRoute adminOnly={true}>
               <ManageStudents />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/pending-approvals"
+          element={
+            <ProtectedRoute adminOnly={true}>
+              <PendingApprovals />
             </ProtectedRoute>
           }
         />

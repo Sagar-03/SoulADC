@@ -94,20 +94,15 @@ router.post(
     switch (event.type) {
       case "checkout.session.completed":
         const session = event.data.object;
-        const { courseId, userId } = session.metadata;
+        const { courseId, userId, finalPrice } = session.metadata;
 
         try {
-          // Get course to fetch duration
+          // Get course info
           const course = await Course.findById(courseId);
           if (!course) {
             console.error(`❌ Course ${courseId} not found during webhook`);
             break;
           }
-
-          // Calculate expiry date based on course duration
-          const purchaseDate = new Date();
-          const expiryDate = new Date(purchaseDate);
-          expiryDate.setMonth(expiryDate.getMonth() + course.durationMonths);
 
           // Check if user already has this course
           const user = await User.findById(userId);
@@ -115,18 +110,23 @@ router.post(
             pc => pc.courseId.toString() === courseId.toString()
           );
 
-          if (!existingCourse) {
-            // Add new course with expiry date
-            user.purchasedCourses.push({
+          // Check if already has pending approval for this course
+          const existingApproval = user.pendingApprovals.find(
+            pa => pa.courseId.toString() === courseId.toString() && pa.status === "pending"
+          );
+
+          if (!existingCourse && !existingApproval) {
+            // Create pending approval instead of granting immediate access
+            user.pendingApprovals.push({
               courseId: courseId,
-              purchaseDate: purchaseDate,
-              expiryDate: expiryDate,
-              isExpired: false
+              paymentSessionId: session.id,
+              paymentAmount: parseFloat(finalPrice) || session.amount_total / 100,
+              paymentDate: new Date(),
+              status: "pending"
             });
             await user.save();
+            console.log(`✅ Payment approval pending for course ${courseId} by user ${userId}`);
           }
-
-          console.log(`✅ Payment successful for course ${courseId} by user ${userId}, expires on ${expiryDate.toDateString()}`);
         } catch (dbErr) {
           console.error("❌ DB update error:", dbErr);
         }
@@ -156,43 +156,42 @@ router.get("/success", protect, async (req, res) => {
       return res.json({ success: false, message: "Payment not verified." });
     }
 
-    // Get course to fetch duration
+    // Get course info
     const course = await Course.findById(course_id);
     if (!course) {
       return res.status(404).json({ error: "Course not found" });
     }
 
-    // Calculate expiry date based on course duration
-    const purchaseDate = new Date();
-    const expiryDate = new Date(purchaseDate);
-    expiryDate.setMonth(expiryDate.getMonth() + course.durationMonths);
+    // Check if user already has this course or pending approval
+    const user = await User.findById(userId);
+    const existingCourse = user.purchasedCourses.find(
+      pc => pc.courseId && pc.courseId.toString() === course_id.toString()
+    );
 
-    // Update user's purchased courses with expiry tracking
-    if (course_id) {
-      const user = await User.findById(userId);
-      const existingCourse = user.purchasedCourses.find(
-        pc => pc.courseId && pc.courseId.toString() === course_id.toString()
-      );
+    const existingApproval = user.pendingApprovals.find(
+      pa => pa.courseId.toString() === course_id.toString() && pa.status === "pending"
+    );
 
-      if (!existingCourse) {
-        user.purchasedCourses.push({
-          courseId: course_id,
-          purchaseDate: purchaseDate,
-          expiryDate: expiryDate,
-          isExpired: false
-        });
-        await user.save();
-      }
+    if (!existingCourse && !existingApproval) {
+      // Create pending approval instead of granting immediate access
+      user.pendingApprovals.push({
+        courseId: course_id,
+        paymentSessionId: session_id,
+        paymentAmount: session.amount_total / 100,
+        paymentDate: new Date(),
+        status: "pending"
+      });
+      await user.save();
     }
 
-    console.log(`✅ Verified payment success - User: ${userId}, Course: ${course_id}, Expires: ${expiryDate.toDateString()}`);
+    console.log(`✅ Payment verification successful - Approval pending for User: ${userId}, Course: ${course_id}`);
 
     res.json({
       success: true,
-      message: "Payment successful! Course added to account.",
+      message: "Payment successful! Your course access is pending admin approval.",
       courseId: course_id,
-      expiryDate: expiryDate,
-      redirectUrl: `/mycourse/${course_id}`,
+      approvalPending: true,
+      redirectUrl: `/courses`,
     });
   } catch (error) {
     console.error("❌ Payment success handling error:", error);

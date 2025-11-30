@@ -14,7 +14,13 @@ const DocumentsPage = () => {
     const fetchPurchasedCourses = async () => {
       try {
         const { data } = await getPurchasedCourses();
-        setPurchasedCourses(data);
+        
+        // Handle new API response format with approvedCourses/allCourses
+        const coursesArray = data?.approvedCourses || 
+                            data?.allCourses || 
+                            (Array.isArray(data) ? data : []);
+        
+        setPurchasedCourses(coursesArray);
       } catch (err) {
         console.error("Error fetching purchased courses:", err);
       } finally {

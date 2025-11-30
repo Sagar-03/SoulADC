@@ -1,11 +1,36 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./css.css";
-import { isAuthenticated, setRedirectAfterLogin } from "../../utils/auth";
+import { isAuthenticated, setRedirectAfterLogin, getUser } from "../../utils/auth";
+import { api } from "../../Api/api";
 
 export default function CourseCard({ course }) {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+  const [isPending, setIsPending] = useState(false);
+  const [hasAccess, setHasAccess] = useState(false);
+
+  useEffect(() => {
+    const checkCourseStatus = async () => {
+      if (isAuthenticated()) {
+        try {
+          const response = await api.get('/user/purchased-courses');
+          const { approvedCourses, pendingCourses } = response.data;
+          
+          // Check if course is approved
+          const isApproved = approvedCourses?.some(c => c._id === course._id);
+          // Check if course is pending approval
+          const isPendingApproval = pendingCourses?.some(c => c._id === course._id);
+          
+          setHasAccess(isApproved);
+          setIsPending(isPendingApproval);
+        } catch (err) {
+          console.error('Error checking course status:', err);
+        }
+      }
+    };
+    checkCourseStatus();
+  }, [course._id]);
 
   const formatPrice = (price) =>
     new Intl.NumberFormat("en-AU", {
@@ -150,9 +175,24 @@ export default function CourseCard({ course }) {
           </div>
 
           <div className="mt-4 d-flex gap-2">
-            <button onClick={handleEnroll} className="btn btn-gradient">
-              Enroll Now
-            </button>
+            {isPending ? (
+              <button className="btn btn-warning" disabled>
+                <i className="bi bi-clock-history me-2"></i>
+                Approval Pending
+              </button>
+            ) : hasAccess ? (
+              <button 
+                onClick={() => navigate(`/mycourse/${course._id}`)} 
+                className="btn btn-success"
+              >
+                <i className="bi bi-play-circle me-2"></i>
+                Access Course
+              </button>
+            ) : (
+              <button onClick={handleEnroll} className="btn btn-gradient">
+                Enroll Now
+              </button>
+            )}
             <a
               href="https://wa.me/"
               className="btn btn-gradient-outline"
@@ -161,7 +201,6 @@ export default function CourseCard({ course }) {
             >
               Talk to Mentor
             </a>
-
           </div>
         </div>
       </div>
