@@ -44,12 +44,30 @@ router.post("/courses", protect, adminOnly, async (req, res) => {
 
 /**
  * GET /api/admin/courses
- * Fetch all courses with shared content info
+ * Fetch all courses with shared content info and weeks
  */
 router.get("/courses", protect, adminOnly, async (req, res) => {
   try {
-    const courses = await Course.find().populate('sharedContentId', 'name description');
-    res.json(courses);
+    const courses = await Course.find().populate('sharedContentId');
+    
+    // Transform courses to include weeks from shared content if needed
+    const coursesWithContent = courses.map(course => {
+      const courseObj = course.toObject();
+      
+      // If course uses shared content, include weeks from it
+      if (course.sharedContentId && course.sharedContentId.weeks) {
+        courseObj.weeks = course.sharedContentId.weeks;
+        courseObj.sharedContent = {
+          _id: course.sharedContentId._id,
+          name: course.sharedContentId.name,
+          description: course.sharedContentId.description
+        };
+      }
+      
+      return courseObj;
+    });
+    
+    res.json({ courses: coursesWithContent });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -598,16 +616,27 @@ router.get("/dashboard/stats", protect, adminOnly, async (req, res) => {
 
 /**
  * GET /api/admin/documents
- * Fetch all uploaded documents (from courses)
+ * Fetch all uploaded documents (from courses and shared content)
  */
 router.get("/documents", protect, adminOnly, async (req, res) => {
   try {
-    const courses = await Course.find({});
+    const courses = await Course.find({}).populate('sharedContentId');
     const allDocuments = [];
 
     courses.forEach(course => {
+      // Determine which weeks to use (direct or from shared content)
+      let weeks = [];
+      
+      if (course.sharedContentId && course.sharedContentId.weeks) {
+        // Course uses shared content
+        weeks = course.sharedContentId.weeks;
+      } else if (course.weeks) {
+        // Course has direct content
+        weeks = course.weeks;
+      }
+
       // Get week-level documents
-      course.weeks.forEach(week => {
+      weeks.forEach(week => {
         if (week.documents && week.documents.length > 0) {
           week.documents.forEach(doc => {
             allDocuments.push({
@@ -620,33 +649,40 @@ router.get("/documents", protect, adminOnly, async (req, res) => {
               uploadedBy: { name: "Admin" }, // Since we don't have user info
               courseTitle: course.title,
               weekTitle: week.title,
-              source: 'week'
+              weekNumber: week.weekNumber,
+              source: 'week',
+              isSharedContent: !!course.sharedContentId
             });
           });
         }
 
         // Get day-level contents (documents)
-        week.days.forEach(day => {
-          if (day.contents && day.contents.length > 0) {
-            day.contents.forEach(content => {
-              if (content.type === 'document' || content.type === 'pdf') {
-                allDocuments.push({
-                  _id: content._id,
-                  title: content.title,
-                  type: content.type,
-                  s3Key: content.s3Key,
-                  url: content.s3Key ? `/api/stream/${content.s3Key}` : null,
-                  createdAt: content._id.getTimestamp(), // Get timestamp from ObjectId
-                  uploadedBy: { name: "Admin" }, // Since we don't have user info
-                  courseTitle: course.title,
-                  weekTitle: week.title,
-                  dayTitle: day.title,
-                  source: 'day'
-                });
-              }
-            });
-          }
-        });
+        if (week.days) {
+          week.days.forEach(day => {
+            if (day.contents && day.contents.length > 0) {
+              day.contents.forEach(content => {
+                if (content.type === 'document' || content.type === 'pdf') {
+                  allDocuments.push({
+                    _id: content._id,
+                    title: content.title,
+                    type: content.type,
+                    s3Key: content.s3Key,
+                    url: content.s3Key ? `/api/stream/${content.s3Key}` : null,
+                    createdAt: content._id.getTimestamp(), // Get timestamp from ObjectId
+                    uploadedBy: { name: "Admin" }, // Since we don't have user info
+                    courseTitle: course.title,
+                    weekTitle: week.title,
+                    weekNumber: week.weekNumber,
+                    dayTitle: day.title,
+                    dayNumber: day.dayNumber,
+                    source: 'day',
+                    isSharedContent: !!course.sharedContentId
+                  });
+                }
+              });
+            }
+          });
+        }
       });
     });
 

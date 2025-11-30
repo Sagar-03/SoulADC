@@ -80,7 +80,7 @@ function App() {
   return (
     <Router>
       <ToastContainer
-        position="top-right"
+        position="top-center"
         autoClose={3000}
         hideProgressBar={false}
         newestOnTop
@@ -91,6 +91,7 @@ function App() {
         pauseOnHover
         theme="colored"
         transition:Bounce
+        style={{ zIndex: 99999 }}
       />
       <Routes>
         {/* Public Routes */}

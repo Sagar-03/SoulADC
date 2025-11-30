@@ -104,9 +104,9 @@ const DocumentsPage = () => {
                     </p>
                     
                     <div className="course-stats">
-                      <span className="modules-count">
+                      {/* <span className="modules-count">
                         {course.weeks?.length || 0} Modules
-                      </span>
+                      </span> */}
                       <span className="documents-count">
                         {course.weeks?.reduce((total, week) => total + (week.documents?.length || 0), 0) || 0} Documents
                       </span>

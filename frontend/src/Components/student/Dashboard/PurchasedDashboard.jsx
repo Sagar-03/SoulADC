@@ -30,10 +30,6 @@ const PurchasedDashboard = () => {
 
   return (
     <StudentLayout>
-      <h2 className="mb-4 fw-bold" style={{ color: "#5A3825" }}>
-        My Courses
-      </h2>
-
       {loading ? (
         <p className="text-muted">Loading your courses...</p>
       ) : approvedCourses.length === 0 && pendingCourses.length === 0 ? (
@@ -49,20 +45,20 @@ const PurchasedDashboard = () => {
           {pendingCourses.length > 0 && (
             <div className="mb-5">
               <div className="d-flex align-items-center gap-2 mb-3">
-                <h4 className="fw-bold text-warning">
+                <h4 className="fw-bold" style={{ color: "#A0764C" }}>
                   <i className="bi bi-clock-history me-2"></i>
                   Pending Approval
                 </h4>
-                <span className="badge bg-warning text-dark">{pendingCourses.length}</span>
+                <span className="badge" style={{ backgroundColor: "#D4A574", color: "#5A3825" }}>{pendingCourses.length}</span>
               </div>
-              <div className="alert alert-warning">
+              <div className="alert" style={{ backgroundColor: "#F5E6D3", borderColor: "#D4A574", color: "#5A3825" }}>
                 <i className="bi bi-info-circle me-2"></i>
                 These courses are waiting for admin approval. You'll get access within 24 hours.
               </div>
               <div className="row g-4">
                 {pendingCourses.map((course) => (
                   <div className="col-md-4" key={course._id || course.id}>
-                    <div className="card course-card h-100 border-warning">
+                    <div className="card course-card h-100" style={{ borderColor: "#D4A574", borderWidth: "2px" }}>
                       {/* Pending Badge */}
                       <div className="position-relative">
                         {course.thumbnail && (
@@ -74,7 +70,7 @@ const PurchasedDashboard = () => {
                           />
                         )}
                         <div className="position-absolute top-0 end-0 m-2">
-                          <span className="badge bg-warning text-dark">
+                          <span className="badge" style={{ backgroundColor: "#D4A574", color: "#5A3825" }}>
                             <i className="bi bi-clock-history me-1"></i>
                             Pending
                           </span>
@@ -89,7 +85,7 @@ const PurchasedDashboard = () => {
                         <p className="text-muted small">
                           <strong>Payment Date:</strong> {new Date(course.paymentDate).toLocaleDateString()}
                         </p>
-                        <button className="btn btn-outline-warning mt-auto" disabled>
+                        <button className="btn mt-auto" style={{ borderColor: "#D4A574", color: "#A0764C", backgroundColor: "transparent" }} disabled>
                           <i className="bi bi-hourglass-split me-2"></i>
                           Awaiting Approval
                         </button>
@@ -105,19 +101,19 @@ const PurchasedDashboard = () => {
           {approvedCourses.length > 0 && (
             <div>
               <div className="d-flex align-items-center gap-2 mb-3">
-                <h4 className="fw-bold text-success">
+                <h4 className="fw-bold" style={{ color: "#5A3825" }}>
                   <i className="bi bi-check-circle me-2"></i>
                   My Active Courses
                 </h4>
-                <span className="badge bg-success">{approvedCourses.length}</span>
+                <span className="badge" style={{ backgroundColor: "#5A3825", color: "white" }}>{approvedCourses.length}</span>
               </div>
               <div className="row g-4">
                 {approvedCourses.map((course) => (
                   <div className="col-md-4" key={course._id || course.id}>
                     <div
-                      className="card course-card h-100 border-success"
+                      className="card course-card h-100"
                       onClick={() => navigate(`/mycourse/${course._id || course.id}`)}
-                      style={{ cursor: "pointer" }}
+                      style={{ cursor: "pointer", borderColor: "#8B5E3C", borderWidth: "2px" }}
                     >
                       {/* Thumbnail */}
                       {course.thumbnail && (
@@ -141,7 +137,7 @@ const PurchasedDashboard = () => {
                             <strong>{course.daysRemaining} days remaining</strong>
                           </p>
                         )}
-                        <button className="btn btn-success mt-auto">
+                        <button className="btn mt-auto" style={{ backgroundColor: "#5A3825", color: "white", border: "none" }}>
                           <i className="bi bi-play-circle me-2"></i>
                           Go to Course
                         </button>

@@ -26,13 +26,21 @@ const AdminDocuments = () => {
     try {
       const response = await api.get('/admin/courses');
       const coursesData = response.data?.courses || response.data || [];
+      
+      console.log('📚 Fetched courses:', coursesData);
+      
       setCourses(coursesData);
       
       // Set first course as default if available
       if (coursesData.length > 0) {
         setSelectedCourse(coursesData[0]);
-        if (coursesData[0].weeks && coursesData[0].weeks.length > 0) {
-          setSelectedModule(coursesData[0].weeks[0].weekNumber);
+        // Check if course has weeks (direct or from shared content)
+        const weeks = coursesData[0].weeks;
+        if (weeks && weeks.length > 0) {
+          console.log('📖 Course has', weeks.length, 'weeks/modules');
+          setSelectedModule(weeks[0].weekNumber);
+        } else {
+          console.warn('⚠️ Course has no weeks/modules');
         }
       }
     } catch (err) {
@@ -131,17 +139,16 @@ const AdminDocuments = () => {
       // Filter by course - backend uses courseTitle
       const matchesCourse = doc.courseTitle === selectedCourse.title;
       
-      // Filter by module/week - match with selected course's week
-      const selectedWeek = selectedCourse.weeks?.find(w => w.weekNumber === selectedModule);
-      const matchesModule = selectedWeek && doc.weekTitle === selectedWeek.title;
+      // Filter by module/week - use weekNumber for more reliable matching
+      const matchesModule = doc.weekNumber === selectedModule;
       
       console.log(`Document ${doc.title}:`, {
         courseMatch: matchesCourse,
         moduleMatch: matchesModule,
         docCourseTitle: doc.courseTitle,
         selectedCourseTitle: selectedCourse.title,
+        docWeekNumber: doc.weekNumber,
         docWeekTitle: doc.weekTitle,
-        selectedWeekTitle: selectedWeek?.title,
         selectedModule
       });
       
@@ -153,10 +160,16 @@ const AdminDocuments = () => {
   };
 
   const handleCourseChange = (course) => {
+    console.log('📖 Switching to course:', course.title);
     setSelectedCourse(course);
     // Reset to first module of the selected course
-    if (course.weeks && course.weeks.length > 0) {
-      setSelectedModule(course.weeks[0].weekNumber);
+    const weeks = course.weeks;
+    if (weeks && weeks.length > 0) {
+      console.log('✅ Course has', weeks.length, 'weeks/modules');
+      setSelectedModule(weeks[0].weekNumber);
+    } else {
+      console.warn('⚠️ Course has no weeks/modules');
+      setSelectedModule(null);
     }
   };
 

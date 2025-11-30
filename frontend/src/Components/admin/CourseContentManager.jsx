@@ -35,6 +35,16 @@ const CourseContentManager = () => {
   const fetchCourse = async () => {
     try {
       const { data } = await getCourses(id);
+      console.log('📚 Fetched course data:', data);
+      
+      // Check if course uses shared content
+      if (data.sharedContentId) {
+        console.log('🔗 Course uses shared content:', data.sharedContent?.name);
+        console.log('📖 Weeks from shared content:', data.weeks?.length || 0);
+      } else {
+        console.log('📖 Course has direct content, weeks:', data.weeks?.length || 0);
+      }
+      
       setCourse(data);
     } catch (err) {
       setError("Failed to fetch course details");
@@ -683,6 +693,33 @@ const CourseContentManager = () => {
         <h3 className="fw-bold mb-4" style={{ color: "#5A3825" }}>
           Manage "{course.title}" - Day-wise Content
         </h3>
+
+        {/* Shared Content Warning */}
+        {course.sharedContentId && (
+          <div className="alert alert-info border-info mb-4" role="alert">
+            <div className="d-flex align-items-start">
+              <i className="bi bi-info-circle-fill me-2 mt-1" style={{ fontSize: "1.5rem" }}></i>
+              <div>
+                <h5 className="alert-heading mb-2">
+                  <i className="bi bi-link-45deg me-1"></i>
+                  This course uses shared content
+                </h5>
+                <p className="mb-2">
+                  <strong>Shared Content:</strong> {course.sharedContent?.name}
+                </p>
+                <p className="mb-0">
+                  This course's content is managed through shared content. Any changes to weeks, days, or content 
+                  should be made in the <strong>Shared Content Manager</strong> to affect all linked courses.
+                </p>
+                <hr className="my-2" />
+                <p className="mb-0 text-muted small">
+                  <i className="bi bi-lightbulb me-1"></i>
+                  <strong>Note:</strong> Editing here will only work if this course has its own direct content (not shared).
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Error Alert */}
         {error && (
