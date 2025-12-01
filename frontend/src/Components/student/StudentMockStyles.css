@@ -267,6 +267,47 @@
   font-weight: 600;
 }
 
+.locked-message {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+  padding: 15px;
+  background: #fff8e1;
+  border-radius: 8px;
+  border: 2px dashed #ff9800;
+}
+
+.locked-message span {
+  color: #ff6f00;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.purchase-btn {
+  width: 100%;
+  padding: 12px;
+  background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.purchase-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+}
+
+.purchase-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  transform: none;
+}
+
 .no-mocks-message {
   text-align: center;
   padding: 60px 20px;

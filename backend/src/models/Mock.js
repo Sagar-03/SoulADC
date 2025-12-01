@@ -66,6 +66,19 @@ const mockSchema = new mongoose.Schema({
     type: Boolean,
     default: true,
   },
+  // Pricing fields for purchasable mocks
+  isPaid: {
+    type: Boolean,
+    default: true, // true = paid by default, free for course students
+  },
+  price: {
+    type: Number,
+    default: 0,
+  },
+  cutPrice: {
+    type: Number, // Original/discounted price
+    required: false,
+  },
 }, {
   timestamps: true,
 });

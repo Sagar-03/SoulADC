@@ -9,6 +9,7 @@ import {
   setAuthData,
   getRedirectAfterLogin,
   clearRedirectAfterLogin,
+  getUser,
 } from "../utils/auth";
 
 const countryCodes = [
@@ -24,6 +25,7 @@ const Login = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [notifications, setNotifications] = useState([]);
   const [showNotification, setShowNotification] = useState(false);
+  const [userRole, setUserRole] = useState(null); // Track user role
 
   const [formData, setFormData] = useState({
     email: "",
@@ -61,26 +63,39 @@ const Login = () => {
 
           if (data.notifications?.length > 0) {
             const approvalNotifications = data.notifications.filter(
-              (n) => n.type === "course_approved" && !n.isRead
+              (n) => (n.type === "course_approved" || n.type === "mock_approved") && !n.isRead
             );
 
             if (approvalNotifications.length > 0) {
               setNotifications(approvalNotifications);
               setShowNotification(true);
+              setUserRole(data.role); // Save role for notification redirect
               return;
             }
           }
 
           const redirectUrl = getRedirectAfterLogin();
 
-          if (redirectUrl) {
+          // Admin should never be redirected to payment pages
+          if (data.role === "admin") {
+            clearRedirectAfterLogin(); // Clear any saved redirect
+            navigate("/admin");
+          } 
+          // If there's a saved redirect and user is not admin, use it
+          else if (redirectUrl) {
             clearRedirectAfterLogin();
             navigate(redirectUrl);
-          } else if (data.user.purchasedCourses?.length > 0) {
-            navigate("/studentdashboard");
-          } else if (data.role === "admin") {
-            navigate("/admin");
-          } else {
+          } 
+          // Students with purchased courses or mocks go to dashboard
+          else if (data.user.purchasedCourses?.length > 0 || data.user.purchasedMocks?.length > 0) {
+            if (data.user.purchasedCourses?.length > 0) {
+              navigate("/studentdashboard");
+            } else {
+              navigate("/student/mocks");
+            }
+          } 
+          // Default to home
+          else {
             navigate("/");
           }
         } else {
@@ -125,12 +140,27 @@ const Login = () => {
           notifications={notifications}
           onClose={() => {
             setShowNotification(false);
-            const redirectUrl = getRedirectAfterLogin();
-            if (redirectUrl) {
+            
+            // Admin should never be redirected to payment pages
+            if (userRole === "admin") {
               clearRedirectAfterLogin();
-              navigate(redirectUrl);
+              navigate("/admin");
             } else {
-              navigate("/studentdashboard");
+              const redirectUrl = getRedirectAfterLogin();
+              if (redirectUrl) {
+                clearRedirectAfterLogin();
+                navigate(redirectUrl);
+              } else {
+                // Redirect based on what user purchased
+                const user = getUser();
+                if (user?.purchasedCourses?.length > 0) {
+                  navigate("/studentdashboard");
+                } else if (user?.purchasedMocks?.length > 0) {
+                  navigate("/student/mocks");
+                } else {
+                  navigate("/");
+                }
+              }
             }
           }}
         />

@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -28,6 +28,7 @@ import DocumentViewer from "./Components/VideoPlayer/DocumentViewer";
 
 // Payment Components
 import PaymentPage from "./Components/PaymentDashboard/PaymentPage";
+import MockPaymentPage from "./Components/PaymentDashboard/MockPaymentPage";
 import PaymentSuccess from "./Components/PaymentDashboard/PaymentSuccess";
 import PaymentCancel from "./Components/PaymentDashboard/PaymentCancel";
 
@@ -51,6 +52,7 @@ import EditMock from "./Components/admin/EditMock";
 import StudentMocks from "./Components/student/StudentMocks";
 import MockAttempt from "./Components/student/MockAttempt";
 import MockResult from "./Components/student/MockResult";
+import MocksPage from "./Components/MocksPage/MocksPage";
 
 // 🔹 Protected Route Wrapper
 const ProtectedRoute = ({ children, requirePurchased = false, adminOnly = false }) => {
@@ -68,7 +70,9 @@ const ProtectedRoute = ({ children, requirePurchased = false, adminOnly = false 
   }
 
   //  If student route requires purchased course but user has none
-  if (requirePurchased && (!user?.purchasedCourses || user.purchasedCourses.length === 0)) {
+  if (requirePurchased && 
+      (!user?.purchasedCourses || user.purchasedCourses.length === 0) && 
+      (!user?.purchasedMocks || user.purchasedMocks.length === 0)) {
     return <Navigate to="/courses" replace />;
   }
 
@@ -98,6 +102,7 @@ function App() {
         <Route path="/" element={<Navigate to="/Home" replace />} />
         <Route path="/Home" element={<Home />} />
         <Route path="/courses" element={<CoursesPage />} />
+        <Route path="/mocks" element={<MocksPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/About" element={<About />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -213,6 +218,14 @@ function App() {
           element={
             <ProtectedRoute>
               <PaymentPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/payment/mock"
+          element={
+            <ProtectedRoute>
+              <MockPaymentPage />
             </ProtectedRoute>
           }
         />

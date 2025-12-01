@@ -3,6 +3,9 @@ const router = express.Router();
 const mockController = require('../controllers/mockController');
 const { protect, adminOnly } = require('../middleware/authMiddleware');
 
+// Public routes (no authentication required)
+router.get('/public', mockController.getPublicMocks);
+
 // Admin routes
 router.post('/create', protect, adminOnly, mockController.createMock);
 router.get('/all', protect, adminOnly, mockController.getAllMocks);

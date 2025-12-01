@@ -131,7 +131,7 @@
   border-radius: 16px;
   padding: 24px;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-  color: linear-gradient(145deg, #A98C6A, #7B563D);
+  color:  #5A3825;
   text-align: center;
 
   /* ✅ Uniform structure */
@@ -335,7 +335,7 @@
 
 /* ===== PROMISE SECTION ===== */
 .promise-section {
-  background: linear-gradient(135deg, linear-gradient(145deg, #A98C6A, #7B563D) 0%, #7B563D 100%);
+  background: #7B563D;
   padding: 120px 0;
   color: white;
   position: relative;
@@ -723,7 +723,7 @@
 }
 
 .adc-download-btn {
-  background: linear-gradient(135deg, linear-gradient(145deg, #A98C6A, #7B563D), #7B563D);
+  background: #7B563D;
   color: #fff;
   padding: 14px 26px;
   border-radius: 50px;

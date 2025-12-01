@@ -33,12 +33,39 @@ const userSchema = new mongoose.Schema(
       }
     ],
 
+    // ✅ Purchased Mocks
+    purchasedMocks: [
+      {
+        mockId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Mock",
+          required: true
+        },
+        purchaseDate: {
+          type: Date,
+          default: Date.now
+        },
+        paymentAmount: {
+          type: Number,
+          required: true
+        }
+      }
+    ],
+
     // ✅ Pending payment approvals (awaiting admin approval)
     pendingApprovals: [
       {
         courseId: {
           type: mongoose.Schema.Types.ObjectId,
-          ref: "Course",
+          ref: "Course"
+        },
+        mockId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Mock"
+        },
+        itemType: {
+          type: String,
+          enum: ["course", "mock"],
           required: true
         },
         paymentSessionId: {
@@ -76,12 +103,16 @@ const userSchema = new mongoose.Schema(
       {
         type: {
           type: String,
-          enum: ["course_approved", "course_rejected", "course_expiring"],
+          enum: ["course_approved", "course_rejected", "course_expiring", "mock_approved"],
           required: true
         },
         courseId: {
           type: mongoose.Schema.Types.ObjectId,
           ref: "Course"
+        },
+        mockId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Mock"
         },
         message: {
           type: String,

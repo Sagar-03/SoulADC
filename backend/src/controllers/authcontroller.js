@@ -176,6 +176,7 @@ const login = async (req, res) => {
         role: user.role || "user",
         name: user.name,
         purchasedCourses: user.purchasedCourses || [],
+        purchasedMocks: user.purchasedMocks || [],
         streak: {
           current: user.streak?.current || 0,
           highest: user.streak?.highest || 0,
@@ -292,7 +293,8 @@ const updateProfile = async (req, res) => {
         email: updatedUser.email,
         phone: updatedUser.phone,
         role: updatedUser.role,
-        purchasedCourses: updatedUser.purchasedCourses || []
+        purchasedCourses: updatedUser.purchasedCourses || [],
+        purchasedMocks: updatedUser.purchasedMocks || []
       }
     });
 

@@ -3,7 +3,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import "./Navbar.css";
 import logo from "../../assets/logo.png";
 import { Link, useNavigate } from "react-router-dom";
-import { isAuthenticated, logout, getUserRole } from "../../utils/auth";
+import { isAuthenticated, logout, getUserRole, getUser } from "../../utils/auth";
 import { onAuthChange } from "../../utils/authEvents"; // ✅ new import
 
 const Navbar = () => {
@@ -34,8 +34,59 @@ const Navbar = () => {
   };
 
   const handleDashboardClick = () => {
-    if (userRole === "admin") navigate("/admin");
-    else navigate("/studentdashboard");
+    if (userRole === "admin") {
+      navigate("/admin");
+    } else {
+      const user = getUser();
+      // If user has purchased courses, go to course dashboard
+      if (user?.purchasedCourses && user.purchasedCourses.length > 0) {
+        navigate("/studentdashboard");
+      } 
+      // If user has purchased mocks, go to mock dashboard
+      else if (user?.purchasedMocks && user.purchasedMocks.length > 0) {
+        navigate("/student/mocks");
+      } 
+      // Otherwise, go to course dashboard as default
+      else {
+        navigate("/studentdashboard");
+      }
+    }
+  };
+
+  const handleMocksClick = () => {
+    if (isLoggedIn) {
+      if (userRole === "admin") {
+        navigate("/admin/manage-mocks");
+      } else {
+        // Check if user has purchased mocks
+        const user = getUser();
+        if (user?.purchasedMocks && user.purchasedMocks.length > 0) {
+          navigate("/student/mocks");
+        } else {
+          navigate("/mocks");
+        }
+      }
+    } else {
+      navigate("/mocks");
+    }
+  };
+
+  const handleCoursesClick = () => {
+    if (isLoggedIn) {
+      if (userRole === "admin") {
+        navigate("/admin/manage-courses");
+      } else {
+        // Check if user has purchased courses
+        const user = getUser();
+        if (user?.purchasedCourses && user.purchasedCourses.length > 0) {
+          navigate("/studentdashboard");
+        } else {
+          navigate("/courses");
+        }
+      }
+    } else {
+      navigate("/courses");
+    }
   };
 
   return (
@@ -71,7 +122,16 @@ const Navbar = () => {
               </Link>
             </li>
 
-            {isLoggedIn ? (
+            <li>
+              <button
+                onClick={handleCoursesClick}
+                className="btn btn-enroll mx-3"
+              >
+                Courses
+              </button>
+            </li>
+
+            {isLoggedIn && (
               <li>
                 <button
                   onClick={handleDashboardClick}
@@ -80,13 +140,16 @@ const Navbar = () => {
                   Dashboard
                 </button>
               </li>
-            ) : (
-              <li>
-                <Link to="/courses" className="btn btn-enroll mx-3">
-                  Courses
-                </Link>
-              </li>
             )}
+
+            <li>
+              <button
+                onClick={handleMocksClick}
+                className="btn btn-enroll mx-3"
+              >
+                Mocks
+              </button>
+            </li>
 
             <li>
               <Link to="/ContactUs" className="btn btn-enroll mx-3">

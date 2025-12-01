@@ -1,6 +1,7 @@
 const express = require("express");
 const { protect, adminOnly } = require("../middleware/authMiddleware");
 const Course = require("../models/Course.js");
+const Mock = require("../models/Mock.js");
 const router = express.Router();
 const User = require("../models/userModel");
 
@@ -1089,7 +1090,7 @@ router.delete("/users/:id", protect, adminOnly, async (req, res) => {
 
 /**
  * GET /api/admin/pending-approvals
- * Fetch all pending payment approvals with complete student data
+ * Fetch all pending payment approvals with complete student data (courses and mocks)
  */
 router.get("/pending-approvals", protect, adminOnly, async (req, res) => {
   try {
@@ -1097,6 +1098,7 @@ router.get("/pending-approvals", protect, adminOnly, async (req, res) => {
       'pendingApprovals': { $exists: true, $ne: [] }
     })
     .populate('pendingApprovals.courseId', 'title price')
+    .populate('pendingApprovals.mockId', 'title price')
     .select('name email phone countryCode pendingApprovals')
     .sort({ 'pendingApprovals.paymentDate': -1 });
 
@@ -1105,15 +1107,28 @@ router.get("/pending-approvals", protect, adminOnly, async (req, res) => {
     usersWithPendingApprovals.forEach(user => {
       user.pendingApprovals.forEach(approval => {
         if (approval.status === 'pending') {
+          const itemData = approval.itemType === 'mock' 
+            ? { 
+                id: approval.mockId?._id, 
+                title: approval.mockId?.title, 
+                price: approval.mockId?.price 
+              }
+            : { 
+                id: approval.courseId?._id, 
+                title: approval.courseId?.title, 
+                price: approval.courseId?.price 
+              };
+
           approvals.push({
             approvalId: approval._id,
             userId: user._id,
             userName: user.name,
             userEmail: user.email,
             userPhone: user.phone ? `${user.countryCode || ''} ${user.phone}` : 'N/A',
-            courseId: approval.courseId._id,
-            courseTitle: approval.courseId.title,
-            coursePrice: approval.courseId.price,
+            itemType: approval.itemType || 'course',
+            itemId: itemData.id,
+            itemTitle: itemData.title,
+            itemPrice: itemData.price,
             paymentAmount: approval.paymentAmount,
             paymentDate: approval.paymentDate,
             paymentSessionId: approval.paymentSessionId,
@@ -1133,7 +1148,7 @@ router.get("/pending-approvals", protect, adminOnly, async (req, res) => {
 
 /**
  * POST /api/admin/approve-payment/:userId/:approvalId
- * Approve a pending payment and grant course access
+ * Approve a pending payment and grant course/mock access
  */
 router.post("/approve-payment/:userId/:approvalId", protect, adminOnly, async (req, res) => {
   try {
@@ -1153,30 +1168,66 @@ router.post("/approve-payment/:userId/:approvalId", protect, adminOnly, async (r
       return res.status(400).json({ error: "This approval has already been processed" });
     }
 
-    // Get course to calculate expiry
-    const course = await Course.findById(approval.courseId);
-    if (!course) {
-      return res.status(404).json({ error: "Course not found" });
-    }
+    let itemTitle = '';
+    let notificationType = '';
+    let notificationMessage = '';
 
-    // Calculate expiry date
-    const purchaseDate = approval.paymentDate;
-    const expiryDate = new Date(purchaseDate);
-    expiryDate.setMonth(expiryDate.getMonth() + course.durationMonths);
+    if (approval.itemType === 'mock') {
+      // Handle mock approval
+      const mock = await Mock.findById(approval.mockId);
+      if (!mock) {
+        return res.status(404).json({ error: "Mock not found" });
+      }
 
-    // Check if user already has this course
-    const existingCourse = user.purchasedCourses.find(
-      pc => pc.courseId.toString() === approval.courseId.toString()
-    );
+      itemTitle = mock.title;
 
-    if (!existingCourse) {
-      // Grant course access
-      user.purchasedCourses.push({
-        courseId: approval.courseId,
-        purchaseDate: purchaseDate,
-        expiryDate: expiryDate,
-        isExpired: false
-      });
+      // Check if user already has this mock
+      const existingMock = user.purchasedMocks.find(
+        pm => pm.mockId.toString() === approval.mockId.toString()
+      );
+
+      if (!existingMock) {
+        // Grant mock access
+        user.purchasedMocks.push({
+          mockId: approval.mockId,
+          purchaseDate: approval.paymentDate,
+          paymentAmount: approval.paymentAmount
+        });
+      }
+
+      notificationType = 'mock_approved';
+      notificationMessage = `Your access to mock "${mock.title}" has been approved! You can now attempt this mock exam.`;
+    } else {
+      // Handle course approval
+      const course = await Course.findById(approval.courseId);
+      if (!course) {
+        return res.status(404).json({ error: "Course not found" });
+      }
+
+      itemTitle = course.title;
+
+      // Calculate expiry date
+      const purchaseDate = approval.paymentDate;
+      const expiryDate = new Date(purchaseDate);
+      expiryDate.setMonth(expiryDate.getMonth() + course.durationMonths);
+
+      // Check if user already has this course
+      const existingCourse = user.purchasedCourses.find(
+        pc => pc.courseId.toString() === approval.courseId.toString()
+      );
+
+      if (!existingCourse) {
+        // Grant course access
+        user.purchasedCourses.push({
+          courseId: approval.courseId,
+          purchaseDate: purchaseDate,
+          expiryDate: expiryDate,
+          isExpired: false
+        });
+      }
+
+      notificationType = 'course_approved';
+      notificationMessage = `Your access to "${course.title}" has been approved! You can now access your course content.`;
     }
 
     // Update approval status
@@ -1186,20 +1237,21 @@ router.post("/approve-payment/:userId/:approvalId", protect, adminOnly, async (r
 
     // Create notification for the student
     user.notifications.push({
-      type: 'course_approved',
-      courseId: approval.courseId,
-      message: `Your access to "${course.title}" has been approved! You can now access your course content.`,
+      type: notificationType,
+      courseId: approval.courseId || null,
+      mockId: approval.mockId || null,
+      message: notificationMessage,
       isRead: false,
       createdAt: new Date()
     });
 
     await user.save();
 
-    console.log(`✅ Admin ${req.user.email} approved payment for user ${user.email}, course: ${course.title}`);
+    console.log(`✅ Admin ${req.user.email} approved payment for user ${user.email}, ${approval.itemType}: ${itemTitle}`);
     res.json({ 
       success: true, 
-      message: "Payment approved and course access granted",
-      courseTitle: course.title,
+      message: `Payment approved and ${approval.itemType} access granted`,
+      itemTitle: itemTitle,
       userName: user.name
     });
   } catch (err) {

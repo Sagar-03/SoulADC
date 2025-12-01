@@ -104,9 +104,16 @@ export const deleteDayApi = (courseId, weekId, dayId) =>
 // Create Stripe checkout session
 export const createCheckoutSession = (payload) => api.post("/payment/create-checkout-session", payload);
 
+// Create Stripe checkout session for mock
+export const createMockCheckoutSession = (payload) => api.post("/payment/create-mock-checkout-session", payload);
+
 // Handle payment success
 export const PaymentSuccessApi = (sessionId, courseId) =>
   api.get(`/payment/success`, { params: { session_id: sessionId, course_id: courseId } });
+
+// Handle mock payment success
+export const MockPaymentSuccessApi = (sessionId, mockId) =>
+  api.get(`/payment/success`, { params: { session_id: sessionId, mock_id: mockId } });
 
 // ============================
 // Multipart Upload APIs

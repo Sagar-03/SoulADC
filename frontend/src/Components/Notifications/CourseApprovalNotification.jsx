@@ -9,9 +9,9 @@ const CourseApprovalNotification = ({ notifications, onClose }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isClosing, setIsClosing] = useState(false);
 
-  // Filter only course approval notifications
+  // Filter course and mock approval notifications
   const approvalNotifications = notifications.filter(
-    (n) => n.type === "course_approved"
+    (n) => (n.type === "course_approved" || n.type === "mock_approved") && !n.isRead
   );
 
   useEffect(() => {
@@ -40,7 +40,7 @@ const CourseApprovalNotification = ({ notifications, onClose }) => {
     }, 300);
   };
 
-  const handleAccessCourse = async (courseId) => {
+  const handleAccessCourse = async (notification) => {
     // Mark as read
     try {
       await api.post("/user/notifications/mark-read", {
@@ -50,7 +50,14 @@ const CourseApprovalNotification = ({ notifications, onClose }) => {
       console.error("Error marking notifications as read:", err);
     }
 
-    navigate(`/mycourse/${courseId}`);
+    // Redirect based on notification type
+    if (notification.type === "mock_approved" && notification.mockId) {
+      navigate("/student/mocks");
+    } else if (notification.courseId) {
+      navigate(`/mycourse/${notification.courseId._id}`);
+    } else {
+      navigate("/studentdashboard");
+    }
     onClose();
   };
 
@@ -87,12 +94,20 @@ const CourseApprovalNotification = ({ notifications, onClose }) => {
 
         {/* Content */}
         <div className="notification-content">
-          <h2 className="notification-title">Course Approved! 🎉</h2>
+          <h2 className="notification-title">
+            {currentNotification.type === "mock_approved" ? "Mock Approved! 🎉" : "Course Approved! 🎉"}
+          </h2>
           <p className="notification-message">{currentNotification.message}</p>
 
           {currentNotification.courseId && (
             <div className="notification-course-info">
               <strong>Course:</strong> {currentNotification.courseId.title}
+            </div>
+          )}
+          
+          {currentNotification.mockId && (
+            <div className="notification-course-info">
+              <strong>Mock:</strong> {currentNotification.mockId.title}
             </div>
           )}
         </div>
@@ -101,11 +116,9 @@ const CourseApprovalNotification = ({ notifications, onClose }) => {
         <div className="notification-actions">
           <button
             className="btn-access-course"
-            onClick={() =>
-              handleAccessCourse(currentNotification.courseId._id)
-            }
+            onClick={() => handleAccessCourse(currentNotification)}
           >
-            Access Your Course
+            {currentNotification.type === "mock_approved" ? "Access Your Mock" : "Access Your Course"}
           </button>
           {approvalNotifications.length > 1 && (
             <button className="btn-secondary-action" onClick={handleNext}>

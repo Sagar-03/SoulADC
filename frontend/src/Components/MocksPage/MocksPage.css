@@ -1,0 +1,744 @@
+/* Mocks Page Styles - Matching Courses Page Theme */
+
+.mocks-page-container {
+  min-height: 100vh;
+  background-color: #f8f9fa;
+}
+
+/* Page Banner */
+.page-banner {
+  background: linear-gradient(145deg, #A98C6A, #7B563D);
+  color: white;
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.page-banner h1 {
+  font-size: 48px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.page-banner p {
+  font-size: 20px;
+  opacity: 0.95;
+}
+
+/* Info Banner */
+.info-banner-container {
+  padding: 40px 20px;
+}
+
+.info-banner {
+  background: linear-gradient(135deg, #A98C6A 0%, #7B563D 100%);
+  border-radius: 12px;
+  padding: 30px;
+  display: flex;
+  align-items: center;
+  gap: 25px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  flex-wrap: wrap;
+}
+
+.info-banner-icon {
+  font-size: 48px;
+  min-width: 60px;
+}
+
+.info-banner-content {
+  flex: 1;
+  color: white;
+  min-width: 250px;
+}
+
+.info-banner-content h3 {
+  margin: 0 0 8px 0;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.info-banner-content p {
+  margin: 0;
+  font-size: 16px;
+  opacity: 0.95;
+}
+
+.view-courses-btn {
+  padding: 12px 30px;
+  background: white;
+  color: #7B563D;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.view-courses-btn:hover {
+  background: #f0f0f0;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Mocks Content */
+.mocks-content {
+  padding: 40px 20px 80px;
+}
+
+/* Loading & Empty States */
+.loading-container,
+.no-mocks-container {
+  text-align: center;
+  padding: 80px 20px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #A98C6A;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 20px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-container p,
+.no-mocks-container p {
+  color: #666;
+  font-size: 16px;
+  margin-top: 15px;
+}
+
+.no-mocks-icon {
+  font-size: 64px;
+  margin-bottom: 20px;
+}
+
+.no-mocks-container h3 {
+  color: #333;
+  font-size: 24px;
+  margin: 20px 0 10px;
+}
+
+/* Mocks Grid */
+.mocks-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 30px;
+}
+
+.mock-card {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #e0e0e0;
+}
+
+.mock-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  border-color: #A98C6A;
+}
+
+.mock-card-image {
+  background: linear-gradient(135deg, #A98C6A 0%, #7B563D 100%);
+  height: 180px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 48px;
+}
+
+.mock-card-image::before {
+  content: '📝';
+}
+
+.mock-badge {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  background: rgba(76, 175, 80, 0.95);
+  color: white;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.discount-badge {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: rgba(244, 67, 54, 0.95);
+  color: white;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.mock-card-content {
+  padding: 25px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.mock-card-content h3 {
+  font-size: 22px;
+  font-weight: 700;
+  color: #333;
+  margin: 0 0 12px 0;
+  line-height: 1.3;
+}
+
+.mock-desc {
+  color: #666;
+  font-size: 15px;
+  line-height: 1.6;
+  margin-bottom: 20px;
+  flex: 1;
+}
+
+.mock-features {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  padding: 15px 0;
+  border-top: 1px solid #f0f0f0;
+  border-bottom: 1px solid #f0f0f0;
+  margin-bottom: 20px;
+}
+
+.feature {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #555;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.feature-icon {
+  font-size: 18px;
+}
+
+.mock-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+}
+
+.price-section {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.original-price {
+  color: #999;
+  font-size: 16px;
+  text-decoration: line-through;
+}
+
+.current-price {
+  color: #A98C6A;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.enroll-btn {
+  padding: 12px 24px;
+  background: linear-gradient(145deg, #A98C6A, #7B563D);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.enroll-btn:hover:not(:disabled) {
+  background: linear-gradient(145deg, #7B563D, #A98C6A);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(123, 86, 61, 0.4);
+}
+
+.enroll-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .page-banner h1 {
+    font-size: 36px;
+  }
+
+  .page-banner p {
+    font-size: 16px;
+  }
+
+  .info-banner {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .info-banner-icon {
+    min-width: auto;
+  }
+
+  .view-courses-btn {
+    width: 100%;
+  }
+
+  .mocks-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .mock-card-footer {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .enroll-btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-banner {
+    padding: 40px 15px;
+  }
+
+  .page-banner h1 {
+    font-size: 28px;
+  }
+
+  .info-banner-container {
+    padding: 30px 15px;
+  }
+
+  .info-banner {
+    padding: 20px;
+  }
+
+  .info-banner-content h3 {
+    font-size: 20px;
+  }
+
+  .mocks-content {
+    padding: 30px 15px 60px;
+  }
+
+  .mock-card-content h3 {
+    font-size: 20px;
+  }
+
+  .current-price {
+    font-size: 24px;
+  }
+}
+
+/* Hero Section */
+.mocks-hero {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 80px 20px;
+  text-align: center;
+}
+
+.hero-content h1 {
+  font-size: 48px;
+  font-weight: 700;
+  margin-bottom: 15px;
+  animation: fadeInDown 0.6s ease-out;
+}
+
+.hero-content > p {
+  font-size: 20px;
+  margin-bottom: 40px;
+  opacity: 0.95;
+  animation: fadeInUp 0.6s ease-out 0.2s both;
+}
+
+.hero-info {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  flex-wrap: wrap;
+  margin-top: 40px;
+  animation: fadeInUp 0.6s ease-out 0.4s both;
+}
+
+.info-card {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  padding: 20px 30px;
+  border-radius: 12px;
+  text-align: left;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.info-card:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: translateY(-5px);
+}
+
+.info-icon {
+  font-size: 36px;
+}
+
+.info-card h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.info-card p {
+  margin: 5px 0 0 0;
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+/* Mocks Container */
+.mocks-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 60px 20px;
+}
+
+.section-header {
+  text-align: center;
+  margin-bottom: 50px;
+}
+
+.section-header h2 {
+  font-size: 36px;
+  color: #333;
+  margin-bottom: 10px;
+  font-weight: 700;
+}
+
+.section-header p {
+  font-size: 18px;
+  color: #666;
+}
+
+/* Loading and Empty States */
+.loading-section,
+.no-mocks-section {
+  text-align: center;
+  padding: 80px 20px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.08);
+}
+
+.loading-section p,
+.no-mocks-section p {
+  color: #666;
+  font-size: 16px;
+  margin-top: 15px;
+}
+
+.no-mocks-section h3 {
+  color: #333;
+  font-size: 24px;
+  margin-top: 20px;
+}
+
+/* Mocks Grid */
+.mocks-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 30px;
+  margin-bottom: 50px;
+}
+
+.mock-card {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  border: 2px solid transparent;
+}
+
+.mock-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+  border-color: #667eea;
+}
+
+.mock-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+}
+
+.mock-status {
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.mock-price-badge {
+  font-size: 20px;
+  font-weight: 700;
+  color: #4CAF50;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.original-price {
+  font-size: 14px;
+  color: #999;
+  text-decoration: line-through;
+  font-weight: 400;
+}
+
+.mock-card-body {
+  padding: 25px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.mock-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 12px;
+  line-height: 1.3;
+}
+
+.mock-description {
+  color: #666;
+  font-size: 15px;
+  line-height: 1.6;
+  margin-bottom: 20px;
+  flex: 1;
+}
+
+.mock-stats {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  padding-top: 15px;
+  border-top: 1px solid #eee;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #555;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.stat-icon {
+  font-size: 18px;
+}
+
+.mock-card-footer {
+  padding: 20px 25px;
+  background: #f9f9f9;
+  border-top: 1px solid #eee;
+}
+
+.view-mock-btn {
+  width: 100%;
+  padding: 12px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.view-mock-btn:hover {
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+  transform: translateX(5px);
+}
+
+.view-mock-btn .arrow {
+  font-size: 20px;
+  transition: transform 0.3s ease;
+}
+
+.view-mock-btn:hover .arrow {
+  transform: translateX(5px);
+}
+
+/* Info Section */
+.info-section {
+  margin-top: 60px;
+  display: flex;
+  justify-content: center;
+}
+
+.info-box {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 40px;
+  border-radius: 16px;
+  text-align: center;
+  max-width: 600px;
+  box-shadow: 0 8px 30px rgba(102, 126, 234, 0.3);
+}
+
+.info-box h3 {
+  font-size: 28px;
+  margin-bottom: 15px;
+  font-weight: 700;
+}
+
+.info-box p {
+  font-size: 16px;
+  margin-bottom: 25px;
+  opacity: 0.95;
+  line-height: 1.6;
+}
+
+.courses-btn {
+  padding: 12px 40px;
+  background: white;
+  color: #667eea;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.courses-btn:hover {
+  background: #f0f0f0;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* Animations */
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .hero-content h1 {
+    font-size: 36px;
+  }
+
+  .hero-content > p {
+    font-size: 16px;
+  }
+
+  .hero-info {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .info-card {
+    width: 100%;
+    max-width: 400px;
+  }
+
+  .mocks-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .section-header h2 {
+    font-size: 28px;
+  }
+
+  .mock-card-header {
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 480px) {
+  .mocks-container {
+    padding: 40px 15px;
+  }
+
+  .hero-content h1 {
+    font-size: 28px;
+  }
+
+  .mock-title {
+    font-size: 20px;
+  }
+
+  .info-box {
+    padding: 30px 20px;
+  }
+
+  .info-box h3 {
+    font-size: 24px;
+  }
+}

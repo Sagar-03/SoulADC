@@ -448,8 +448,9 @@ async function updateCourseProgress(user, courseId) {
 router.get('/notifications', protect, async (req, res) => {
   try {
     const user = await User.findById(req.user.id)
-      .populate('notifications.courseId', 'title thumbnail');
-    
+      .populate('notifications.courseId', 'title thumbnail')
+      .populate('notifications.mockId', 'title');
+
     res.json(user.notifications || []);
   } catch (err) {
     res.status(500).json({ error: err.message });

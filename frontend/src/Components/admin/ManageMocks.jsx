@@ -146,6 +146,20 @@ const ManageMocks = () => {
                     <span className="info-label">Duration:</span>
                     <span className="info-value">{mock.duration} min</span>
                   </div>
+                  <div className="info-item">
+                    <span className="info-label">Type:</span>
+                    <span className="info-value" style={{ color: mock.isPaid ? '#4CAF50' : '#2196F3' }}>
+                      {mock.isPaid ? `Paid ($${mock.price})` : 'Free'}
+                    </span>
+                  </div>
+                  {mock.isPaid && mock.cutPrice > 0 && (
+                    <div className="info-item">
+                      <span className="info-label">Original:</span>
+                      <span className="info-value" style={{ textDecoration: 'line-through', color: '#999' }}>
+                        ${mock.cutPrice}
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 {mock.liveAt && (

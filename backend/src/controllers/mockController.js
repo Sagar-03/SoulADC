@@ -1,5 +1,7 @@
 const Mock = require('../models/Mock');
 const MockAttempt = require('../models/MockAttempt');
+const User = require('../models/userModel');
+const { checkUserMockAccess } = require('../middleware/mockAccessMiddleware');
 
 // Admin Controllers
 
@@ -293,6 +295,44 @@ exports.getMockStatistics = async (req, res) => {
   }
 };
 
+// Public Controllers
+
+// Get all live mocks for public viewing (no auth required)
+exports.getPublicMocks = async (req, res) => {
+  try {
+    const mocks = await Mock.find({ status: 'live' })
+      .select('title description duration totalMarks questions.length isPaid price cutPrice status liveAt')
+      .sort({ liveAt: -1 });
+
+    // Map to include question count
+    const mocksWithCount = mocks.map(mock => ({
+      _id: mock._id,
+      title: mock.title,
+      description: mock.description,
+      duration: mock.duration,
+      totalMarks: mock.totalMarks,
+      isPaid: mock.isPaid,
+      price: mock.price,
+      cutPrice: mock.cutPrice,
+      status: mock.status,
+      liveAt: mock.liveAt,
+      questions: { length: mock.questions.length }
+    }));
+
+    res.status(200).json({
+      success: true,
+      mocks: mocksWithCount,
+    });
+  } catch (error) {
+    console.error('Error fetching public mocks:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching mocks',
+      error: error.message,
+    });
+  }
+};
+
 // Student Controllers
 
 // Get all live mocks for students
@@ -302,25 +342,48 @@ exports.getLiveMocks = async (req, res) => {
       .select('-questions.correctAnswer') // Don't send correct answers
       .sort({ liveAt: -1 });
 
-    // Check if student has already attempted
-    const mocksWithAttemptStatus = await Promise.all(
+    // Check if student has purchased any course
+    const user = await User.findById(req.user.id);
+    const hasPurchasedCourse = user.purchasedCourses && user.purchasedCourses.length > 0;
+
+    // Check access and attempt status for each mock
+    const mocksWithStatus = await Promise.all(
       mocks.map(async (mock) => {
+        // Check if student has already attempted
         const attempt = await MockAttempt.findOne({
           mockId: mock._id,
           studentId: req.user.id,
         });
 
+        // Students with purchased courses get free access to all mocks
+        let hasAccess = hasPurchasedCourse;
+        let isPurchased = hasPurchasedCourse;
+        
+        // If student doesn't have a course, check if they purchased this specific mock
+        if (!hasPurchasedCourse) {
+          const purchasedMock = user.purchasedMocks.find(
+            pm => pm.mockId.toString() === mock._id.toString()
+          );
+          hasAccess = !!purchasedMock;
+          isPurchased = !!purchasedMock;
+        }
+
         return {
           ...mock.toObject(),
           hasAttempted: !!attempt,
           attemptStatus: attempt?.status || null,
+          attemptId: attempt?._id || null,
+          hasAccess: hasAccess,
+          isPurchased: isPurchased,
+          isLocked: !hasAccess,
+          accessReason: hasPurchasedCourse ? 'course_access' : (isPurchased ? 'mock_purchased' : 'locked'),
         };
       })
     );
 
     res.status(200).json({
       success: true,
-      mocks: mocksWithAttemptStatus,
+      mocks: mocksWithStatus,
     });
   } catch (error) {
     console.error('Error fetching live mocks:', error);
@@ -405,6 +468,31 @@ exports.startMockAttempt = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: 'This mock is not live',
+      });
+    }
+
+    // Check if user has access to this mock
+    // Students with purchased courses get free access
+    const user = await User.findById(req.user.id);
+    const hasPurchasedCourse = user.purchasedCourses && user.purchasedCourses.length > 0;
+    
+    let hasAccess = hasPurchasedCourse;
+    
+    // If no course purchased, check if mock was purchased individually
+    if (!hasPurchasedCourse) {
+      const purchasedMock = user.purchasedMocks.find(
+        pm => pm.mockId.toString() === mockId.toString()
+      );
+      hasAccess = !!purchasedMock;
+    }
+    
+    if (!hasAccess) {
+      return res.status(403).json({
+        success: false,
+        message: 'You need to purchase a course or this mock to attempt it',
+        reason: 'not_purchased',
+        price: mock.price,
+        cutPrice: mock.cutPrice,
       });
     }
 

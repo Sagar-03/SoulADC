@@ -15,6 +15,9 @@ const EditMock = () => {
     description: '',
     duration: 60,
     questions: [],
+    isPaid: false,
+    price: 0,
+    cutPrice: 0,
   });
 
   const [currentQuestion, setCurrentQuestion] = useState({
@@ -42,6 +45,9 @@ const EditMock = () => {
         description: mock.description || '',
         duration: mock.duration,
         questions: mock.questions,
+        isPaid: mock.isPaid || false,
+        price: mock.price || 0,
+        cutPrice: mock.cutPrice || 0,
       });
     } catch (error) {
       console.error('Error fetching mock:', error);
@@ -254,6 +260,52 @@ const EditMock = () => {
               required
             />
           </div>
+
+          <div className="form-group">
+            <label>
+              <input
+                type="checkbox"
+                checked={mockData.isPaid}
+                onChange={(e) => setMockData({ ...mockData, isPaid: e.target.checked })}
+              />
+              {' '}This is a Paid Mock (Students with purchased courses get free access)
+            </label>
+            <small style={{ display: 'block', color: '#666', marginTop: '5px' }}>
+              Note: All mocks are paid by default. Students who purchased any course can access all mocks for free.
+            </small>
+          </div>
+
+          {mockData.isPaid && (
+            <>
+              <div className="form-group">
+                <label>Price (AUD) *</label>
+                <input
+                  type="number"
+                  name="price"
+                  value={mockData.price}
+                  onChange={(e) => setMockData({ ...mockData, price: parseFloat(e.target.value) || 0 })}
+                  min="0"
+                  step="0.01"
+                  placeholder="e.g., 49.99"
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Original Price (Cut Price) - Optional</label>
+                <input
+                  type="number"
+                  name="cutPrice"
+                  value={mockData.cutPrice}
+                  onChange={(e) => setMockData({ ...mockData, cutPrice: parseFloat(e.target.value) || 0 })}
+                  min="0"
+                  step="0.01"
+                  placeholder="e.g., 99.99"
+                />
+                <small>Show discount by displaying original price</small>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Add/Edit Question Section */}

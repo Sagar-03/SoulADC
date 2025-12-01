@@ -29,9 +29,10 @@ const PendingApprovals = () => {
     }
   };
 
-  const handleApprove = async (userId, approvalId, userName, courseTitle) => {
+  const handleApprove = async (userId, approvalId, userName, itemTitle, itemType) => {
+    const itemTypeLabel = itemType === 'mock' ? 'mock' : 'course';
     const confirmApproval = window.confirm(
-      `Are you sure you want to approve course access for ${userName} to "${courseTitle}"?`
+      `Are you sure you want to approve ${itemTypeLabel} access for ${userName} to "${itemTitle}"?`
     );
 
     if (!confirmApproval) return;
@@ -39,7 +40,7 @@ const PendingApprovals = () => {
     try {
       setProcessing(approvalId);
       await api.post(`/admin/approve-payment/${userId}/${approvalId}`);
-      toast.success(`✅ Course access approved for ${userName}`);
+      toast.success(`✅ ${itemType === 'mock' ? 'Mock' : 'Course'} access approved for ${userName}`);
       
       // Remove from local state
       setApprovals(approvals.filter(a => a.approvalId !== approvalId));
@@ -128,7 +129,8 @@ const PendingApprovals = () => {
                 <th>Student Name</th>
                 <th>Email</th>
                 <th>Phone</th>
-                <th>Course</th>
+                <th>Type</th>
+                <th>Item</th>
                 <th>Amount Paid</th>
                 <th>Payment Date</th>
                 <th>Actions</th>
@@ -141,7 +143,12 @@ const PendingApprovals = () => {
                   <td>{approval.userEmail}</td>
                   <td>{approval.userPhone}</td>
                   <td>
-                    <span className="badge bg-primary">{approval.courseTitle}</span>
+                    <span className={`badge ${approval.itemType === 'mock' ? 'bg-success' : 'bg-primary'}`}>
+                      {approval.itemType === 'mock' ? 'Mock' : 'Course'}
+                    </span>
+                  </td>
+                  <td>
+                    <span className="badge bg-secondary">{approval.itemTitle}</span>
                   </td>
                   <td className="fw-bold text-success">
                     ${approval.paymentAmount.toFixed(2)}
@@ -155,7 +162,8 @@ const PendingApprovals = () => {
                           approval.userId, 
                           approval.approvalId, 
                           approval.userName,
-                          approval.courseTitle
+                          approval.itemTitle,
+                          approval.itemType
                         )}
                         disabled={processing === approval.approvalId}
                       >
