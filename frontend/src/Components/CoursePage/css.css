@@ -56,6 +56,16 @@
   color: #888;
 }
 
+.discount-badge {
+  background: #4CAF50;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
 /* Gradient button */
 .btn-gradient {
   background: linear-gradient(145deg, #A98C6A, #7B563D) !important;

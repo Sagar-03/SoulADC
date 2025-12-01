@@ -43,8 +43,7 @@
 }
 
 .tab-btn:hover {
-  color: #7B563D;
-
+  color: #7B563D
 }
 
 .mocks-content {
@@ -92,6 +91,21 @@
   font-weight: 700;
   margin: 0;
   flex: 1;
+}
+
+.badge-group {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.discount-badge-mock {
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  color: white;
+  background: #EF4444;
 }
 
 .mock-badge {
@@ -149,6 +163,28 @@
 
 .detail-icon {
   font-size: 20px;
+}
+
+.mock-price-section {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin: 25px 0 20px 0;
+  padding: 15px 0;
+  border-top: 1px solid #E0E0E0;
+}
+
+.mock-cut-price {
+  font-size: 18px;
+  color: #999;
+  text-decoration: line-through;
+  font-weight: 500;
+}
+
+.mock-current-price {
+  font-size: 28px;
+  color: #A98C6A;
+  font-weight: 700;
 }
 
 .start-mock-btn {

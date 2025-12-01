@@ -32,12 +32,9 @@ export default function CourseCard({ course }) {
     checkCourseStatus();
   }, [course._id]);
 
-  const formatPrice = (price) =>
-    new Intl.NumberFormat("en-AU", {
-      style: "currency",
-      currency: "AUD",
-      minimumFractionDigits: 0,
-    }).format(price);
+  const formatPrice = (price) => {
+    return `AUD ${price}`;
+  };
 
   const getAccentColor = (index = 0) => {
     const colors = ["#a1754f", "#7a5b3e", "#8B4513", "#A0522D", "#CD853F"];
@@ -116,6 +113,13 @@ export default function CourseCard({ course }) {
             <span className="h4 fw-bold text-success">
               {formatPrice(courseData.price)}
             </span>
+
+            {/* Discount percentage badge */}
+            {cutPrice && cutPrice > courseData.price && (
+              <span className="discount-badge">
+                {Math.round((cutPrice - courseData.price) / cutPrice * 100)}% OFF
+              </span>
+            )}
           </div>
 
           {courseData.weeks.length > 0 && (

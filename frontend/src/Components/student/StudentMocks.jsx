@@ -68,7 +68,14 @@ const StudentMocks = () => {
           <div key={mock._id} className="student-mock-card">
             <div className="mock-card-header">
               <h3>{mock.title}</h3>
-              <span className="mock-badge live">LIVE</span>
+              <div className="badge-group">
+                <span className="mock-badge live">LIVE</span>
+                {mock.isPaid && mock.isLocked && mock.cutPrice > 0 && (
+                  <span className="discount-badge-mock">
+                    {Math.round((mock.cutPrice - mock.price) / mock.cutPrice * 100)}% OFF
+                  </span>
+                )}
+              </div>
             </div>
             
             <p className="mock-description">{mock.description || 'No description'}</p>
@@ -86,20 +93,16 @@ const StudentMocks = () => {
                 <span className="detail-icon">⏱️</span>
                 <span>{mock.duration} Minutes</span>
               </div>
-              {mock.isPaid && (
-                <div className="detail-item">
-                  <span className="detail-icon">💰</span>
-                  <span>
-                    ${mock.price}
-                    {mock.cutPrice > 0 && (
-                      <span style={{ textDecoration: 'line-through', marginLeft: '8px', color: '#999' }}>
-                        ${mock.cutPrice}
-                      </span>
-                    )}
-                  </span>
-                </div>
-              )}
             </div>
+
+            {mock.isPaid && mock.isLocked && (
+              <div className="mock-price-section">
+                {mock.cutPrice > 0 && (
+                  <span className="mock-cut-price">AUD {mock.cutPrice}</span>
+                )}
+                <span className="mock-current-price">AUD {mock.price}</span>
+              </div>
+            )}
 
             {mock.isLocked ? (
               mock.isPending ? (
@@ -124,7 +127,7 @@ const StudentMocks = () => {
                     onClick={() => handlePurchaseMock(mock._id, mock.title, mock.price)}
                     disabled={purchasing === mock._id}
                   >
-                    {purchasing === mock._id ? 'Processing...' : `Purchase Mock - $${mock.price}`}
+                    {purchasing === mock._id ? 'Processing...' : `Purchase Mock - AUD ${mock.price}`}
                   </button>
                 </div>
               )

@@ -119,9 +119,9 @@ const MocksPage = () => {
                     <div className="mock-card-footer">
                       <div className="price-section">
                         {mock.cutPrice > 0 && (
-                          <span className="original-price">${mock.cutPrice}</span>
+                          <span className="original-price">AUD {mock.cutPrice}</span>
                         )}
-                        <span className="current-price">${mock.price}</span>
+                        <span className="current-price">AUD {mock.price}</span>
                       </div>
                       <button
                         className="enroll-btn"
