@@ -190,7 +190,7 @@
 .start-mock-btn {
   width: 100%;
   padding: 14px;
-  background: #7B563D;
+  background: linear-gradient(145deg, #A98C6A, #7B563D);
   color: white;
   border: none;
   border-radius: 10px;
@@ -202,8 +202,9 @@
   letter-spacing: 0.5px;
 }
 
+
 .start-mock-btn:hover {
-  background: #6A4A34;
+  background:linear-gradient(145deg, #A98C6A, #7B563D);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(123, 86, 61, 0.4);
 }
@@ -223,7 +224,7 @@
 .view-result-btn {
   width: 100%;
   padding: 12px;
-  background: #2196F3;
+  background: linear-gradient(145deg, #A98C6A, #7B563D);
   color: white;
   border: none;
   border-radius: 8px;
@@ -234,7 +235,7 @@
 }
 
 .view-result-btn:hover:not(:disabled) {
-  background: #0b7dda;
+  background: linear-gradient(145deg, #A98C6A, #7B563D);
 }
 
 .view-result-btn:disabled {

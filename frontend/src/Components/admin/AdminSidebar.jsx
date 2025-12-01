@@ -1,10 +1,10 @@
 import React from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { RxDashboard } from "react-icons/rx";
 import { FaBook, FaUsers, FaPlus, FaFilePdf, FaSignOutAlt, FaClipboardList, FaCheckCircle } from "react-icons/fa";
 import { FiMessageCircle } from "react-icons/fi";
 import logo from "../../assets/logo.png";
-import { logout } from "../../utils/auth"; 
+import { logout } from "../../utils/auth";
 
 const AdminSidebar = () => {
     const navigate = useNavigate();
@@ -21,9 +21,14 @@ const AdminSidebar = () => {
         >
             {/* Logo */}
             <div className="d-flex align-items-center justify-content-center w-100 mb-3">
-                <img src={logo} alt="Logo" style={{ width: "210px" }} />
+                <Link to="/">
+                    <img
+                        src={logo}
+                        alt="Logo"
+                        style={{ width: "210px", cursor: "pointer" }}
+                    />
+                </Link>
             </div>
-
             {/* Nav */}
             <div className="nav flex-column w-100 mt-4 fs-5">
                 <SidebarItem

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { RxDashboard } from "react-icons/rx";
 import { FaBook, FaSignOutAlt, FaFileAlt, FaChartLine, FaClipboardList } from "react-icons/fa";
 import { FiMessageCircle } from "react-icons/fi";
@@ -56,7 +56,9 @@ const Leftsidebar = () => {
       >
         {/* Logo */}
         <div className="d-flex align-items-center justify-content-center w-100 mb-4">
+          <Link to="/">
           <img src={logo} alt="Logo" style={{ width: "210px" }} />
+          </Link>
         </div>
 
         {/* Top Section */}
@@ -80,6 +82,7 @@ const Leftsidebar = () => {
             text="Documents"
             active={location.pathname.includes("/documents")}
             onClick={() => handleRestrictedClick("/documents")}
+          
             hoverColor="linear-gradient(145deg, #A98C6A, #7B563D)" />
           <SidebarItem
             icon={<FiMessageCircle />}
@@ -111,7 +114,7 @@ const Leftsidebar = () => {
             text="Profile"
             active={location.pathname === "/profile"}
             onClick={() => navigate("/profile")}
-            hoverColor="#5C83E6"
+            hoverColor="linear-gradient(145deg, #A98C6A, #7B563D)"
           />
 
           {/* ✅ Real Logout Button */}

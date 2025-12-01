@@ -155,7 +155,7 @@
 
 /* Course Button */
 .course-button {
-  background: linear-gradient(135deg, linear-gradient(145deg, #A98C6A, #7B563D), #A98C6A);
+  background: linear-gradient(145deg, #A98C6A, #7B563D);
   border: none;
   border-radius: 8px;
   padding: 10px 20px;

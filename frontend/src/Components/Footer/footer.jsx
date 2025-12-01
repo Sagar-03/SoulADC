@@ -12,12 +12,15 @@ const Footer = () => {
         <Row className="mb-4">
           {/* Column 1: Logo and Social Media */}
           <Col md={3} className="mb-4">
+            <Link to="/">
             <img
               src={logo}
               alt="Soul ADC Logo"
               className="img-fluid mb-3"
               style={{ maxWidth: '320px', height: 'auto', marginRight: '20px' }}
             />
+            </Link>
+
             <p className="text-secondary fs-7">
               Empowering future Australian dentists with expert ADC Part 1 preparation. Your success is our mission.
             </p>

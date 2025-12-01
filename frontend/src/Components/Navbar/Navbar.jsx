@@ -9,12 +9,24 @@ import { onAuthChange } from "../../utils/authEvents"; // ✅ new import
 const Navbar = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userRole, setUserRole] = useState("user");
+  const [shouldShowDashboard, setShouldShowDashboard] = useState(false);
   const navigate = useNavigate();
 
   const updateAuthState = () => {
     const loggedIn = isAuthenticated();
     setIsLoggedIn(loggedIn);
-    setUserRole(loggedIn ? getUserRole() : "user");
+    const role = loggedIn ? getUserRole() : "user";
+    setUserRole(role);
+    
+    // Check if user should see dashboard
+    if (loggedIn && role !== "admin") {
+      const user = getUser();
+      const hasPurchasedCourses = user?.purchasedCourses && user.purchasedCourses.length > 0;
+      const hasPurchasedMocks = user?.purchasedMocks && user.purchasedMocks.length > 0;
+      setShouldShowDashboard(hasPurchasedCourses || hasPurchasedMocks);
+    } else {
+      setShouldShowDashboard(false);
+    }
   };
 
   // ✅ Run on mount and listen for auth changes
@@ -131,7 +143,7 @@ const Navbar = () => {
               </button>
             </li>
 
-            {isLoggedIn && (
+            {shouldShowDashboard && (
               <li>
                 <button
                   onClick={handleDashboardClick}

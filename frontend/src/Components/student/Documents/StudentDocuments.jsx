@@ -94,7 +94,7 @@ const StudentDocuments = () => {
         {/* Header */}
         <div className="documents-header mb-4">
           <h2 className="fw-bold" style={{ color: "#5A3825" }}>
-            Notes & Mock Papers
+            Reading Materials
           </h2>
           <p className="text-muted">{course.title}</p>
         </div>

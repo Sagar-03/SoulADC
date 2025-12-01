@@ -55,7 +55,7 @@ const DocumentsPage = () => {
         {/* Header */}
         <div className="documents-page-header mb-4">
           <h2 className="fw-bold" style={{ color: "#5A3825" }}>
-            Notes & Mock Papers
+            Reading Materials
           </h2>
           <p className="text-muted">Select a course to view its Notes and study materials</p>
         </div>
