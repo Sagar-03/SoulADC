@@ -152,6 +152,7 @@ const Auth = ({ isOpen, onClose, defaultTab = "signIn" }) => {
                     type="text"
                     id="name"
                     name="name"
+                    placeholder="Enter your full name"
                     value={formData.name}
                     onChange={handleInputChange}
                     required
@@ -165,6 +166,7 @@ const Auth = ({ isOpen, onClose, defaultTab = "signIn" }) => {
                   type="email"
                   id="email"
                   name="email"
+                  placeholder="Enter your email address"
                   value={formData.email}
                   onChange={handleInputChange}
                   required
@@ -178,6 +180,7 @@ const Auth = ({ isOpen, onClose, defaultTab = "signIn" }) => {
                     type="tel"
                     id="phone"
                     name="phone"
+                    placeholder="Enter your phone number"
                     value={formData.phone}
                     onChange={handleInputChange}
                     required
@@ -191,6 +194,7 @@ const Auth = ({ isOpen, onClose, defaultTab = "signIn" }) => {
                   type="password"
                   id="password"
                   name="password"
+                  placeholder="Enter your password"
                   value={formData.password}
                   onChange={handleInputChange}
                   required
@@ -204,6 +208,7 @@ const Auth = ({ isOpen, onClose, defaultTab = "signIn" }) => {
                     type="password"
                     id="confirmPassword"
                     name="confirmPassword"
+                    placeholder="Re-enter your password"
                     value={formData.confirmPassword}
                     onChange={handleInputChange}
                     required

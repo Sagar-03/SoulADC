@@ -221,6 +221,7 @@ const Login = () => {
                     <input
                       type="text"
                       name="name"
+                      placeholder="Enter your full name"
                       value={formData.name}
                       onChange={handleInputChange}
                       required
@@ -233,6 +234,7 @@ const Login = () => {
                   <input
                     type="email"
                     name="email"
+                    placeholder="Enter your email address"
                     value={formData.email}
                     onChange={handleInputChange}
                     required
@@ -242,11 +244,12 @@ const Login = () => {
                 {!isLogin && (
                   <div className="input-group">
                     <label>Phone Number</label>
-                    <div style={{ display: "flex", gap: "10px" }}>
+                    <div style={{ display: "flex", gap: "8px" }}>
                       <select
                         name="countryCode"
                         value={formData.countryCode}
                         onChange={handleInputChange}
+                        style={{ width: "140px", flexShrink: 0 }}
                       >
                         {countryCodes.map((item) => (
                           <option key={item.code} value={item.code}>
@@ -261,7 +264,7 @@ const Login = () => {
                         value={formData.phone}
                         onChange={handleInputChange}
                         required
-                        placeholder="Phone number"
+                        placeholder="Enter phone number"
                         style={{ flex: 1 }}
                       />
                     </div>
@@ -273,6 +276,7 @@ const Login = () => {
                   <input
                     type="password"
                     name="password"
+                    placeholder="Enter your password"
                     value={formData.password}
                     onChange={handleInputChange}
                     required
@@ -285,6 +289,7 @@ const Login = () => {
                     <input
                       type="password"
                       name="confirmPassword"
+                      placeholder="Re-enter your password"
                       value={formData.confirmPassword}
                       onChange={handleInputChange}
                       required
