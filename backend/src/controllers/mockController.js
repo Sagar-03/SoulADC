@@ -8,7 +8,7 @@ const { checkUserMockAccess } = require('../middleware/mockAccessMiddleware');
 // Create a new mock
 exports.createMock = async (req, res) => {
   try {
-    const { title, description, questions, duration } = req.body;
+    const { title, description, questions, duration, isPaid, price, cutPrice } = req.body;
 
     // Handle the case where admin might not have a valid ObjectId
     let createdById = req.user.id;
@@ -42,6 +42,9 @@ exports.createMock = async (req, res) => {
       duration: duration || 60,
       createdBy: createdById,
       status: 'draft',
+      isPaid: isPaid !== undefined ? isPaid : true,
+      price: price || 0,
+      cutPrice: cutPrice || undefined,
     });
 
     await mock.save();
