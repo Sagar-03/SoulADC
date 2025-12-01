@@ -1,0 +1,149 @@
+.screenshot-warning-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.95);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.screenshot-warning-modal {
+  background: white;
+  padding: 40px 50px;
+  border-radius: 20px;
+  text-align: center;
+  max-width: 500px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.warning-icon {
+  font-size: 64px;
+  margin-bottom: 20px;
+  animation: bounce 0.6s ease-in-out;
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.screenshot-warning-modal h2 {
+  color: #f44336;
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 20px;
+}
+
+.screenshot-warning-modal p {
+  font-size: 18px;
+  color: #333;
+  margin-bottom: 15px;
+  line-height: 1.6;
+}
+
+.screenshot-count {
+  font-size: 28px;
+  font-weight: 700;
+  color: #f44336;
+  margin: 20px 0;
+  padding: 15px;
+  background: #ffebee;
+  border-radius: 10px;
+}
+
+.warning-message {
+  font-size: 16px;
+  color: #666;
+  font-weight: 500;
+}
+
+.reload-page-btn {
+  padding: 15px 40px;
+  background: linear-gradient(145deg, #A98C6A, #7B563D);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: 600;
+  margin-top: 25px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(169, 140, 106, 0.3);
+}
+
+.reload-page-btn:hover {
+  background: linear-gradient(145deg, #8B704F, #634330);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(169, 140, 106, 0.4);
+}
+
+.reload-page-btn:active {
+  transform: translateY(0);
+}
+
+.warning-footer {
+  font-size: 13px;
+  color: #999;
+  margin-top: 20px;
+  font-style: italic;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .screenshot-warning-modal {
+    padding: 30px 25px;
+    margin: 20px;
+    max-width: 90%;
+  }
+
+  .warning-icon {
+    font-size: 48px;
+  }
+
+  .screenshot-warning-modal h2 {
+    font-size: 24px;
+  }
+
+  .screenshot-warning-modal p {
+    font-size: 16px;
+  }
+
+  .screenshot-count {
+    font-size: 22px;
+  }
+
+  .reload-page-btn {
+    padding: 12px 30px;
+    font-size: 16px;
+  }
+}

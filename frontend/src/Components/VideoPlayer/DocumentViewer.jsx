@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { FaArrowLeft, FaExpand, FaCompress } from "react-icons/fa";
 import StudentLayout from "../student/StudentLayout";
 import { api, getStreamUrl } from "../../Api/api";
+import ScreenshotWarning from "../common/ScreenshotWarning";
 import "./DocumentViewer.css";
 
 const DocumentViewer = () => {
@@ -15,6 +16,8 @@ const DocumentViewer = () => {
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [documentUrl, setDocumentUrl] = useState(null);
     const [fetchingDoc, setFetchingDoc] = useState(true);
+    const [showScreenshotWarning, setShowScreenshotWarning] = useState(false);
+    const [screenshotCount, setScreenshotCount] = useState(0);
 
     useEffect(() => {
 
@@ -155,6 +158,111 @@ const DocumentViewer = () => {
     //     // Protection logic removed for now
     // }, [documentUrl]);
 
+    // Screenshot prevention
+    useEffect(() => {
+        let screenshotDetectionTimeout = null;
+
+        const handleScreenshotAttempt = () => {
+            setScreenshotCount(prev => prev + 1);
+            setShowScreenshotWarning(true);
+            
+            // Log the attempt (you can send this to backend)
+            console.warn('Screenshot attempt detected at:', new Date().toISOString());
+        };
+
+        const handleKeyDown = (e) => {
+            // Detect Print Screen key (works in some browsers)
+            if (e.key === 'PrintScreen' || e.keyCode === 44 || e.code === 'PrintScreen') {
+                e.preventDefault();
+                handleScreenshotAttempt();
+                return;
+            }
+
+            // Detect Windows Snipping Tool (Win + Shift + S)
+            if (e.key === 's' && e.shiftKey && e.metaKey) {
+                e.preventDefault();
+                handleScreenshotAttempt();
+                return;
+            }
+
+            // Detect Mac screenshot shortcuts
+            if (e.metaKey && e.shiftKey && ['3', '4', '5'].includes(e.key)) {
+                e.preventDefault();
+                handleScreenshotAttempt();
+                return;
+            }
+        };
+
+        // Monitor clipboard for screenshot paste attempts
+        const handleCopy = (e) => {
+            console.warn('Copy event detected');
+            handleScreenshotAttempt();
+        };
+
+        // Detect window/tab switching (often used with screenshot tools)
+        const handleVisibilityChange = () => {
+            if (document.hidden) {
+                console.log('Document hidden - potential screenshot tool usage');
+                // Set a timeout to show warning if user was gone for screenshot
+                screenshotDetectionTimeout = setTimeout(() => {
+                    handleScreenshotAttempt();
+                }, 100);
+            } else {
+                // Clear timeout if user returns quickly
+                if (screenshotDetectionTimeout) {
+                    clearTimeout(screenshotDetectionTimeout);
+                }
+            }
+        };
+
+        // Detect blur events (screenshot tools often cause blur)
+        const handleBlur = () => {
+            console.log('Window blur detected');
+            screenshotDetectionTimeout = setTimeout(() => {
+                handleScreenshotAttempt();
+            }, 100);
+        };
+
+        const handleFocus = () => {
+            if (screenshotDetectionTimeout) {
+                clearTimeout(screenshotDetectionTimeout);
+            }
+        };
+
+        // Disable right-click
+        const handleContextMenu = (e) => {
+            e.preventDefault();
+            handleScreenshotAttempt();
+            return false;
+        };
+
+        // Add all event listeners
+        document.addEventListener('keydown', handleKeyDown);
+        document.addEventListener('keyup', handleKeyDown);
+        document.addEventListener('copy', handleCopy);
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        window.addEventListener('blur', handleBlur);
+        window.addEventListener('focus', handleFocus);
+        document.addEventListener('contextmenu', handleContextMenu);
+
+        return () => {
+            document.removeEventListener('keydown', handleKeyDown);
+            document.removeEventListener('keyup', handleKeyDown);
+            document.removeEventListener('copy', handleCopy);
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            window.removeEventListener('blur', handleBlur);
+            window.removeEventListener('focus', handleFocus);
+            document.removeEventListener('contextmenu', handleContextMenu);
+            if (screenshotDetectionTimeout) {
+                clearTimeout(screenshotDetectionTimeout);
+            }
+        };
+    }, []);
+
+    const handleReloadPage = () => {
+        window.location.reload();
+    };
+
     const toggleFullscreen = () => {
         setIsFullscreen(!isFullscreen);
     };
@@ -212,6 +320,13 @@ const DocumentViewer = () => {
 
     return (
         <div className={`document-viewer-container ${isFullscreen ? 'fullscreen' : ''}`}>
+            {/* Screenshot Warning Modal */}
+            <ScreenshotWarning 
+                show={showScreenshotWarning}
+                screenshotCount={screenshotCount}
+                onReload={handleReloadPage}
+            />
+
             {!isFullscreen && (
                 <StudentLayout>
                     <DocumentViewerContent

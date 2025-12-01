@@ -6,6 +6,7 @@ import "./EmbeddedVideoPlayer.css";
 import StudentLayout from "../student/StudentLayout";
 import { api, getStreamUrl, updateVideoProgress } from "../../Api/api";
 import { toast } from 'react-toastify';
+import ScreenshotWarning from "../common/ScreenshotWarning";
 import {
   saveVideoProgress,
   getVideoProgress,
@@ -53,6 +54,8 @@ const EmbeddedVideoPlayer = () => {
   const [savedProgress, setSavedProgress] = useState(null);
   const [hasResumed, setHasResumed] = useState(false);
   const [lastBackendUpdate, setLastBackendUpdate] = useState(0);
+  const [showScreenshotWarning, setShowScreenshotWarning] = useState(false);
+  const [screenshotCount, setScreenshotCount] = useState(0);
 
   // Fetch course data and video info
   useEffect(() => {
@@ -205,8 +208,40 @@ const EmbeddedVideoPlayer = () => {
 
   // Anti-screenshot mechanism: Blur only on non-alphanumeric key press
   useEffect(() => {
+    let screenshotDetectionTimeout = null;
+
+    const handleScreenshotAttempt = () => {
+      setScreenshotCount(prev => prev + 1);
+      setShowScreenshotWarning(true);
+      setIsBlurred(true);
+      
+      // Log the attempt (you can send this to backend)
+      console.warn('Screenshot attempt detected at:', new Date().toISOString());
+    };
+
     const handleKeyDown = (e) => {
-      // Ignore letters (a-z, A-Z) and numbers (0-9)
+      // Detect Print Screen key (works in some browsers)
+      if (e.key === 'PrintScreen' || e.keyCode === 44 || e.code === 'PrintScreen') {
+        e.preventDefault();
+        handleScreenshotAttempt();
+        return;
+      }
+
+      // Detect Windows Snipping Tool (Win + Shift + S)
+      if (e.key === 's' && e.shiftKey && e.metaKey) {
+        e.preventDefault();
+        handleScreenshotAttempt();
+        return;
+      }
+
+      // Detect Mac screenshot shortcuts
+      if (e.metaKey && e.shiftKey && ['3', '4', '5'].includes(e.key)) {
+        e.preventDefault();
+        handleScreenshotAttempt();
+        return;
+      }
+
+      // Ignore letters (a-z, A-Z) and numbers (0-9) for normal blur
       if (/^[a-zA-Z0-9]$/.test(e.key)) return;
 
       setIsBlurred(true);
@@ -218,33 +253,68 @@ const EmbeddedVideoPlayer = () => {
       }
     };
 
+    // Monitor clipboard for screenshot paste attempts
+    const handleCopy = (e) => {
+      console.warn('Copy event detected');
+      handleScreenshotAttempt();
+    };
+
     // Blur when user switches tab/window
     const handleWindowBlur = () => {
       setIsBlurred(true);
+      // Check for potential screenshot tool usage
+      screenshotDetectionTimeout = setTimeout(() => {
+        handleScreenshotAttempt();
+      }, 100);
     };
 
-    const handleWindowFocus = () => setIsBlurred(false);
+    const handleWindowFocus = () => {
+      setIsBlurred(false);
+      if (screenshotDetectionTimeout) {
+        clearTimeout(screenshotDetectionTimeout);
+      }
+    };
 
     const handleVisibilityChange = () => {
       if (document.hidden) {
         setIsBlurred(true);
+        screenshotDetectionTimeout = setTimeout(() => {
+          handleScreenshotAttempt();
+        }, 100);
       } else {
         setIsBlurred(false);
+        if (screenshotDetectionTimeout) {
+          clearTimeout(screenshotDetectionTimeout);
+        }
       }
+    };
+
+    // Disable right-click
+    const handleContextMenu = (e) => {
+      e.preventDefault();
+      handleScreenshotAttempt();
+      return false;
     };
 
     document.addEventListener('keydown', handleKeyDown);
     document.addEventListener('keyup', handleKeyUp);
+    document.addEventListener('copy', handleCopy);
     window.addEventListener('blur', handleWindowBlur);
     window.addEventListener('focus', handleWindowFocus);
     document.addEventListener('visibilitychange', handleVisibilityChange);
+    document.addEventListener('contextmenu', handleContextMenu);
 
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
       document.removeEventListener('keyup', handleKeyUp);
+      document.removeEventListener('copy', handleCopy);
       window.removeEventListener('blur', handleWindowBlur);
       window.removeEventListener('focus', handleWindowFocus);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+      document.removeEventListener('contextmenu', handleContextMenu);
+      if (screenshotDetectionTimeout) {
+        clearTimeout(screenshotDetectionTimeout);
+      }
     };
   }, [currentVideo.id]);
 
@@ -443,6 +513,10 @@ const EmbeddedVideoPlayer = () => {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const handleReloadPage = () => {
+    window.location.reload();
+  };
+
   if (loading) {
     return (
       <StudentLayout>
@@ -457,6 +531,13 @@ const EmbeddedVideoPlayer = () => {
 
   return (
     <StudentLayout>
+      {/* Screenshot Warning Modal */}
+      <ScreenshotWarning 
+        show={showScreenshotWarning}
+        screenshotCount={screenshotCount}
+        onReload={handleReloadPage}
+      />
+
       <div className="video-player-page" style={{ userSelect: 'none' }}>
         <div className="container-fluid px-4">
           <div className="video-header d-flex justify-content-between align-items-center mb-4">
