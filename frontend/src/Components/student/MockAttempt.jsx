@@ -313,7 +313,7 @@ const MockAttempt = () => {
             <h3>{question.questionText}</h3>
             {question.imageUrl && (
               <div className="question-image">
-                <img src={question.imageUrl} alt="Question" />
+                <img src={`${import.meta.env.VITE_API_URL || 'http://localhost:7001/api'}/stream/${question.imageUrl}`} alt="Question" />
               </div>
             )}
           </div>

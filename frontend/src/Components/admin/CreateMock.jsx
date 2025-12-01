@@ -121,9 +121,11 @@ const CreateMock = () => {
     // Upload image if provided
     if (currentQuestion.imageFile) {
       try {
-        const { uploadQuestionImage } = await import('../../Api/api');
+        const { uploadQuestionImage, getStreamUrl } = await import('../../Api/api');
         const response = await uploadQuestionImage(currentQuestion.imageFile);
-        imageUrl = response.data.url;
+        const s3Key = response.data.s3Key;
+        // Store s3Key for database, but use stream URL for preview
+        imageUrl = s3Key;
         toast.success('Image uploaded successfully');
       } catch (error) {
         console.error('Error uploading image:', error);
@@ -438,7 +440,7 @@ const CreateMock = () => {
                   </div>
                   {question.imageUrl && (
                     <div className="question-image">
-                      <img src={question.imageUrl} alt="Question" />
+                      <img src={`${import.meta.env.VITE_API_URL || 'http://localhost:7001/api'}/stream/${question.imageUrl}`} alt="Question" />
                     </div>
                   )}
                   <div className="question-details">

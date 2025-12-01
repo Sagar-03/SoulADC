@@ -48,29 +48,9 @@ const StudentMocks = () => {
     navigate(`/student/mock-result/${attemptId}`);
   };
 
-  const handlePurchaseMock = async (mockId) => {
-    try {
-      setPurchasing(mockId);
-      
-      const successUrl = `${window.location.origin}/student/mocks?payment=success`;
-      const cancelUrl = `${window.location.origin}/student/mocks?payment=cancelled`;
-
-      const response = await createMockCheckoutSession({
-        mockId,
-        successUrl,
-        cancelUrl,
-      });
-
-      // Redirect to Stripe checkout
-      if (response.data.url) {
-        window.location.href = response.data.url;
-      }
-    } catch (error) {
-      console.error('Error creating checkout session:', error);
-      toast.error('Failed to initiate purchase. Please try again.');
-    } finally {
-      setPurchasing(null);
-    }
+  const handlePurchaseMock = async (mockId, mockTitle, mockPrice) => {
+    // Navigate to payment page where student can enter coupon code
+    navigate(`/payment/mock?mockId=${mockId}&title=${encodeURIComponent(mockTitle)}&price=${mockPrice}`);
   };
 
   const renderLiveMocks = () => {
@@ -122,19 +102,32 @@ const StudentMocks = () => {
             </div>
 
             {mock.isLocked ? (
-              <div className="locked-message">
-                <span>🔒 Purchase Required</span>
-                <p style={{ fontSize: '14px', color: '#666', margin: '10px 0' }}>
-                  Purchase any course to get free access to all mocks, or buy this mock individually.
-                </p>
-                <button 
-                  className="purchase-btn"
-                  onClick={() => handlePurchaseMock(mock._id)}
-                  disabled={purchasing === mock._id}
-                >
-                  {purchasing === mock._id ? 'Processing...' : `Purchase Mock - $${mock.price}`}
-                </button>
-              </div>
+              mock.isPending ? (
+                <div className="pending-message">
+                  <span>⏳ Awaiting Approval</span>
+                  <p style={{ fontSize: '14px', color: '#666', margin: '10px 0' }}>
+                    Your payment is being reviewed. You'll get access within 24 hours.
+                  </p>
+                  <button className="pending-btn" disabled>
+                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    Pending Admin Approval
+                  </button>
+                </div>
+              ) : (
+                <div className="locked-message">
+                  <span>🔒 Purchase Required</span>
+                  <p style={{ fontSize: '14px', color: '#666', margin: '10px 0' }}>
+                    Purchase any course to get free access to all mocks, or buy this mock individually.
+                  </p>
+                  <button 
+                    className="purchase-btn"
+                    onClick={() => handlePurchaseMock(mock._id, mock.title, mock.price)}
+                    disabled={purchasing === mock._id}
+                  >
+                    {purchasing === mock._id ? 'Processing...' : `Purchase Mock - $${mock.price}`}
+                  </button>
+                </div>
+              )
             ) : mock.hasAttempted ? (
               <div className="attempted-message">
                 <span>✓ Already Attempted</span>
@@ -266,7 +259,7 @@ const StudentMocks = () => {
           <h2>Mock Exams</h2>
         </div>
 
-        <div className="info-banner" style={{
+        {/* <div className="info-banner" style={{
           background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
           color: 'white',
           padding: '15px 20px',
@@ -276,12 +269,12 @@ const StudentMocks = () => {
           alignItems: 'center',
           gap: '10px'
         }}>
-          <span style={{ fontSize: '24px' }}>💡</span>
-          <div>
+          {/* <span style={{ fontSize: '24px' }}>💡</span> */}
+          {/* <div>
             <strong>Pro Tip:</strong> Purchase any course to get FREE access to ALL mock exams! 
             Or purchase individual mocks separately.
-          </div>
-        </div>
+          </div> 
+        </div> */}
 
       <div className="mocks-tabs">
         <button 

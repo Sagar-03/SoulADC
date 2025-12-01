@@ -251,10 +251,6 @@ export const getMockStatistics = (id) => api.get(`/mocks/statistics/${id}`);
 
 // Upload question image
 export const uploadQuestionImage = async (file) => {
-  const formData = new FormData();
-  formData.append("file", file);
-  formData.append("folder", "mock-questions");
-  
   // Use presigned URL approach for consistency
   const fileName = `${Date.now()}-${file.name}`;
   const presignResponse = await getPresignUrl(fileName, file.type, "mock-questions");
@@ -267,9 +263,8 @@ export const uploadQuestionImage = async (file) => {
     },
   });
   
-  // Return the S3 URL
-  const s3Url = uploadUrl.split("?")[0];
-  return { data: { url: s3Url, key } };
+  // Return the s3Key (not full URL) - it will be accessed via stream endpoint
+  return { data: { s3Key: key, key } };
 };
 
 // Student Mock APIs

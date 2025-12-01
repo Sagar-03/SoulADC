@@ -361,6 +361,7 @@ exports.getLiveMocks = async (req, res) => {
         // Students with purchased courses get free access to all mocks
         let hasAccess = hasPurchasedCourse;
         let isPurchased = hasPurchasedCourse;
+        let isPending = false;
         
         // If student doesn't have a course, check if they purchased this specific mock
         if (!hasPurchasedCourse) {
@@ -369,6 +370,15 @@ exports.getLiveMocks = async (req, res) => {
           );
           hasAccess = !!purchasedMock;
           isPurchased = !!purchasedMock;
+          
+          // Check if mock purchase is pending approval
+          if (!purchasedMock) {
+            const pendingMock = user.pendingApprovals.find(
+              pa => pa.mockId && pa.mockId.toString() === mock._id.toString() && 
+                    pa.itemType === 'mock' && pa.status === 'pending'
+            );
+            isPending = !!pendingMock;
+          }
         }
 
         return {
@@ -378,8 +388,9 @@ exports.getLiveMocks = async (req, res) => {
           attemptId: attempt?._id || null,
           hasAccess: hasAccess,
           isPurchased: isPurchased,
+          isPending: isPending,
           isLocked: !hasAccess,
-          accessReason: hasPurchasedCourse ? 'course_access' : (isPurchased ? 'mock_purchased' : 'locked'),
+          accessReason: hasPurchasedCourse ? 'course_access' : (isPurchased ? 'mock_purchased' : (isPending ? 'pending_approval' : 'locked')),
         };
       })
     );

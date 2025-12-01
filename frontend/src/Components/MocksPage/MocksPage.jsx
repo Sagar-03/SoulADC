@@ -83,33 +83,36 @@ const MocksPage = () => {
             <div className="mocks-grid">
               {mocks.map((mock) => (
                 <div key={mock._id} className="mock-card">
-                  <div className="mock-card-image">
-                    <div className="mock-badge">LIVE</div>
-                    {mock.cutPrice > 0 && (
-                      <div className="discount-badge">
-                        {Math.round(((mock.cutPrice - mock.price) / mock.cutPrice) * 100)}% OFF
-                      </div>
-                    )}
+                  <div className="mock-card-header">
+                    <div className="mock-status-badges">
+                      <span className="mock-badge">LIVE</span>
+                      {mock.cutPrice > 0 && (
+                        <span className="discount-badge">
+                          {Math.round(((mock.cutPrice - mock.price) / mock.cutPrice) * 100)}% OFF
+                        </span>
+                      )}
+                    </div>
+                    <div className="mock-icon">📝</div>
                   </div>
 
                   <div className="mock-card-content">
                     <h3>{mock.title}</h3>
                     <p className="mock-desc">
-                      {mock.description || 'Comprehensive mock exam to test your knowledge and skills'}
+                      {mock.description || 'Comprehensive mock exam to test your knowledge'}
                     </p>
 
-                    <div className="mock-features">
-                      <div className="feature">
-                        <span className="feature-icon">📝</span>
-                        <span>{mock.questions?.length || 0} Questions</span>
+                    <div className="mock-stats-grid">
+                      <div className="stat-item">
+                        <span className="stat-label">Questions</span>
+                        <span className="stat-value">{mock.questions?.length || 0}</span>
                       </div>
-                      <div className="feature">
-                        <span className="feature-icon">⏱️</span>
-                        <span>{mock.duration} Minutes</span>
+                      <div className="stat-item">
+                        <span className="stat-label">Duration</span>
+                        <span className="stat-value">{mock.duration} min</span>
                       </div>
-                      <div className="feature">
-                        <span className="feature-icon">⭐</span>
-                        <span>{mock.totalMarks} Marks</span>
+                      <div className="stat-item">
+                        <span className="stat-label">Marks</span>
+                        <span className="stat-value">{mock.totalMarks}</span>
                       </div>
                     </div>
 

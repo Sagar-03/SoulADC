@@ -61,8 +61,14 @@ export default function MockPaymentPage() {
         return;
       }
 
-      const successUrl = `${window.location.origin}/payment-success?mock_id=${mock.id}`;
-      const cancelUrl = `${window.location.origin}/payment-cancel`;
+      // Check if user came from student portal (via referrer or state)
+      const isFromStudentPortal = document.referrer.includes('/student/mocks');
+      const successUrl = isFromStudentPortal 
+        ? `${window.location.origin}/payment-success?mock_id=${mock.id}&redirect=student`
+        : `${window.location.origin}/payment-success?mock_id=${mock.id}`;
+      const cancelUrl = isFromStudentPortal
+        ? `${window.location.origin}/student/mocks?payment=cancelled`
+        : `${window.location.origin}/payment-cancel`;
 
       const payload = {
         mockId: mock.id,
