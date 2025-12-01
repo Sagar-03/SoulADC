@@ -311,6 +311,11 @@ const MockAttempt = () => {
 
           <div className="question-text">
             <h3>{question.questionText}</h3>
+            {question.imageUrl && (
+              <div className="question-image">
+                <img src={question.imageUrl} alt="Question" />
+              </div>
+            )}
           </div>
 
           <div className="answer-section">

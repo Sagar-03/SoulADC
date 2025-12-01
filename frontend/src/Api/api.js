@@ -249,6 +249,29 @@ export const makeMockLive = (id) => api.patch(`/mocks/live/${id}`);
 export const endMock = (id) => api.patch(`/mocks/end/${id}`);
 export const getMockStatistics = (id) => api.get(`/mocks/statistics/${id}`);
 
+// Upload question image
+export const uploadQuestionImage = async (file) => {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("folder", "mock-questions");
+  
+  // Use presigned URL approach for consistency
+  const fileName = `${Date.now()}-${file.name}`;
+  const presignResponse = await getPresignUrl(fileName, file.type, "mock-questions");
+  const { uploadUrl, key } = presignResponse.data;
+  
+  // Upload directly to S3
+  await axios.put(uploadUrl, file, {
+    headers: {
+      "Content-Type": file.type,
+    },
+  });
+  
+  // Return the S3 URL
+  const s3Url = uploadUrl.split("?")[0];
+  return { data: { url: s3Url, key } };
+};
+
 // Student Mock APIs
 export const getLiveMocks = () => api.get("/mocks/live");
 export const getPastMocks = () => api.get("/mocks/past");

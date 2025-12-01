@@ -149,6 +149,11 @@ const MockResult = () => {
 
               <div className="review-question-text">
                 <h4>{question.questionText}</h4>
+                {question.imageUrl && (
+                  <div className="question-image">
+                    <img src={question.imageUrl} alt="Question" />
+                  </div>
+                )}
               </div>
 
               {question.questionType === 'mcq' && (

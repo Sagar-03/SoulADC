@@ -26,6 +26,10 @@ const questionSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  imageUrl: {
+    type: String,
+    required: false,
+  },
 });
 
 const mockSchema = new mongoose.Schema({

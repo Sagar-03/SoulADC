@@ -27,6 +27,8 @@ const EditMock = () => {
     correctAnswer: '',
     marks: 1,
     orderIndex: 0,
+    imageUrl: '',
+    imageFile: null,
   });
 
   const [editingIndex, setEditingIndex] = useState(null);
@@ -81,7 +83,52 @@ const EditMock = () => {
     });
   };
 
-  const addOrUpdateQuestion = () => {
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Image size should be less than 5MB');
+        return;
+      }
+      setCurrentQuestion({
+        ...currentQuestion,
+        imageFile: file,
+        imageUrl: URL.createObjectURL(file),
+      });
+    }
+  };
+
+  const removeImage = () => {
+    if (currentQuestion.imageUrl && currentQuestion.imageUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(currentQuestion.imageUrl);
+    }
+    setCurrentQuestion({
+      ...currentQuestion,
+      imageFile: null,
+      imageUrl: '',
+    });
+  };
+
+  const addOption = () => {
+    setCurrentQuestion({
+      ...currentQuestion,
+      options: [...currentQuestion.options, ''],
+    });
+  };
+
+  const removeOption = (index) => {
+    if (currentQuestion.options.length <= 2) {
+      toast.error('At least 2 options are required for MCQ');
+      return;
+    }
+    const newOptions = currentQuestion.options.filter((_, i) => i !== index);
+    setCurrentQuestion({
+      ...currentQuestion,
+      options: newOptions,
+    });
+  };
+
+  const addOrUpdateQuestion = async () => {
     if (!currentQuestion.questionText.trim()) {
       toast.error('Question text is required');
       return;
@@ -100,11 +147,29 @@ const EditMock = () => {
       }
     }
 
+    let imageUrl = currentQuestion.imageUrl;
+
+    // Upload image if new file provided
+    if (currentQuestion.imageFile) {
+      try {
+        const { uploadQuestionImage } = await import('../../Api/api');
+        const response = await uploadQuestionImage(currentQuestion.imageFile);
+        imageUrl = response.data.url;
+        toast.success('Image uploaded successfully');
+      } catch (error) {
+        console.error('Error uploading image:', error);
+        toast.error('Failed to upload image');
+        return;
+      }
+    }
+
     const newQuestion = {
       ...currentQuestion,
       options: currentQuestion.questionType === 'mcq' 
         ? currentQuestion.options.filter(opt => opt.trim() !== '')
         : [],
+      imageUrl,
+      imageFile: undefined,
     };
 
     if (editingIndex !== null) {
@@ -135,6 +200,8 @@ const EditMock = () => {
       correctAnswer: '',
       marks: 1,
       orderIndex: 0,
+      imageUrl: '',
+      imageFile: null,
     });
   };
 
@@ -143,8 +210,10 @@ const EditMock = () => {
     setCurrentQuestion({
       ...question,
       options: question.questionType === 'mcq' 
-        ? [...question.options, '', '', '', ''].slice(0, 4)
+        ? [...question.options, '', '', '', ''].slice(0, Math.max(4, question.options.length))
         : ['', '', '', ''],
+      imageUrl: question.imageUrl || '',
+      imageFile: null,
     });
     setEditingIndex(index);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -172,6 +241,9 @@ const EditMock = () => {
 
   const cancelEdit = () => {
     setEditingIndex(null);
+    if (currentQuestion.imageUrl && currentQuestion.imageUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(currentQuestion.imageUrl);
+    }
     setCurrentQuestion({
       questionText: '',
       questionType: 'mcq',
@@ -179,6 +251,8 @@ const EditMock = () => {
       correctAnswer: '',
       marks: 1,
       orderIndex: 0,
+      imageUrl: '',
+      imageFile: null,
     });
   };
 
@@ -340,15 +414,29 @@ const EditMock = () => {
             <div className="form-group">
               <label>Options</label>
               {currentQuestion.options.map((option, index) => (
-                <input
-                  key={index}
-                  type="text"
-                  value={option}
-                  onChange={(e) => handleOptionChange(index, e.target.value)}
-                  placeholder={`Option ${index + 1}`}
-                  className="option-input"
-                />
+                <div key={index} className="option-input-wrapper">
+                  <input
+                    type="text"
+                    value={option}
+                    onChange={(e) => handleOptionChange(index, e.target.value)}
+                    placeholder={`Option ${index + 1}`}
+                    className="option-input"
+                  />
+                  {currentQuestion.options.length > 2 && (
+                    <button
+                      type="button"
+                      onClick={() => removeOption(index)}
+                      className="remove-option-btn"
+                      title="Remove option"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
               ))}
+              <button type="button" onClick={addOption} className="add-option-btn">
+                + Add Option
+              </button>
             </div>
           )}
 
@@ -391,6 +479,30 @@ const EditMock = () => {
             />
           </div>
 
+          <div className="form-group">
+            <label>Question Image (Optional)</label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageChange}
+              style={{ display: 'none' }}
+              id="question-image-upload"
+            />
+            {!currentQuestion.imageUrl ? (
+              <label htmlFor="question-image-upload" className="upload-image-btn">
+                📷 Upload Image
+              </label>
+            ) : (
+              <div className="image-preview">
+                <img src={currentQuestion.imageUrl} alt="Question" />
+                <button type="button" onClick={removeImage} className="remove-image-btn">
+                  ✕ Remove Image
+                </button>
+              </div>
+            )}
+            <small>Max size: 5MB. Supported formats: JPG, PNG, GIF</small>
+          </div>
+
           <div className="question-actions">
             <button type="button" onClick={addOrUpdateQuestion} className="add-question-btn">
               {editingIndex !== null ? '✓ Update Question' : '+ Add Question'}
@@ -429,6 +541,11 @@ const EditMock = () => {
                       </button>
                     </div>
                   </div>
+                  {question.imageUrl && (
+                    <div className="question-image">
+                      <img src={question.imageUrl} alt="Question" />
+                    </div>
+                  )}
                   <div className="question-details">
                     <span className="question-type">{question.questionType.toUpperCase()}</span>
                     <span className="question-marks">{question.marks} marks</span>
