@@ -34,7 +34,7 @@
 .video-wrapper {
   position: relative;
   background: #000;
-  border-radius: 12px;
+  border-radius: 0;
   overflow: hidden;
   aspect-ratio: 16/9;
 }
@@ -42,8 +42,8 @@
 .main-video {
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  border-radius: 12px;
+  object-fit: contain;
+  border-radius: 0;
 }
 
 .video-info h5 {
@@ -92,11 +92,11 @@
 .progress {
   height: 8px;
   border-radius: 4px;
-  background: #eef1f6;
+  background: #ffffff;
 }
 
 .progress-bar {
-  background: linear-gradient(145deg, #A98C6A, #7B563D);
+  background: #7B563D;
   border-radius: 4px;
   transition: width 0.3s ease;
 }
@@ -122,9 +122,9 @@
   background: #f8f9fa;
 }
 
-.week-header:hover {
+/* .week-header:hover {
   background: #f0f1f3;
-}
+} */
 
 .week-header.active {
   background: linear-gradient(145deg, #A98C6A, #7B563D);

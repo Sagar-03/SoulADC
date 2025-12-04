@@ -363,12 +363,12 @@ const EmbeddedVideoPlayer = () => {
             totalDuration: videoDuration
           };
           
-          console.log("📊 Sending progress to backend:", {
-            progress: `${(progressData.progress * 100).toFixed(1)}%`,
-            time: `${Math.floor(currentVideoTime)}s / ${Math.floor(videoDuration)}s`,
-            courseId,
-            videoId
-          });
+          // console.log("📊 Sending progress to backend:", {
+          //   progress: `${(progressData.progress * 100).toFixed(1)}%`,
+          //   time: `${Math.floor(currentVideoTime)}s / ${Math.floor(videoDuration)}s`,
+          //   courseId,
+          //   videoId
+          // });
           
           // Send to backend asynchronously (don't wait for response)
           updateVideoProgress(progressData)
@@ -555,7 +555,7 @@ const EmbeddedVideoPlayer = () => {
 
           {error && (
             <div className="alert alert-warning mb-4" role="alert">
-              <small>⚠️ Using demo data. {error}</small>
+              <small>Using demo data. {error}</small>
             </div>
           )}
 
@@ -563,7 +563,7 @@ const EmbeddedVideoPlayer = () => {
           {showResumeNotification && savedProgress && (
             <div className="alert alert-info mb-4 d-flex justify-content-between align-items-center" role="alert">
               <div>
-                <strong>🕐 Resume watching?</strong>
+                <strong>Resume watching?</strong>
                 <br />
                 <small>
                   You were at {Math.floor(savedProgress.currentTime / 60)}:{(savedProgress.currentTime % 60).toFixed(0).padStart(2, '0')} 
@@ -701,7 +701,7 @@ const EmbeddedVideoPlayer = () => {
                           {week.days?.map((day, dayIndex) => (
                             <div key={day._id || dayIndex} className="day-item">
                               <div className="day-header">
-                                <small className="day-number">Day {day.dayNumber}</small>
+                                <small className="day-number">{day.dayNumber}</small>
                               </div>
                               <div className="day-contents">
                                 {day.contents?.map((content, contentIndex) => (
