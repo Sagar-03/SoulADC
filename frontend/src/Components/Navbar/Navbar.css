@@ -7,13 +7,13 @@
 
 /* Logo Left */
 .navbar-brand img {
-  height: 70px;   /* larger logo */
+  height: 80px;   /* larger logo */
   width: auto;
   transition: transform 0.3s ease;
 }
 
 .navbar-brand img:hover {
-  transform: scale(1.05);
+  transform: scale(1.02);
 }
 
 /* Nav Links Center */
