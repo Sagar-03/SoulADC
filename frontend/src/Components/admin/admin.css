@@ -136,6 +136,12 @@
   color: white;
 }
 
+/* Disable hover effect on week header card */
+.week-card:hover {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
 .content-type-badge.video {
   background-color: #007bff !important;
 }

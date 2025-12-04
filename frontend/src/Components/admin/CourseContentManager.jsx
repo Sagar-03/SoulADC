@@ -35,14 +35,14 @@ const CourseContentManager = () => {
   const fetchCourse = async () => {
     try {
       const { data } = await getCourses(id);
-      console.log('📚 Fetched course data:', data);
+      // console.log('📚 Fetched course data:', data);
       
       // Check if course uses shared content
       if (data.sharedContentId) {
-        console.log('🔗 Course uses shared content:', data.sharedContent?.name);
-        console.log('📖 Weeks from shared content:', data.weeks?.length || 0);
+        // console.log('🔗 Course uses shared content:', data.sharedContent?.name);
+        // console.log('📖 Weeks from shared content:', data.weeks?.length || 0);
       } else {
-        console.log('📖 Course has direct content, weeks:', data.weeks?.length || 0);
+        // console.log('📖 Course has direct content, weeks:', data.weeks?.length || 0);
       }
       
       setCourse(data);
@@ -134,7 +134,7 @@ const CourseContentManager = () => {
         throw new Error("Could not find selected week or day");
       }
 
-      console.log(`Uploading to Week ${activeWeek.weekNumber}, Day ${activeDay.dayNumber}`);
+      // console.log(`Uploading to Week ${activeWeek.weekNumber}, Day ${activeDay.dayNumber}`);
 
       const folder = activeType === "video" ? "videos" : "documents";
       const MULTIPART_THRESHOLD = 100 * 1024 * 1024; // 100MB threshold for multipart upload
@@ -142,7 +142,7 @@ const CourseContentManager = () => {
 
       // Use multipart upload for files larger than 100MB
       if (file.size > MULTIPART_THRESHOLD) {
-        console.log(`File size: ${(file.size / 1024 / 1024).toFixed(2)}MB - Using multipart upload`);
+        // console.log(`File size: ${(file.size / 1024 / 1024).toFixed(2)}MB - Using multipart upload`);
         
         // 1. Initiate multipart upload
         const initiateRes = await initiateMultipartUpload(
@@ -155,52 +155,113 @@ const CourseContentManager = () => {
         
         const uploadId = initiateRes.data.uploadId;
         key = initiateRes.data.key;
-        console.log("Multipart upload initiated:", { uploadId, key });
+        // console.log("Multipart upload initiated:", { uploadId, key });
 
         try {
-          // 2. Upload file in parts (5MB chunks)
-          const PART_SIZE = 5 * 1024 * 1024; // 5MB per part
+          // 2. Upload file in parts (10MB chunks for faster uploads)
+          const PART_SIZE = 10 * 1024 * 1024; // 10MB per part (optimized for 10GB+ files)
           const numParts = Math.ceil(file.size / PART_SIZE);
           const uploadedParts = [];
+          const CONCURRENT_UPLOADS = 5; // Upload 5 parts in parallel
+          const startTime = Date.now();
+          let uploadedBytes = 0;
 
-          for (let partNumber = 1; partNumber <= numParts; partNumber++) {
-            const start = (partNumber - 1) * PART_SIZE;
-            const end = Math.min(start + PART_SIZE, file.size);
-            const partBlob = file.slice(start, end);
+          // Upload parts in batches for speed
+          for (let batchStart = 1; batchStart <= numParts; batchStart += CONCURRENT_UPLOADS) {
+            const batchEnd = Math.min(batchStart + CONCURRENT_UPLOADS - 1, numParts);
+            const batchPromises = [];
+            
+            for (let partNumber = batchStart; partNumber <= batchEnd; partNumber++) {
+              const start = (partNumber - 1) * PART_SIZE;
+              const end = Math.min(start + PART_SIZE, file.size);
+              const partBlob = file.slice(start, end);
 
-            // Get presigned URL for this part
-            const partUrlRes = await getPresignedPartUrl(key, uploadId, partNumber);
-            const partUploadUrl = partUrlRes.data.uploadUrl;
+              // Create upload promise for this part
+              const uploadPromise = (async () => {
+                // Retry logic for each part (max 3 attempts)
+                let retries = 3;
+                let etag = null;
+                
+                while (retries > 0) {
+                  try {
+                    // Get presigned URL for this part
+                    const partUrlRes = await getPresignedPartUrl(key, uploadId, partNumber);
+                    const partUploadUrl = partUrlRes.data.uploadUrl;
 
-            // Upload part
-            const response = await fetch(partUploadUrl, {
-              method: 'PUT',
-              body: partBlob,
-              headers: {
-                'Content-Type': file.type,
-              },
-            });
+                    // Upload part with XMLHttpRequest for better control
+                    const response = await new Promise((resolve, reject) => {
+                      const xhr = new XMLHttpRequest();
+                      
+                      xhr.open('PUT', partUploadUrl);
+                      xhr.setRequestHeader('Content-Type', file.type);
+                      
+                      xhr.onload = () => {
+                        if (xhr.status === 200) {
+                          resolve(xhr);
+                        } else {
+                          reject(new Error(`Part ${partNumber} upload failed with status: ${xhr.status}`));
+                        }
+                      };
+                      
+                      xhr.onerror = () => reject(new Error(`Part ${partNumber} network error`));
+                      xhr.ontimeout = () => reject(new Error(`Part ${partNumber} timeout`));
+                      
+                      xhr.send(partBlob);
+                    });
 
-            if (!response.ok) {
-              throw new Error(`Part ${partNumber} upload failed with status: ${response.status}`);
+                    // Get ETag from response
+                    etag = response.getResponseHeader('ETag');
+                    if (!etag) {
+                      throw new Error('No ETag received from server');
+                    }
+                    
+                    break; // Success, exit retry loop
+                  } catch (error) {
+                    retries--;
+                    console.warn(`Part ${partNumber} failed, retries left: ${retries}`, error);
+                    if (retries === 0) {
+                      throw new Error(`Part ${partNumber} failed after 3 attempts: ${error.message}`);
+                    }
+                    // Wait before retry (exponential backoff)
+                    await new Promise(resolve => setTimeout(resolve, (4 - retries) * 1000));
+                  }
+                }
+
+                return { partNumber, etag };
+              })();
+
+              batchPromises.push(uploadPromise);
             }
 
-            // Get ETag from response
-            const etag = response.headers.get('ETag');
-            uploadedParts.push({
-              PartNumber: partNumber,
-              ETag: etag,
+            // Wait for all parts in this batch to complete
+            const batchResults = await Promise.all(batchPromises);
+            
+            // Add completed parts to array
+            batchResults.forEach(({ partNumber, etag }) => {
+              uploadedParts.push({
+                PartNumber: partNumber,
+                ETag: etag,
+              });
+              uploadedBytes += PART_SIZE;
             });
 
-            // Update progress
-            const progress = Math.round((partNumber / numParts) * 100);
+            // Calculate and display upload speed
+            const elapsedSeconds = (Date.now() - startTime) / 1000;
+            const speedMBps = (uploadedBytes / 1024 / 1024) / elapsedSeconds;
+            const remainingBytes = file.size - uploadedBytes;
+            const etaSeconds = remainingBytes / (uploadedBytes / elapsedSeconds);
+            const etaMinutes = Math.round(etaSeconds / 60);
+
+            // Update progress with speed info
+            const progress = Math.round((batchEnd / numParts) * 100);
             setUploadProgress(progress);
-            console.log(`Uploaded part ${partNumber}/${numParts} (${progress}%)`);
+            console.log(`✅ Uploaded parts ${batchStart}-${batchEnd}/${numParts} (${progress}%) | Speed: ${speedMBps.toFixed(2)} MB/s | ETA: ${etaMinutes}min`);
           }
 
-          // 3. Complete multipart upload
+          // 3. Sort parts by part number and complete multipart upload
+          uploadedParts.sort((a, b) => a.PartNumber - b.PartNumber);
           await completeMultipartUpload(key, uploadId, uploadedParts);
-          console.log("Multipart upload completed successfully");
+          console.log("✅ Multipart upload completed successfully");
 
         } catch (err) {
           // Abort multipart upload on error
@@ -211,7 +272,7 @@ const CourseContentManager = () => {
 
       } else {
         // Use regular single-part upload for smaller files
-        console.log(`File size: ${(file.size / 1024 / 1024).toFixed(2)}MB - Using single-part upload`);
+        // console.log(`File size: ${(file.size / 1024 / 1024).toFixed(2)}MB - Using single-part upload`);
         
         const presignRes = await getPresignUrl(
           file.name,
@@ -223,7 +284,7 @@ const CourseContentManager = () => {
 
         const uploadUrl = presignRes.data.uploadUrl;
         key = presignRes.data.key;
-        console.log("Got presigned URL and key:", { uploadUrl, key });
+        // console.log("Got presigned URL and key:", { uploadUrl, key });
 
         // Upload file to S3 with progress tracking
         const xhr = new XMLHttpRequest();
@@ -262,7 +323,7 @@ const CourseContentManager = () => {
           s3Key: key,
         });
 
-        console.log("Content saved:", saveRes.data);
+        // console.log("Content saved:", saveRes.data);
       } catch (err) {
         throw new Error("Failed to save content metadata: " + err.message);
       }
@@ -442,7 +503,7 @@ const CourseContentManager = () => {
 
       // Use multipart upload for files larger than 100MB
       if (file.size > MULTIPART_THRESHOLD) {
-        console.log(`File size: ${(file.size / 1024 / 1024).toFixed(2)}MB - Using multipart upload`);
+        // console.log(`File size: ${(file.size / 1024 / 1024).toFixed(2)}MB - Using multipart upload`);
         
         // 1. Initiate multipart upload
         const initiateRes = await initiateMultipartUpload(
@@ -455,52 +516,113 @@ const CourseContentManager = () => {
         
         const uploadId = initiateRes.data.uploadId;
         key = initiateRes.data.key;
-        console.log("Multipart upload initiated:", { uploadId, key });
+        // console.log("Multipart upload initiated:", { uploadId, key });
 
         try {
-          // 2. Upload file in parts (5MB chunks)
-          const PART_SIZE = 5 * 1024 * 1024; // 5MB per part
+          // 2. Upload file in parts (10MB chunks for faster uploads)
+          const PART_SIZE = 10 * 1024 * 1024; // 10MB per part (optimized for 10GB+ files)
           const numParts = Math.ceil(file.size / PART_SIZE);
           const uploadedParts = [];
+          const CONCURRENT_UPLOADS = 5; // Upload 5 parts in parallel
+          const startTime = Date.now();
+          let uploadedBytes = 0;
 
-          for (let partNumber = 1; partNumber <= numParts; partNumber++) {
-            const start = (partNumber - 1) * PART_SIZE;
-            const end = Math.min(start + PART_SIZE, file.size);
-            const partBlob = file.slice(start, end);
+          // Upload parts in batches for speed
+          for (let batchStart = 1; batchStart <= numParts; batchStart += CONCURRENT_UPLOADS) {
+            const batchEnd = Math.min(batchStart + CONCURRENT_UPLOADS - 1, numParts);
+            const batchPromises = [];
+            
+            for (let partNumber = batchStart; partNumber <= batchEnd; partNumber++) {
+              const start = (partNumber - 1) * PART_SIZE;
+              const end = Math.min(start + PART_SIZE, file.size);
+              const partBlob = file.slice(start, end);
 
-            // Get presigned URL for this part
-            const partUrlRes = await getPresignedPartUrl(key, uploadId, partNumber);
-            const partUploadUrl = partUrlRes.data.uploadUrl;
+              // Create upload promise for this part
+              const uploadPromise = (async () => {
+                // Retry logic for each part (max 3 attempts)
+                let retries = 3;
+                let etag = null;
+                
+                while (retries > 0) {
+                  try {
+                    // Get presigned URL for this part
+                    const partUrlRes = await getPresignedPartUrl(key, uploadId, partNumber);
+                    const partUploadUrl = partUrlRes.data.uploadUrl;
 
-            // Upload part
-            const response = await fetch(partUploadUrl, {
-              method: 'PUT',
-              body: partBlob,
-              headers: {
-                'Content-Type': file.type,
-              },
-            });
+                    // Upload part with XMLHttpRequest for better control
+                    const response = await new Promise((resolve, reject) => {
+                      const xhr = new XMLHttpRequest();
+                      
+                      xhr.open('PUT', partUploadUrl);
+                      xhr.setRequestHeader('Content-Type', file.type);
+                      
+                      xhr.onload = () => {
+                        if (xhr.status === 200) {
+                          resolve(xhr);
+                        } else {
+                          reject(new Error(`Part ${partNumber} upload failed with status: ${xhr.status}`));
+                        }
+                      };
+                      
+                      xhr.onerror = () => reject(new Error(`Part ${partNumber} network error`));
+                      xhr.ontimeout = () => reject(new Error(`Part ${partNumber} timeout`));
+                      
+                      xhr.send(partBlob);
+                    });
 
-            if (!response.ok) {
-              throw new Error(`Part ${partNumber} upload failed with status: ${response.status}`);
+                    // Get ETag from response
+                    etag = response.getResponseHeader('ETag');
+                    if (!etag) {
+                      throw new Error('No ETag received from server');
+                    }
+                    
+                    break; // Success, exit retry loop
+                  } catch (error) {
+                    retries--;
+                    console.warn(`Part ${partNumber} failed, retries left: ${retries}`, error);
+                    if (retries === 0) {
+                      throw new Error(`Part ${partNumber} failed after 3 attempts: ${error.message}`);
+                    }
+                    // Wait before retry (exponential backoff)
+                    await new Promise(resolve => setTimeout(resolve, (4 - retries) * 1000));
+                  }
+                }
+
+                return { partNumber, etag };
+              })();
+
+              batchPromises.push(uploadPromise);
             }
 
-            // Get ETag from response
-            const etag = response.headers.get('ETag');
-            uploadedParts.push({
-              PartNumber: partNumber,
-              ETag: etag,
+            // Wait for all parts in this batch to complete
+            const batchResults = await Promise.all(batchPromises);
+            
+            // Add completed parts to array
+            batchResults.forEach(({ partNumber, etag }) => {
+              uploadedParts.push({
+                PartNumber: partNumber,
+                ETag: etag,
+              });
+              uploadedBytes += PART_SIZE;
             });
 
-            // Update progress
-            const progress = Math.round((partNumber / numParts) * 100);
+            // Calculate and display upload speed
+            const elapsedSeconds = (Date.now() - startTime) / 1000;
+            const speedMBps = (uploadedBytes / 1024 / 1024) / elapsedSeconds;
+            const remainingBytes = file.size - uploadedBytes;
+            const etaSeconds = remainingBytes / (uploadedBytes / elapsedSeconds);
+            const etaMinutes = Math.round(etaSeconds / 60);
+
+            // Update progress with speed info
+            const progress = Math.round((batchEnd / numParts) * 100);
             setUploadProgress(progress);
-            console.log(`Uploaded part ${partNumber}/${numParts} (${progress}%)`);
+            console.log(`✅ Uploaded parts ${batchStart}-${batchEnd}/${numParts} (${progress}%) | Speed: ${speedMBps.toFixed(2)} MB/s | ETA: ${etaMinutes}min`);
           }
 
-          // 3. Complete multipart upload
+          // 3. Sort parts by part number and complete multipart upload
+          uploadedParts.sort((a, b) => a.PartNumber - b.PartNumber);
           await completeMultipartUpload(key, uploadId, uploadedParts);
-          console.log("Multipart upload completed successfully");
+          console.log("✅ Multipart upload completed successfully");
 
         } catch (err) {
           // Abort multipart upload on error
@@ -511,7 +633,7 @@ const CourseContentManager = () => {
 
       } else {
         // Use regular single-part upload for smaller files
-        console.log(`File size: ${(file.size / 1024 / 1024).toFixed(2)}MB - Using single-part upload`);
+        // console.log(`File size: ${(file.size / 1024 / 1024).toFixed(2)}MB - Using single-part upload`);
         
         const presignRes = await getPresignUrl(
           file.name,
@@ -523,7 +645,7 @@ const CourseContentManager = () => {
 
         const uploadUrl = presignRes.data.uploadUrl;
         key = presignRes.data.key;
-        console.log("Got presigned URL and key:", { uploadUrl, key });
+        // console.log("Got presigned URL and key:", { uploadUrl, key });
 
         // Upload file to S3 with progress tracking
         const xhr = new XMLHttpRequest();

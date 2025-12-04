@@ -28,7 +28,7 @@ const Leftsidebar = () => {
     return !hasCourses && hasMocks;
   };
 
-  // ✅ Handle restricted navigation
+  // Handle restricted navigation
   const handleRestrictedClick = (navigateTo) => {
     if (hasOnlyMockAccess()) {
       setShowModal(true);
@@ -37,7 +37,7 @@ const Leftsidebar = () => {
     }
   };
 
-  // ✅ Force signout function
+  // Force signout function
   const handleSignOut = () => {
     logout(); // clears cookies + emits auth change
     navigate("/login"); // redirect to login

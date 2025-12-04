@@ -262,10 +262,8 @@ const EmbeddedVideoPlayer = () => {
     // Blur when user switches tab/window
     const handleWindowBlur = () => {
       setIsBlurred(true);
-      // Check for potential screenshot tool usage
-      screenshotDetectionTimeout = setTimeout(() => {
-        handleScreenshotAttempt();
-      }, 100);
+      // Trigger immediately for instant detection
+      handleScreenshotAttempt();
     };
 
     const handleWindowFocus = () => {
@@ -278,9 +276,8 @@ const EmbeddedVideoPlayer = () => {
     const handleVisibilityChange = () => {
       if (document.hidden) {
         setIsBlurred(true);
-        screenshotDetectionTimeout = setTimeout(() => {
-          handleScreenshotAttempt();
-        }, 100);
+        // Trigger immediately for instant detection
+        handleScreenshotAttempt();
       } else {
         setIsBlurred(false);
         if (screenshotDetectionTimeout) {
@@ -530,16 +527,17 @@ const EmbeddedVideoPlayer = () => {
   }
 
   return (
-    <StudentLayout>
-      {/* Screenshot Warning Modal */}
+    <>
+      {/* Screenshot Warning Modal - Outside StudentLayout for proper z-index */}
       <ScreenshotWarning 
         show={showScreenshotWarning}
         screenshotCount={screenshotCount}
         onReload={handleReloadPage}
       />
 
-      <div className="video-player-page" style={{ userSelect: 'none' }}>
-        <div className="container-fluid px-4">
+      <StudentLayout>
+        <div className="video-player-page" style={{ userSelect: 'none' }}>
+          <div className="container-fluid px-4">
           <div className="video-header d-flex justify-content-between align-items-center mb-4">
             <div style={{ flex: 1, maxWidth: '70%' }}>
               <button
@@ -744,6 +742,7 @@ const EmbeddedVideoPlayer = () => {
         </div>
       </div>
     </StudentLayout>
+    </>
   );
 };
 

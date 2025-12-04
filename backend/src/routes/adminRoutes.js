@@ -103,12 +103,12 @@ router.get("/courses/:id", protect, adminOnly, async (req, res) => {
 
 /**
  * POST /api/admin/courses/:id/weeks
- * Add a week to a course
+ * Add a week to a course (supports both direct and shared content)
  */
 router.post("/courses/:id/weeks", protect, adminOnly, async (req, res) => {
   try {
     const { weekNumber, title } = req.body;
-    const course = await Course.findById(req.params.id);
+    const course = await Course.findById(req.params.id).populate('sharedContentId');
     if (!course) return res.status(404).json({ error: "Course not found" });
 
     // Create a week with 7 days
@@ -121,45 +121,98 @@ router.post("/courses/:id/weeks", protect, adminOnly, async (req, res) => {
       });
     }
 
-    course.weeks.push({ weekNumber, title, days });
-    await course.save();
-    res.json(course);
+    const newWeek = { weekNumber, title, days };
+
+    // Check if course uses shared content
+    if (course.sharedContentId) {
+      const SharedContent = require("../models/SharedContent");
+      const sharedContent = await SharedContent.findById(course.sharedContentId._id);
+      
+      if (!sharedContent) {
+        return res.status(404).json({ error: "SharedContent not found" });
+      }
+
+      sharedContent.weeks.push(newWeek);
+      await sharedContent.save();
+      console.log(`✅ Week ${weekNumber} added to SharedContent: ${sharedContent.name}`);
+      res.json(sharedContent);
+    } else {
+      // Course has direct content
+      course.weeks.push(newWeek);
+      await course.save();
+      console.log(`✅ Week ${weekNumber} added to Course: ${course.title}`);
+      res.json(course);
+    }
   } catch (err) {
+    console.error("❌ Error adding week:", err);
     res.status(500).json({ error: err.message });
   }
 });
 
 /**
  * POST /api/admin/courses/:courseId/weeks/:weekId/days
- * Add a day to an existing week
+ * Add a day to an existing week (supports both direct and shared content)
  */
 router.post("/courses/:courseId/weeks/:weekId/days", protect, adminOnly, async (req, res) => {
   try {
     const { courseId, weekId } = req.params;
     const { dayTitle } = req.body;
 
-    const course = await Course.findById(courseId);
+    const course = await Course.findById(courseId).populate('sharedContentId');
     if (!course) return res.status(404).json({ error: "Course not found" });
 
-    const week = course.weeks.id(weekId);
-    if (!week) return res.status(404).json({ error: "Week not found" });
+    // Check if course uses shared content
+    if (course.sharedContentId) {
+      const SharedContent = require("../models/SharedContent");
+      const sharedContent = await SharedContent.findById(course.sharedContentId._id);
+      
+      if (!sharedContent) {
+        return res.status(404).json({ error: "SharedContent not found" });
+      }
 
-    // Find the next day number for this week
-    const maxDayNumber = week.days.length > 0
-      ? Math.max(...week.days.map(day => day.dayNumber))
-      : 0;
-    const nextDayNumber = maxDayNumber + 1;
+      const week = sharedContent.weeks.id(weekId);
+      if (!week) return res.status(404).json({ error: "Week not found in SharedContent" });
 
-    // Add the new day
-    week.days.push({
-      dayNumber: nextDayNumber,
-      title: dayTitle || `Day ${nextDayNumber}`,
-      contents: []
-    });
+      // Find the next day number for this week
+      const maxDayNumber = week.days.length > 0
+        ? Math.max(...week.days.map(day => day.dayNumber))
+        : 0;
+      const nextDayNumber = maxDayNumber + 1;
 
-    await course.save();
-    res.json(course);
+      // Add the new day
+      week.days.push({
+        dayNumber: nextDayNumber,
+        title: dayTitle || `Day ${nextDayNumber}`,
+        contents: []
+      });
+
+      await sharedContent.save();
+      console.log(`✅ Day ${nextDayNumber} added to SharedContent week ${week.weekNumber}`);
+      res.json(sharedContent);
+    } else {
+      // Course has direct content
+      const week = course.weeks.id(weekId);
+      if (!week) return res.status(404).json({ error: "Week not found" });
+
+      // Find the next day number for this week
+      const maxDayNumber = week.days.length > 0
+        ? Math.max(...week.days.map(day => day.dayNumber))
+        : 0;
+      const nextDayNumber = maxDayNumber + 1;
+
+      // Add the new day
+      week.days.push({
+        dayNumber: nextDayNumber,
+        title: dayTitle || `Day ${nextDayNumber}`,
+        contents: []
+      });
+
+      await course.save();
+      console.log(`✅ Day ${nextDayNumber} added to Course week ${week.weekNumber}`);
+      res.json(course);
+    }
   } catch (err) {
+    console.error("❌ Error adding day:", err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -234,66 +287,127 @@ router.post("/courses/:courseId/weeks/:weekId/documents", protect, adminOnly, as
 
 /**
  * POST /api/admin/courses/:courseId/weeks/:weekId/days/:dayId/contents
- * Add video/document to a specific day
+ * Add video/document to a specific day (supports both direct and shared content)
  */
 router.post("/courses/:courseId/weeks/:weekId/days/:dayId/contents", protect, adminOnly, async (req, res) => {
   try {
     const { type, title, s3Key } = req.body;
-    const course = await Course.findById(req.params.courseId);
+    const course = await Course.findById(req.params.courseId).populate('sharedContentId');
     if (!course) return res.status(404).json({ error: "Course not found" });
 
-    const week = course.weeks.id(req.params.weekId);
-    if (!week) return res.status(404).json({ error: "Week not found" });
+    // Check if course uses shared content
+    if (course.sharedContentId) {
+      const SharedContent = require("../models/SharedContent");
+      const sharedContent = await SharedContent.findById(course.sharedContentId._id);
+      
+      if (!sharedContent) {
+        return res.status(404).json({ error: "SharedContent not found" });
+      }
 
-    const day = week.days.id(req.params.dayId);
-    if (!day) return res.status(404).json({ error: "Day not found" });
+      const week = sharedContent.weeks.id(req.params.weekId);
+      if (!week) return res.status(404).json({ error: "Week not found in SharedContent" });
 
-    day.contents.push({ type, title, s3Key });
-    await course.save();
-    res.json(course);
+      const day = week.days.id(req.params.dayId);
+      if (!day) return res.status(404).json({ error: "Day not found" });
+
+      day.contents.push({ type, title, s3Key });
+      await sharedContent.save();
+      console.log(`✅ Content added to SharedContent day ${day.dayNumber}`);
+      res.json(sharedContent);
+    } else {
+      // Course has direct content
+      const week = course.weeks.id(req.params.weekId);
+      if (!week) return res.status(404).json({ error: "Week not found" });
+
+      const day = week.days.id(req.params.dayId);
+      if (!day) return res.status(404).json({ error: "Day not found" });
+
+      day.contents.push({ type, title, s3Key });
+      await course.save();
+      console.log(`✅ Content added to Course day ${day.dayNumber}`);
+      res.json(course);
+    }
   } catch (err) {
+    console.error("❌ Error adding content:", err);
     res.status(500).json({ error: err.message });
   }
 });
 
 /**
  * DELETE /api/admin/courses/:courseId/weeks/:weekId/days/:dayId/contents/:contentId
- * Delete content from a specific day
+ * Delete content from a specific day (supports both direct and shared content)
  */
 router.delete("/courses/:courseId/weeks/:weekId/days/:dayId/contents/:contentId", protect, adminOnly, async (req, res) => {
   try {
-    console.log(" Delete request received:", req.params); // 👈 Add this
+    console.log("🗑️ Delete request received:", req.params);
     const { courseId, weekId, dayId, contentId } = req.params;
-    const course = await Course.findById(courseId);
+    const course = await Course.findById(courseId).populate('sharedContentId');
     if (!course) return res.status(404).json({ error: "Course not found" });
 
-    const week = course.weeks.id(weekId);
-    if (!week) return res.status(404).json({ error: "Week not found" });
+    // Check if course uses shared content
+    if (course.sharedContentId) {
+      const SharedContent = require("../models/SharedContent");
+      const sharedContent = await SharedContent.findById(course.sharedContentId._id);
+      
+      if (!sharedContent) {
+        return res.status(404).json({ error: "SharedContent not found" });
+      }
 
-    const day = week.days.id(dayId);
-    if (!day) return res.status(404).json({ error: "Day not found" });
+      const week = sharedContent.weeks.id(weekId);
+      if (!week) return res.status(404).json({ error: "Week not found in SharedContent" });
 
-    const content = day.contents.id(contentId);
-    if (!content) return res.status(404).json({ error: "Content not found" });
+      const day = week.days.id(dayId);
+      if (!day) return res.status(404).json({ error: "Day not found" });
 
-    // Delete from S3 if s3 is available
-    try {
-      const s3 = require("../config/s3");
-      const { DeleteObjectCommand } = require("@aws-sdk/client-s3");
-      const deleteParams = {
-        Bucket: process.env.AWS_S3_BUCKET,
-        Key: content.s3Key
-      };
-      await s3.send(new DeleteObjectCommand(deleteParams));
-    } catch (s3Error) {
-      console.warn("Failed to delete from S3:", s3Error.message);
+      const content = day.contents.id(contentId);
+      if (!content) return res.status(404).json({ error: "Content not found" });
+
+      // Delete from S3 if s3 is available
+      try {
+        const s3 = require("../config/s3");
+        const { DeleteObjectCommand } = require("@aws-sdk/client-s3");
+        await s3.send(new DeleteObjectCommand({
+          Bucket: process.env.AWS_S3_BUCKET,
+          Key: content.s3Key
+        }));
+      } catch (s3Error) {
+        console.warn("Failed to delete from S3:", s3Error.message);
+      }
+
+      // Remove from SharedContent
+      content.deleteOne();
+      await sharedContent.save();
+      console.log(`✅ Content deleted from SharedContent`);
+      res.json({ success: true, message: "Content deleted from SharedContent" });
+    } else {
+      // Course has direct content
+      const week = course.weeks.id(weekId);
+      if (!week) return res.status(404).json({ error: "Week not found" });
+
+      const day = week.days.id(dayId);
+      if (!day) return res.status(404).json({ error: "Day not found" });
+
+      const content = day.contents.id(contentId);
+      if (!content) return res.status(404).json({ error: "Content not found" });
+
+      // Delete from S3 if s3 is available
+      try {
+        const s3 = require("../config/s3");
+        const { DeleteObjectCommand } = require("@aws-sdk/client-s3");
+        await s3.send(new DeleteObjectCommand({
+          Bucket: process.env.AWS_S3_BUCKET,
+          Key: content.s3Key
+        }));
+      } catch (s3Error) {
+        console.warn("Failed to delete from S3:", s3Error.message);
+      }
+
+      // Remove from Course
+      content.deleteOne();
+      await course.save();
+      console.log(`✅ Content deleted from Course`);
+      res.json({ success: true, message: "Content deleted" });
     }
-
-    // Remove from DB
-    content.deleteOne();
-    await course.save();
-
-    res.json({ success: true, message: "Content deleted" });
   } catch (err) {
     console.error("delete-content error:", err);
     res.status(500).json({ error: err.message });
@@ -302,42 +416,93 @@ router.delete("/courses/:courseId/weeks/:weekId/days/:dayId/contents/:contentId"
 
 /**
  * DELETE /api/admin/courses/:courseId/weeks/:weekId
- * Delete an entire week
+ * Delete an entire week (supports both direct and shared content)
  */
 router.delete("/courses/:courseId/weeks/:weekId", protect, adminOnly, async (req, res) => {
   try {
     const { courseId, weekId } = req.params;
-    const course = await Course.findById(courseId);
+    const course = await Course.findById(courseId).populate('sharedContentId');
     if (!course) return res.status(404).json({ error: "Course not found" });
 
-    const week = course.weeks.id(weekId);
-    if (!week) return res.status(404).json({ error: "Week not found" });
+    // Check if course uses shared content
+    if (course.sharedContentId) {
+      const SharedContent = require("../models/SharedContent");
+      const sharedContent = await SharedContent.findById(course.sharedContentId._id);
+      
+      if (!sharedContent) {
+        return res.status(404).json({ error: "SharedContent not found" });
+      }
 
-    // Delete all content from S3 for this week
-    try {
-      const s3 = require("../config/s3");
-      const { DeleteObjectCommand } = require("@aws-sdk/client-s3");
+      const week = sharedContent.weeks.id(weekId);
+      if (!week) return res.status(404).json({ error: "Week not found in SharedContent" });
 
-      for (const day of week.days || []) {
-        for (const content of day.contents || []) {
-          if (content.s3Key) {
-            const deleteParams = {
-              Bucket: process.env.AWS_S3_BUCKET,
-              Key: content.s3Key
-            };
-            await s3.send(new DeleteObjectCommand(deleteParams));
+      // Delete all content from S3 for this week
+      try {
+        const s3 = require("../config/s3");
+        const { DeleteObjectCommand } = require("@aws-sdk/client-s3");
+
+        // Delete week-level documents
+        if (week.documents && week.documents.length > 0) {
+          for (const doc of week.documents) {
+            if (doc.s3Key) {
+              await s3.send(new DeleteObjectCommand({
+                Bucket: process.env.AWS_S3_BUCKET,
+                Key: doc.s3Key
+              }));
+            }
           }
         }
+
+        // Delete day-level contents
+        for (const day of week.days || []) {
+          for (const content of day.contents || []) {
+            if (content.s3Key) {
+              await s3.send(new DeleteObjectCommand({
+                Bucket: process.env.AWS_S3_BUCKET,
+                Key: content.s3Key
+              }));
+            }
+          }
+        }
+      } catch (s3Error) {
+        console.warn("Failed to delete some S3 content:", s3Error.message);
       }
-    } catch (s3Error) {
-      console.warn("Failed to delete some S3 content:", s3Error.message);
+
+      // Remove week from SharedContent
+      week.deleteOne();
+      await sharedContent.save();
+      console.log(`✅ Week deleted from SharedContent: ${sharedContent.name}`);
+      res.json({ success: true, message: "Week deleted successfully from SharedContent" });
+    } else {
+      // Course has direct content
+      const week = course.weeks.id(weekId);
+      if (!week) return res.status(404).json({ error: "Week not found" });
+
+      // Delete all content from S3 for this week
+      try {
+        const s3 = require("../config/s3");
+        const { DeleteObjectCommand } = require("@aws-sdk/client-s3");
+
+        for (const day of week.days || []) {
+          for (const content of day.contents || []) {
+            if (content.s3Key) {
+              await s3.send(new DeleteObjectCommand({
+                Bucket: process.env.AWS_S3_BUCKET,
+                Key: content.s3Key
+              }));
+            }
+          }
+        }
+      } catch (s3Error) {
+        console.warn("Failed to delete some S3 content:", s3Error.message);
+      }
+
+      // Remove week from Course
+      week.deleteOne();
+      await course.save();
+      console.log(`✅ Week deleted from Course: ${course.title}`);
+      res.json({ success: true, message: "Week deleted successfully" });
     }
-
-    // Remove week from DB
-    week.deleteOne();
-    await course.save();
-
-    res.json({ success: true, message: "Week deleted successfully" });
   } catch (err) {
     console.error("delete-week error:", err);
     res.status(500).json({ error: err.message });
@@ -346,43 +511,82 @@ router.delete("/courses/:courseId/weeks/:weekId", protect, adminOnly, async (req
 
 /**
  * DELETE /api/admin/courses/:courseId/weeks/:weekId/days/:dayId
- * Delete a specific day and all its content
+ * Delete a specific day and all its content (supports both direct and shared content)
  */
 router.delete("/courses/:courseId/weeks/:weekId/days/:dayId", protect, adminOnly, async (req, res) => {
   try {
     const { courseId, weekId, dayId } = req.params;
-    const course = await Course.findById(courseId);
+    const course = await Course.findById(courseId).populate('sharedContentId');
     if (!course) return res.status(404).json({ error: "Course not found" });
 
-    const week = course.weeks.id(weekId);
-    if (!week) return res.status(404).json({ error: "Week not found" });
-
-    const day = week.days.id(dayId);
-    if (!day) return res.status(404).json({ error: "Day not found" });
-
-    // Delete all content from S3 for this day
-    try {
-      const s3 = require("../config/s3");
-      const { DeleteObjectCommand } = require("@aws-sdk/client-s3");
-
-      for (const content of day.contents || []) {
-        if (content.s3Key) {
-          const deleteParams = {
-            Bucket: process.env.AWS_S3_BUCKET,
-            Key: content.s3Key
-          };
-          await s3.send(new DeleteObjectCommand(deleteParams));
-        }
+    // Check if course uses shared content
+    if (course.sharedContentId) {
+      const SharedContent = require("../models/SharedContent");
+      const sharedContent = await SharedContent.findById(course.sharedContentId._id);
+      
+      if (!sharedContent) {
+        return res.status(404).json({ error: "SharedContent not found" });
       }
-    } catch (s3Error) {
-      console.warn("Failed to delete some S3 content:", s3Error.message);
+
+      const week = sharedContent.weeks.id(weekId);
+      if (!week) return res.status(404).json({ error: "Week not found in SharedContent" });
+
+      const day = week.days.id(dayId);
+      if (!day) return res.status(404).json({ error: "Day not found" });
+
+      // Delete all content from S3 for this day
+      try {
+        const s3 = require("../config/s3");
+        const { DeleteObjectCommand } = require("@aws-sdk/client-s3");
+
+        for (const content of day.contents || []) {
+          if (content.s3Key) {
+            await s3.send(new DeleteObjectCommand({
+              Bucket: process.env.AWS_S3_BUCKET,
+              Key: content.s3Key
+            }));
+          }
+        }
+      } catch (s3Error) {
+        console.warn("Failed to delete some S3 content:", s3Error.message);
+      }
+
+      // Remove day from SharedContent
+      day.deleteOne();
+      await sharedContent.save();
+      console.log(`✅ Day deleted from SharedContent week ${week.weekNumber}`);
+      res.json({ success: true, message: "Day deleted successfully from SharedContent" });
+    } else {
+      // Course has direct content
+      const week = course.weeks.id(weekId);
+      if (!week) return res.status(404).json({ error: "Week not found" });
+
+      const day = week.days.id(dayId);
+      if (!day) return res.status(404).json({ error: "Day not found" });
+
+      // Delete all content from S3 for this day
+      try {
+        const s3 = require("../config/s3");
+        const { DeleteObjectCommand } = require("@aws-sdk/client-s3");
+
+        for (const content of day.contents || []) {
+          if (content.s3Key) {
+            await s3.send(new DeleteObjectCommand({
+              Bucket: process.env.AWS_S3_BUCKET,
+              Key: content.s3Key
+            }));
+          }
+        }
+      } catch (s3Error) {
+        console.warn("Failed to delete some S3 content:", s3Error.message);
+      }
+
+      // Remove day from Course
+      day.deleteOne();
+      await course.save();
+      console.log(`✅ Day deleted from Course week ${week.weekNumber}`);
+      res.json({ success: true, message: "Day deleted successfully" });
     }
-
-    // Remove day from DB
-    day.deleteOne();
-    await course.save();
-
-    res.json({ success: true, message: "Day deleted successfully" });
   } catch (err) {
     console.error("delete-day error:", err);
     res.status(500).json({ error: err.message });
@@ -391,7 +595,7 @@ router.delete("/courses/:courseId/weeks/:weekId/days/:dayId", protect, adminOnly
 
 /**
  * PUT /api/admin/courses/:courseId/weeks/:weekId/days/:dayId/contents/:contentId
- * Update content title
+ * Update content title (supports both direct and shared content)
  */
 router.put("/courses/:courseId/weeks/:weekId/days/:dayId/contents/:contentId", protect, adminOnly, async (req, res) => {
   try {
@@ -402,22 +606,47 @@ router.put("/courses/:courseId/weeks/:weekId/days/:dayId/contents/:contentId", p
       return res.status(400).json({ error: "Title is required" });
     }
 
-    const course = await Course.findById(courseId);
+    const course = await Course.findById(courseId).populate('sharedContentId');
     if (!course) return res.status(404).json({ error: "Course not found" });
 
-    const week = course.weeks.id(weekId);
-    if (!week) return res.status(404).json({ error: "Week not found" });
+    // Check if course uses shared content
+    if (course.sharedContentId) {
+      const SharedContent = require("../models/SharedContent");
+      const sharedContent = await SharedContent.findById(course.sharedContentId._id);
+      
+      if (!sharedContent) {
+        return res.status(404).json({ error: "SharedContent not found" });
+      }
 
-    const day = week.days.id(dayId);
-    if (!day) return res.status(404).json({ error: "Day not found" });
+      const week = sharedContent.weeks.id(weekId);
+      if (!week) return res.status(404).json({ error: "Week not found in SharedContent" });
 
-    const content = day.contents.id(contentId);
-    if (!content) return res.status(404).json({ error: "Content not found" });
+      const day = week.days.id(dayId);
+      if (!day) return res.status(404).json({ error: "Day not found" });
 
-    content.title = title;
-    await course.save();
+      const content = day.contents.id(contentId);
+      if (!content) return res.status(404).json({ error: "Content not found" });
 
-    res.json({ message: "Content title updated successfully", content });
+      content.title = title;
+      await sharedContent.save();
+      console.log(`✅ Content title updated in SharedContent`);
+      res.json({ message: "Content title updated successfully in SharedContent", content });
+    } else {
+      // Course has direct content
+      const week = course.weeks.id(weekId);
+      if (!week) return res.status(404).json({ error: "Week not found" });
+
+      const day = week.days.id(dayId);
+      if (!day) return res.status(404).json({ error: "Day not found" });
+
+      const content = day.contents.id(contentId);
+      if (!content) return res.status(404).json({ error: "Content not found" });
+
+      content.title = title;
+      await course.save();
+      console.log(`✅ Content title updated in Course`);
+      res.json({ message: "Content title updated successfully", content });
+    }
   } catch (err) {
     console.error("update-content-title error:", err);
     res.status(500).json({ error: err.message });

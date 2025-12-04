@@ -7,6 +7,7 @@ const API_BASE_URL =
 const api = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true,
+  timeout: 0, // No timeout for large file uploads
 });
 
 // Add request interceptor to include auth token
