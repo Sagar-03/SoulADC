@@ -1532,4 +1532,73 @@ router.post("/reject-payment/:userId/:approvalId", protect, adminOnly, async (re
   }
 });
 
+/**
+ * POST /api/admin/reset-device-lock/:userId
+ * Reset device and IP lock for a specific user
+ * Allows student to login from a new device/IP
+ */
+router.post("/reset-device-lock/:userId", protect, adminOnly, async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    // Validate userId format
+    if (!userId.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).json({ 
+        success: false,
+        message: "Invalid user ID format" 
+      });
+    }
+
+    // Find the user
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ 
+        success: false,
+        message: "User not found" 
+      });
+    }
+
+    // Don't allow resetting admin accounts
+    if (user.role === "admin") {
+      return res.status(403).json({ 
+        success: false,
+        message: "Cannot reset device lock for admin accounts" 
+      });
+    }
+
+    // Store previous values for logging
+    const previousIp = user.registeredIp;
+    const previousFingerprint = user.deviceFingerprint;
+
+    // Clear device lock
+    user.registeredIp = null;
+    user.deviceFingerprint = null;
+    await user.save();
+
+    console.log(`✅ Admin ${req.user.email} reset device lock for user ${user.email}`, {
+      previousIp,
+      previousFingerprint: previousFingerprint?.substring(0, 10) + '...'
+    });
+
+    res.json({ 
+      success: true,
+      message: "Device lock reset successfully. User can now login from a new device.",
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        deviceLockCleared: true
+      }
+    });
+  } catch (err) {
+    console.error("❌ Error resetting device lock:", err.message);
+    res.status(500).json({ 
+      success: false,
+      message: "Failed to reset device lock",
+      error: err.message 
+    });
+  }
+});
+
 module.exports = router;
+

@@ -83,54 +83,54 @@ const MocksPage = () => {
             <div className="mocks-grid">
               {mocks.map((mock) => (
                 <div key={mock._id} className="mock-card">
-                  <div className="mock-card-header">
-                    <div className="mock-status-badges">
-                      <span className="mock-badge">LIVE</span>
-                      {mock.cutPrice > 0 && (
-                        <span className="discount-badge">
-                          {Math.round(((mock.cutPrice - mock.price) / mock.cutPrice) * 100)}% OFF
-                        </span>
-                      )}
+                  <div className="mock-card-content">
+                    {/* Title and Description */}
+                    <div className="mock-header">
+                      <h3 className="mock-title">{mock.title}</h3>
+                      <p className="mock-description">
+                        {mock.description || 'Comprehensive mock exam to test your knowledge'}
+                      </p>
                     </div>
-                    <div className="mock-icon">📝</div>
+
+                    {/* Info Grid - 2 Columns */}
+                    <div className="mock-info-grid">
+                      <div className="info-item">
+                        <span className="info-label">Fee*</span>
+                        <div className="info-value-group">
+                          {mock.cutPrice > 0 && (
+                            <span className="price-old">AUD {mock.cutPrice}</span>
+                          )}
+                          <span className="price-current">AUD {mock.price}</span>
+                        </div>
+                      </div>
+                      
+                      <div className="info-item">
+                        <span className="info-label">Duration</span>
+                        <span className="info-value">{(mock.duration / 60).toFixed(1)} hours</span>
+                      </div>
+                      
+                      <div className="info-item">
+                        <span className="info-label">Questions</span>
+                        <span className="info-value">{mock.questions?.length || 0}</span>
+                      </div>
+                      
+                      <div className="info-item">
+                        <span className="info-label">Location</span>
+                        <span className="info-value">Online</span>
+                      </div>
+                    </div>
                   </div>
 
-                  <div className="mock-card-content">
-                    <h3>{mock.title}</h3>
-                    <p className="mock-desc">
-                      {mock.description || 'Comprehensive mock exam to test your knowledge'}
-                    </p>
-
-                    <div className="mock-stats-grid">
-                      <div className="stat-item">
-                        <span className="stat-label">Questions</span>
-                        <span className="stat-value">{mock.questions?.length || 0}</span>
-                      </div>
-                      <div className="stat-item">
-                        <span className="stat-label">Duration</span>
-                        <span className="stat-value">{mock.duration} min</span>
-                      </div>
-                      <div className="stat-item">
-                        <span className="stat-label">Marks</span>
-                        <span className="stat-value">{mock.totalMarks}</span>
-                      </div>
-                    </div>
-
-                    <div className="mock-card-footer">
-                      <div className="price-section">
-                        {mock.cutPrice > 0 && (
-                          <span className="original-price">AUD {mock.cutPrice}</span>
-                        )}
-                        <span className="current-price">AUD {mock.price}</span>
-                      </div>
-                      <button
-                        className="enroll-btn"
-                        onClick={() => handleEnroll(mock._id, mock.title, mock.price)}
-                        disabled={purchasing === mock._id}
-                      >
-                        {purchasing === mock._id ? 'Processing...' : 'Enroll Now'}
-                      </button>
-                    </div>
+                  {/* Action Buttons */}
+                  <div className="mock-card-footer">
+                    <button className="contact-btn">Contact Us</button>
+                    <button
+                      className="enroll-btn"
+                      onClick={() => handleEnroll(mock._id, mock.title, mock.price)}
+                      disabled={purchasing === mock._id}
+                    >
+                      {purchasing === mock._id ? 'Processing...' : 'Enroll'}
+                    </button>
                   </div>
                 </div>
               ))}

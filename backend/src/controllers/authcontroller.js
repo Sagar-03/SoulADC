@@ -95,6 +95,45 @@ const login = async (req, res) => {
       return res.status(400).json({ message: "Invalid email or password" });
     }
 
+    // ✅ DEVICE & IP SECURITY CHECK (only for non-admin users)
+    if (user.role !== "admin") {
+      const currentIp = req.headers['x-forwarded-for']?.split(',')[0].trim() || 
+                        req.connection.remoteAddress || 
+                        req.socket.remoteAddress || 
+                        req.ip;
+      const currentFingerprint = req.body.deviceFingerprint;
+
+      // If this is the first login (no stored IP/fingerprint), store them
+      if (!user.registeredIp && !user.deviceFingerprint) {
+        if (currentFingerprint) {
+          user.registeredIp = currentIp;
+          user.deviceFingerprint = currentFingerprint;
+          await user.save();
+          console.log("✅ First login - Device and IP registered:", { ip: currentIp, fingerprint: currentFingerprint.substring(0, 10) + '...' });
+        }
+      } else {
+        // Subsequent logins - verify IP and fingerprint match
+        const ipMatches = user.registeredIp === currentIp;
+        const fingerprintMatches = user.deviceFingerprint === currentFingerprint;
+
+        if (!ipMatches || !fingerprintMatches) {
+          console.log("❌ Login blocked - Device/IP mismatch:", {
+            storedIp: user.registeredIp,
+            currentIp,
+            storedFingerprint: user.deviceFingerprint?.substring(0, 10) + '...',
+            currentFingerprint: currentFingerprint?.substring(0, 10) + '...',
+            ipMatches,
+            fingerprintMatches
+          });
+          return res.status(403).json({ 
+            message: "Login blocked: Unauthorized device or IP.",
+            details: "This account is locked to a specific device and IP address. Please contact support if you need to access from a different device."
+          });
+        }
+        console.log("✅ Device and IP verified successfully");
+      }
+    }
+
     // Update streak data
     const today = new Date();
     today.setHours(0, 0, 0, 0); // Set to start of day for accurate comparison

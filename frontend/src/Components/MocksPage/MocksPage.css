@@ -135,184 +135,155 @@
 /* Mocks Grid */
 .mocks-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 30px;
 }
 
 .mock-card {
   background: white;
-  border-radius: 12px;
+  border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
   transition: all 0.3s ease;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #e5e5e5;
   display: flex;
   flex-direction: column;
 }
 
 .mock-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  transform: translateY(-6px);
+  box-shadow: 0 8px 30px rgba(169, 140, 106, 0.2);
   border-color: #A98C6A;
-}
-
-/* Card Header */
-.mock-card-header {
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  padding: 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid #dee2e6;
-}
-
-.mock-status-badges {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.mock-badge {
-  background: #10b981;
-  color: white;
-  padding: 4px 12px;
-  border-radius: 6px;
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.discount-badge {
-  background: #ef4444;
-  color: white;
-  padding: 4px 12px;
-  border-radius: 6px;
-  font-size: 11px;
-  font-weight: 700;
-}
-
-.mock-icon {
-  font-size: 32px;
-  opacity: 0.7;
 }
 
 /* Card Content */
 .mock-card-content {
-  padding: 20px;
+  padding: 32px;
   display: flex;
   flex-direction: column;
+  gap: 28px;
   flex: 1;
 }
 
-.mock-card-content h3 {
-  font-size: 20px;
-  font-weight: 700;
-  color: #1f2937;
-  margin: 0 0 10px 0;
-  line-height: 1.3;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-}
-
-.mock-desc {
-  color: #6b7280;
-  font-size: 14px;
-  line-height: 1.5;
-  margin-bottom: 16px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  flex: 1;
-}
-
-/* Stats Grid */
-.mock-stats-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
+/* Header */
+.mock-header {
+  display: flex;
+  flex-direction: column;
   gap: 12px;
-  margin-bottom: 16px;
-  padding: 16px 0;
-  border-top: 1px solid #f3f4f6;
-  border-bottom: 1px solid #f3f4f6;
 }
 
-.stat-item {
-  text-align: center;
+.mock-title {
+  font-size: 26px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0;
+  line-height: 1.3;
+  letter-spacing: -0.4px;
+}
+
+.mock-description {
+  color: #6b6b6b;
+  font-size: 15px;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Info Grid - 2 Columns */
+.mock-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  padding-top: 8px;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.info-label {
+  font-size: 15px;
+  font-weight: 700;
+  color: #2a2a2a;
+}
+
+.info-value {
+  font-size: 15px;
+  font-weight: 400;
+  color: #5a5a5a;
+  line-height: 1.5;
+}
+
+.info-value-group {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
-.stat-label {
-  font-size: 11px;
-  color: #9ca3af;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+.price-old {
+  text-decoration: line-through;
+  color: #aaa;
+  font-size: 14px;
+  font-weight: 400;
 }
 
-.stat-value {
-  font-size: 18px;
+.price-current {
+  font-size: 16px;
   font-weight: 700;
-  color: #A98C6A;
+  color: #1a1a1a;
 }
 
 /* Card Footer */
 .mock-card-footer {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
+  gap: 12px;
+  padding: 24px 32px;
+  border-top: 1px solid #ececec;
+  background: #fafafa;
 }
 
-.price-section {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.original-price {
-  color: #9ca3af;
-  font-size: 13px;
-  text-decoration: line-through;
-  font-weight: 400;
-}
-
-.current-price {
-  color: #A98C6A;
-  font-size: 26px;
+.contact-btn {
+  flex: 1;
+  padding: 13px 24px;
+  background: white;
+  color: #1a1a1a;
+  border: 2px solid #A98C6A;
+  border-radius: 8px;
+  font-size: 16px;
   font-weight: 700;
-  line-height: 1;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.contact-btn:hover {
+  background: #A98C6A;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(169, 140, 106, 0.3);
 }
 
 .enroll-btn {
-  padding: 10px 24px;
-  background: linear-gradient(135deg, #A98C6A, #7B563D);
+  flex: 1;
+  padding: 13px 24px;
+  background: #A98C6A;
   color: white;
   border: none;
   border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.3s ease;
-  white-space: nowrap;
-  flex-shrink: 0;
 }
 
 .enroll-btn:hover:not(:disabled) {
-  background: linear-gradient(135deg, #8A6F51, #6B4A32);
+  background: #8A6F51;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(123, 86, 61, 0.3);
+  box-shadow: 0 4px 16px rgba(169, 140, 106, 0.4);
 }
 
 .enroll-btn:disabled {
-  background: #d1d5db;
+  background: #b5b5b5;
   cursor: not-allowed;
   transform: none;
 }
@@ -347,19 +318,26 @@
 
   .mocks-grid {
     grid-template-columns: 1fr;
+    gap: 24px;
   }
-
+  
+  .mock-card-content {
+    padding: 24px;
+    gap: 24px;
+  }
+  
+  .mock-title {
+    font-size: 23px;
+  }
+  
   .mock-card-footer {
     flex-direction: column;
-    align-items: stretch;
+    padding: 20px 24px;
   }
 
+  .contact-btn,
   .enroll-btn {
     width: 100%;
-  }
-
-  .price-section {
-    align-self: flex-start;
   }
 }
 
@@ -392,32 +370,44 @@
     padding: 20px 15px 40px;
   }
 
+  .mocks-grid {
+    gap: 20px;
+  }
+
   .mock-card-content {
-    padding: 16px;
+    padding: 20px;
+    gap: 20px;
   }
 
-  .mock-card-header {
-    padding: 16px;
+  .mock-title {
+    font-size: 21px;
   }
 
-  .mock-card-content h3 {
-    font-size: 18px;
+  .mock-description {
+    font-size: 14px;
   }
 
-  .current-price {
-    font-size: 24px;
+  .mock-info-grid {
+    gap: 20px;
+  }
+  
+  .info-label {
+    font-size: 14px;
+  }
+  
+  .info-value {
+    font-size: 14px;
   }
 
-  .mock-stats-grid {
-    gap: 8px;
+  .mock-card-footer {
+    padding: 18px 20px;
+    gap: 10px;
   }
-
-  .stat-value {
-    font-size: 16px;
-  }
-
-  .stat-label {
-    font-size: 10px;
+  
+  .contact-btn,
+  .enroll-btn {
+    padding: 12px 20px;
+    font-size: 15px;
   }
 }
 

@@ -171,6 +171,16 @@ const userSchema = new mongoose.Schema(
       lastAccessedAt: { type: Date, default: Date.now },
       enrolledAt: { type: Date, default: Date.now }
     }],
+
+    // ✅ Device and IP security tracking
+    registeredIp: { 
+      type: String, 
+      default: null 
+    },
+    deviceFingerprint: { 
+      type: String, 
+      default: null 
+    },
   },
   { timestamps: true }
 );
