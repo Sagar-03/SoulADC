@@ -26,10 +26,25 @@ const questionSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
-  imageUrl: {
+});
+
+const scenarioSchema = new mongoose.Schema({
+  title: {
     type: String,
-    required: false,
+    required: true,
   },
+  description: {
+    type: String,
+    required: true,
+  },
+  images: [{
+    type: String, // S3 keys for scenario images
+  }],
+  orderIndex: {
+    type: Number,
+    default: 0,
+  },
+  questions: [questionSchema],
 });
 
 const mockSchema = new mongoose.Schema({
@@ -40,7 +55,8 @@ const mockSchema = new mongoose.Schema({
   description: {
     type: String,
   },
-  questions: [questionSchema],
+  scenarios: [scenarioSchema], // New scenario-based structure
+  questions: [questionSchema], // Keep for backward compatibility
   duration: {
     type: Number, // duration in minutes
     required: true,
@@ -89,7 +105,14 @@ const mockSchema = new mongoose.Schema({
 
 // Calculate total marks before saving
 mockSchema.pre('save', function(next) {
-  if (this.questions && this.questions.length > 0) {
+  // Calculate from scenarios if they exist
+  if (this.scenarios && this.scenarios.length > 0) {
+    this.totalMarks = this.scenarios.reduce((sum, scenario) => {
+      return sum + scenario.questions.reduce((qSum, q) => qSum + (q.marks || 0), 0);
+    }, 0);
+  } 
+  // Otherwise calculate from questions (backward compatibility)
+  else if (this.questions && this.questions.length > 0) {
     this.totalMarks = this.questions.reduce((sum, q) => sum + (q.marks || 0), 0);
   }
   next();

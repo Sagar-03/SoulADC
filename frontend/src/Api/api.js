@@ -6,7 +6,7 @@ const API_BASE_URL =
 
 const api = axios.create({
   baseURL: API_BASE_URL,
-  withCredentials: true,
+  // withCredentials removed - not needed since we use Authorization header
   timeout: 0, // No timeout for large file uploads
 });
 
@@ -229,6 +229,11 @@ export const getCourseProgress = (courseId) => api.get(`/user/progress/course/${
 // 🗑️ Delete a document
 export const deleteDocument = (id) => {
   return api.delete(`/admin/documents/${id}`);
+};
+
+// ✏️ Update document title
+export const updateDocument = (id, title) => {
+  return api.put(`/admin/documents/${id}`, { title });
 };
 
 // 🧹 Cleanup orphaned documents

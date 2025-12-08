@@ -33,8 +33,16 @@ dBConnect();
 // ===================== APP + SERVER =====================
 const app = express();
 const server = http.createServer(app);
+
+// Define allowed origins for CORS
+const allowedOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(",").map((o) => o.trim())
+  : ["https://souladc.com", "https://www.souladc.com", "http://localhost:5173", "http://localhost:3000"];
+
 const io = new Server(server, {
-  cors: { origin: "*" },
+  cors: {
+    origin: "*",
+  },
 });
 
 // Set io instance for chat upload routes
@@ -52,27 +60,13 @@ app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
 // ===================== CORS =====================
-const allowedOrigins = process.env.CORS_ORIGIN
-  ? process.env.CORS_ORIGIN.split(",").map((o) => o.trim())
-  : ["https://souladc.com", "https://www.souladc.com", "http://localhost:5173"];
+// Note: allowedOrigins defined above with Socket.IO
 
 app.use(
   cors({
-    origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        console.log("🚫 Blocked by CORS:", origin);
-        callback(null, false);
-      }
-    },
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "Accept", "Content-Length"],
-    optionsSuccessStatus: 200,
+    origin: "*",
   })
 );
-
 // ===================== EXISTING ROUTES =====================
 app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
@@ -247,6 +241,8 @@ const PORT = process.env.PORT || 7001;
 
 server.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Server running on port ${PORT}`);
+  // console.log(`📋 Allowed CORS origins:`, allowedOrigins);
+  // console.log(`🔐 Credentials: enabled`);
 });
 
 server.timeout = 7200000;

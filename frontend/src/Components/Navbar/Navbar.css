@@ -7,7 +7,7 @@
 
 /* Logo Left */
 .navbar-brand img {
-  height: 80px;   /* larger logo */
+  height: 85px;   /* larger logo */
   width: auto;
   transition: transform 0.3s ease;
 }

@@ -49,6 +49,56 @@
   display: flex;
   gap: 8px;
   margin-top: auto;
+  flex-wrap: wrap;
+}
+
+.admin-actions .btn {
+  flex: 1;
+  min-width: 40px;
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+  border: 2px solid;
+}
+
+.admin-actions .btn-primary {
+  background: transparent;
+  border-color: #0d6efd;
+  color: #0d6efd;
+}
+
+.admin-actions .btn-primary:hover {
+  background: #0d6efd;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(13, 110, 253, 0.3);
+}
+
+.admin-actions .btn-success {
+  background: transparent;
+  border-color: #198754;
+  color: #198754;
+}
+
+.admin-actions .btn-success:hover {
+  background: #198754;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(25, 135, 84, 0.3);
+}
+
+.admin-actions .btn-secondary {
+  background: transparent;
+  border-color: #6c757d;
+  color: #6c757d;
+}
+
+.admin-actions .btn-secondary:hover {
+  background: #6c757d;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(108, 117, 125, 0.3);
 }
 
 .admin-delete-btn {
@@ -56,13 +106,14 @@
   border: 2px solid #dc3545;
   color: #dc3545;
   border-radius: 6px;
-  padding: 8px 12px;
+  padding: 6px 10px;
   font-size: 0.85rem;
   transition: all 0.3s ease;
   min-width: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex: 1;
 }
 
 .admin-delete-btn:hover {
@@ -70,6 +121,23 @@
   color: white;
   transform: translateY(-1px);
   box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
+}
+
+/* Edit Document Title Input */
+.edit-document-title {
+  width: 100%;
+}
+
+.edit-document-title .form-control {
+  border: 2px solid #0d6efd;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  padding: 6px 10px;
+}
+
+.edit-document-title .form-control:focus {
+  border-color: #0a58ca;
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
 }
 
 /* Upload Information */

@@ -288,42 +288,31 @@ const resetPassword = async (req, res) => {
   }
 };
 
-// UPDATE PROFILE controller
+// Update user profile
+
 const updateProfile = async (req, res) => {
   try {
-    const { name, email } = req.body;
+    const { name } = req.body;
     const userId = req.user.id;
 
-    // Validate required fields
-    if (!name || !email) {
-      return res.status(400).json({ message: "Name and email are required" });
+    // Validate input
+    if (!name || name.trim() === "") {
+      return res.status(400).json({ message: "Name is required" });
     }
 
-    // Check if email is already taken by another user
-    const existingUser = await User.findOne({ 
-      email, 
-      _id: { $ne: userId } 
-    });
-    
-    if (existingUser) {
-      return res.status(400).json({ message: "Email is already taken by another user" });
-    }
-
-    // Update user profile
+    // Update only the name field
     const updatedUser = await User.findByIdAndUpdate(
       userId,
-      { 
-        name: name.trim(),
-        email: email.trim().toLowerCase()
-      },
+      { name: name.trim() },
       { new: true, runValidators: true }
-    ).select('-password -resetToken -resetTokenExpire');
+    ).select("-password -resetToken -resetTokenExpire");
 
     if (!updatedUser) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    console.log("Profile updated successfully for user:", email);
+    console.log("Profile updated successfully for user:", updatedUser.email);
+
     res.json({
       message: "Profile updated successfully",
       user: {
@@ -342,5 +331,6 @@ const updateProfile = async (req, res) => {
     res.status(500).json({ message: "Profile update failed", error: error.message });
   }
 };
+
 
 module.exports = { register, login, forgotPassword, resetPassword, updateProfile };

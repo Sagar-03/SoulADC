@@ -34,7 +34,7 @@ const CourseFeatures = () => {
         <div className="container">
           <div className="program-badge">Our Program</div>
           <h1 className="section-title">
-            5-Month <span className="gradient-text">ADC Part 1</span> Preparation Course
+            Structured <span className="gradient-text">ADC Part 1</span> Preparation Course
           </h1>
           <p className="section-subtitle">
             A meticulously designed program that covers every aspect of the ADC Part 1 examination, ensuring you're fully prepared for success.

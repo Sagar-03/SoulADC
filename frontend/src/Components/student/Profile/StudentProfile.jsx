@@ -43,48 +43,42 @@ const StudentProfile = () => {
     setIsLoading(true);
 
     try {
-      // Validate form data
-      if (!formData.name.trim() || !formData.email.trim()) {
-        setError("Name and email are required");
-        setIsLoading(false);
-        return;
-      }
-
-      // Email validation
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(formData.email.trim())) {
-        setError("Please enter a valid email address");
+      // ✅ Only validate name now
+      if (!formData.name.trim()) {
+        setError("Name is required");
         setIsLoading(false);
         return;
       }
 
       console.log("Saving profile data:", formData);
-      
-      // Call API to update profile
+
+      // ✅ Only send name to API (keep email as is)
       const response = await updateUserProfile({
         name: formData.name.trim(),
-        email: formData.email.trim()
+        // If your API requires email, pass the existing one:
+        // email: user.email,
       });
 
       if (response.data && response.data.user) {
-        // Update local user data
         const updatedUser = updateUserData(response.data.user);
         setUser(updatedUser);
         setSuccess("Profile updated successfully!");
         setIsEditing(false);
-        
-        // Clear success message after 3 seconds
+
         setTimeout(() => setSuccess(""), 3000);
       }
 
     } catch (error) {
       console.error("Profile update error:", error);
-      const errorMessage = error.response?.data?.message || "Failed to update profile. Please try again.";
+      const errorMessage =
+        error.response?.data?.message ||
+        "Failed to update profile. Please try again.";
       setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
   };
+
 
   const handleCancel = () => {
     setFormData({
@@ -169,7 +163,7 @@ const StudentProfile = () => {
                     {error}
                   </div>
                 )}
-                
+
                 {success && (
                   <div className="alert alert-success mb-3" role="alert">
                     <i className="fas fa-check-circle me-2"></i>
@@ -215,29 +209,17 @@ const StudentProfile = () => {
                       </div>
 
                       {/* Email Field */}
+                      {/* Email Field */}
                       <div className="mb-4">
                         <label className="profile-label">
                           <FaEnvelope className="profile-icon" />
                           Email Address
                         </label>
-                        {isEditing ? (
-                          <div className="profile-field">
-                            <input
-                              type="email"
-                              className={`profile-input w-100 ${error && (!formData.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) ? 'is-invalid' : ''}`}
-                              name="email"
-                              value={formData.email}
-                              onChange={handleInputChange}
-                              placeholder="Enter your email address"
-                              required
-                            />
-                          </div>
-                        ) : (
-                          <div className="profile-field">
-                            {user.email || "Not provided"}
-                          </div>
-                        )}
+                        <div className="profile-field">
+                          {user.email || "Not provided"}
+                        </div>
                       </div>
+
 
                       {/* Phone Field */}
                       {/* <div className="mb-4">

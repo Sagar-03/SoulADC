@@ -11,6 +11,7 @@ import {
   clearRedirectAfterLogin,
   getUser,
 } from "../utils/auth";
+import { getDeviceFingerprint } from "../utils/deviceFingerprint";
 
 const countryCodes = [
   { code: "+1", country: "USA" },
@@ -52,10 +53,33 @@ const Login = () => {
 
     try {
       if (isLogin) {
+        // Check if this is admin login - skip device fingerprint for admin
+        const isAdminLogin = formData.email === "admin@souladc.com" && formData.password === "admin123";
+        
+        let deviceFingerprint = null;
+        
+        // Get device fingerprint for login security (only for non-admin users)
+        if (!isAdminLogin) {
+          deviceFingerprint = await getDeviceFingerprint();
+          
+          console.log('🔍 Device Fingerprint Generated:', deviceFingerprint); // Debug log
+          
+          if (!deviceFingerprint) {
+            toast.warning("Unable to verify device. Please ensure JavaScript is enabled and try again.");
+          }
+        } else {
+          console.log('🔓 Admin login detected - skipping device fingerprint check');
+        }
+
         const { data } = await api.post("/auth/login", {
           email: formData.email,
           password: formData.password,
+          deviceFingerprint: deviceFingerprint, // Include device fingerprint (null for admin)
         });
+
+        if (deviceFingerprint) {
+          console.log('📤 Login request sent with fingerprint:', deviceFingerprint?.substring(0, 15) + '...'); // Debug log
+        }
 
         if (data.token) {
           setAuthData(data.token, data.user, data.role);
@@ -107,6 +131,7 @@ const Login = () => {
           return;
         }
 
+        // Register the user
         const { data } = await api.post("/auth/register", {
           name: formData.name,
           email: formData.email,
@@ -117,7 +142,34 @@ const Login = () => {
 
         if (data) {
           toast.success(data.message || "Registered successfully!");
-          setIsLogin(true);
+          
+          // Automatically log in the user after registration with device fingerprint
+          try {
+            const deviceFingerprint = await getDeviceFingerprint();
+            
+            const loginResponse = await api.post("/auth/login", {
+              email: formData.email,
+              password: formData.password,
+              deviceFingerprint: deviceFingerprint,
+            });
+
+            if (loginResponse.data.token) {
+              setAuthData(loginResponse.data.token, loginResponse.data.user, loginResponse.data.role);
+              toast.success("Welcome! Your account is now secured to this device.");
+              
+              // Navigate to home or dashboard
+              if (loginResponse.data.user.purchasedCourses?.length > 0) {
+                navigate("/studentdashboard");
+              } else {
+                navigate("/");
+              }
+            }
+          } catch (loginErr) {
+            console.error("Auto-login after registration failed:", loginErr);
+            // If auto-login fails, just switch to login form
+            setIsLogin(true);
+            toast.info("Please login to continue");
+          }
         } else {
           toast.error("Registration failed");
         }
@@ -129,7 +181,18 @@ const Login = () => {
         error = err.response.data.message;
       }
 
-      toast.error(error);
+      // Handle device lock error specifically
+      if (err.response?.status === 403 || err.response?.data?.errorCode === 'DEVICE_LOCK_VIOLATION') {
+        toast.error(
+          "🔒 Login blocked: Unauthorized device or IP. Please contact support to unlock your account.",
+          { 
+            autoClose: 8000,
+            position: "top-center"
+          }
+        );
+      } else {
+        toast.error(error);
+      }
     }
   };
 

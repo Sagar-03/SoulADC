@@ -175,32 +175,72 @@ const Mycourse = () => {
                       <div
                         key={day._id || dayIndex}
                         className={`content-row ${activeDay === dayIndex ? "active" : ""}`}
-                        onClick={() => setActiveDay(dayIndex)}
+                        onClick={() => {
+                          // If there's only one content item, open it directly
+                          if (day.contents && day.contents.length === 1) {
+                            handleOpenContent(day.contents[0]);
+                          } else if (day.contents && day.contents.length > 0) {
+                            // If multiple items, open the first video or first item
+                            const firstVideo = day.contents.find(c => c.type === "video");
+                            handleOpenContent(firstVideo || day.contents[0]);
+                          }
+                        }}
+                        style={{ cursor: 'pointer' }}
                       >
-                        <div className="d-flex align-items-center gap-3">
-                          <span className="type-chip day">
-                            {selectedWeek}.{day.dayNumber}
-                          </span>
-                          <span className="badge bg-secondary">
-                            {day.contents?.length || 0} items
-                          </span>
-                        </div>
+                        <div className="d-flex align-items-center justify-content-between w-100">
+                          <div className="d-flex align-items-center gap-3">
+                            <span className="type-chip day">
+                              {selectedWeek}.{day.dayNumber}
+                            </span>
+                            <span className="badge bg-secondary">
+                              {day.contents?.length || 0} {day.contents?.length === 1 ? 'item' : 'items'}
+                            </span>
+                          </div>
 
-                        <div className="d-flex align-items-center gap-2">
-                          {day.contents?.map((content, contentIndex) => (
-                            <button
-                              key={content._id || contentIndex}
-                              className={`btn btn-sm btn-outline-${content.type === "video" ? "primary" : "info"
-                                }`}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleOpenContent(content);
-                              }}
-                              title={`Open ${content.title || content.type}`}
-                            >
-                              {content.type === "video" ? "🎬" : "📄"} {content.type}
-                            </button>
-                          )) || <span className="text-muted small">No content</span>}
+                          <div className="d-flex align-items-center gap-3 flex-grow-1 mx-4">
+                            {day.contents?.map((content, contentIndex) => (
+                              <div 
+                                key={content._id || contentIndex}
+                                className="d-flex align-items-center gap-2"
+                                style={{ flex: '0 0 auto' }}
+                              >
+                                <span style={{ 
+                                  fontSize: '1.2rem'
+                                }}
+                                title={`${content.title || content.type}`}
+                                >
+                                  {content.type === "video" ? "🎬" : "📄"}
+                                </span>
+                                <span 
+                                  className="content-title-text"
+                                  style={{
+                                    color: '#333',
+                                    fontSize: '0.9rem'
+                                  }}
+                                  title={content.title || content.type}
+                                >
+                                  {content.title || content.type}
+                                </span>
+                              </div>
+                            )) || <span className="text-muted small">No content</span>}
+                          </div>
+
+                          <div className="d-flex align-items-center gap-2">
+                            {day.contents?.map((content, contentIndex) => (
+                              <button
+                                key={content._id || contentIndex}
+                                className={`btn btn-sm ${content.type === "video" ? "btn-primary" : "btn-info"
+                                  }`}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleOpenContent(content);
+                                }}
+                                title={`Open ${content.title || content.type}`}
+                              >
+                                {content.type === "video" ? "video" : "document"}
+                              </button>
+                            )) || null}
+                          </div>
                         </div>
                       </div>
                     )) || (

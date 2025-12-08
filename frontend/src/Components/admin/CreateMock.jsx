@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { createMock } from '../../Api/api';
+import { getAuthToken } from '../../utils/auth';
 import AdminLayout from './AdminLayout';
 import './MockStyles.css';
 
@@ -12,10 +13,19 @@ const CreateMock = () => {
     title: '',
     description: '',
     duration: 60,
-    questions: [],
+    scenarios: [],
     isPaid: true,
     price: '',
     cutPrice: '',
+  });
+
+  const [currentScenario, setCurrentScenario] = useState({
+    title: '',
+    description: '',
+    images: [],
+    imageFiles: [],
+    orderIndex: 0,
+    questions: [],
   });
 
   const [currentQuestion, setCurrentQuestion] = useState({
@@ -25,9 +35,9 @@ const CreateMock = () => {
     correctAnswer: '',
     marks: 1,
     orderIndex: 0,
-    imageUrl: '',
-    imageFile: null,
   });
+
+  const [editingScenarioIndex, setEditingScenarioIndex] = useState(null);
 
   const handleInputChange = (e) => {
     setMockData({
@@ -43,6 +53,13 @@ const CreateMock = () => {
     });
   };
 
+  const handleScenarioChange = (e) => {
+    setCurrentScenario({
+      ...currentScenario,
+      [e.target.name]: e.target.value,
+    });
+  };
+
   const handleOptionChange = (index, value) => {
     const newOptions = [...currentQuestion.options];
     newOptions[index] = value;
@@ -52,29 +69,49 @@ const CreateMock = () => {
     });
   };
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
+  const handleScenarioImagesChange = (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+
+    // Validate file sizes
+    for (const file of files) {
       if (file.size > 5 * 1024 * 1024) {
-        toast.error('Image size should be less than 5MB');
+        toast.error('Each image should be less than 5MB');
         return;
       }
-      setCurrentQuestion({
-        ...currentQuestion,
-        imageFile: file,
-        imageUrl: URL.createObjectURL(file),
-      });
     }
+
+    // Limit to 3 images
+    const maxImages = 3;
+    const totalImages = currentScenario.images.length + files.length;
+    if (totalImages > maxImages) {
+      toast.error(`You can upload a maximum of ${maxImages} images per scenario`);
+      return;
+    }
+
+    const newImageFiles = [...currentScenario.imageFiles, ...files];
+    const newImageUrls = [...currentScenario.images, ...files.map(f => URL.createObjectURL(f))];
+
+    setCurrentScenario({
+      ...currentScenario,
+      imageFiles: newImageFiles,
+      images: newImageUrls,
+    });
   };
 
-  const removeImage = () => {
-    if (currentQuestion.imageUrl && currentQuestion.imageUrl.startsWith('blob:')) {
-      URL.revokeObjectURL(currentQuestion.imageUrl);
+  const removeScenarioImage = (index) => {
+    const newImages = currentScenario.images.filter((_, i) => i !== index);
+    const newImageFiles = currentScenario.imageFiles.filter((_, i) => i !== index);
+    
+    // Revoke the object URL to prevent memory leak
+    if (currentScenario.images[index].startsWith('blob:')) {
+      URL.revokeObjectURL(currentScenario.images[index]);
     }
-    setCurrentQuestion({
-      ...currentQuestion,
-      imageFile: null,
-      imageUrl: '',
+
+    setCurrentScenario({
+      ...currentScenario,
+      images: newImages,
+      imageFiles: newImageFiles,
     });
   };
 
@@ -97,7 +134,7 @@ const CreateMock = () => {
     });
   };
 
-  const addQuestion = async () => {
+  const addQuestionToScenario = () => {
     if (!currentQuestion.questionText.trim()) {
       toast.error('Question text is required');
       return;
@@ -116,37 +153,17 @@ const CreateMock = () => {
       }
     }
 
-    let imageUrl = currentQuestion.imageUrl;
-
-    // Upload image if provided
-    if (currentQuestion.imageFile) {
-      try {
-        const { uploadQuestionImage, getStreamUrl } = await import('../../Api/api');
-        const response = await uploadQuestionImage(currentQuestion.imageFile);
-        const s3Key = response.data.s3Key;
-        // Store s3Key for database, but use stream URL for preview
-        imageUrl = s3Key;
-        toast.success('Image uploaded successfully');
-      } catch (error) {
-        console.error('Error uploading image:', error);
-        toast.error('Failed to upload image');
-        return;
-      }
-    }
-
     const newQuestion = {
       ...currentQuestion,
-      orderIndex: mockData.questions.length,
+      orderIndex: currentScenario.questions.length,
       options: currentQuestion.questionType === 'mcq' 
         ? currentQuestion.options.filter(opt => opt.trim() !== '')
         : [],
-      imageUrl,
-      imageFile: undefined,
     };
 
-    setMockData({
-      ...mockData,
-      questions: [...mockData.questions, newQuestion],
+    setCurrentScenario({
+      ...currentScenario,
+      questions: [...currentScenario.questions, newQuestion],
     });
 
     // Reset current question
@@ -157,20 +174,96 @@ const CreateMock = () => {
       correctAnswer: '',
       marks: 1,
       orderIndex: 0,
-      imageUrl: '',
-      imageFile: null,
     });
 
-    toast.success('Question added');
+    toast.success('Question added to scenario');
   };
 
-  const removeQuestion = (index) => {
-    const updatedQuestions = mockData.questions.filter((_, i) => i !== index);
-    setMockData({
-      ...mockData,
+  const removeQuestionFromScenario = (index) => {
+    const updatedQuestions = currentScenario.questions.filter((_, i) => i !== index);
+    setCurrentScenario({
+      ...currentScenario,
       questions: updatedQuestions,
     });
-    toast.info('Question removed');
+    toast.info('Question removed from scenario');
+  };
+
+  const addScenario = async () => {
+    if (!currentScenario.title.trim()) {
+      toast.error('Scenario title is required');
+      return;
+    }
+
+    if (!currentScenario.description.trim()) {
+      toast.error('Scenario description is required');
+      return;
+    }
+
+    if (currentScenario.questions.length === 0) {
+      toast.error('Please add at least one question to the scenario');
+      return;
+    }
+
+    let uploadedImageKeys = [];
+
+    // Upload scenario images if provided
+    if (currentScenario.imageFiles.length > 0) {
+      try {
+        const { uploadQuestionImage } = await import('../../Api/api');
+        
+        for (const file of currentScenario.imageFiles) {
+          const response = await uploadQuestionImage(file);
+          uploadedImageKeys.push(response.data.s3Key);
+        }
+        
+        toast.success(`${uploadedImageKeys.length} image(s) uploaded successfully`);
+      } catch (error) {
+        console.error('Error uploading images:', error);
+        toast.error('Failed to upload images');
+        return;
+      }
+    }
+
+    const newScenario = {
+      title: currentScenario.title,
+      description: currentScenario.description,
+      images: uploadedImageKeys,
+      orderIndex: mockData.scenarios.length,
+      questions: currentScenario.questions,
+    };
+
+    setMockData({
+      ...mockData,
+      scenarios: [...mockData.scenarios, newScenario],
+    });
+
+    // Clean up blob URLs
+    currentScenario.images.forEach(url => {
+      if (url.startsWith('blob:')) {
+        URL.revokeObjectURL(url);
+      }
+    });
+
+    // Reset current scenario
+    setCurrentScenario({
+      title: '',
+      description: '',
+      images: [],
+      imageFiles: [],
+      orderIndex: 0,
+      questions: [],
+    });
+
+    toast.success('Scenario added to mock');
+  };
+
+  const removeScenario = (index) => {
+    const updatedScenarios = mockData.scenarios.filter((_, i) => i !== index);
+    setMockData({
+      ...mockData,
+      scenarios: updatedScenarios,
+    });
+    toast.info('Scenario removed');
   };
 
   const handleSubmit = async (e) => {
@@ -181,8 +274,8 @@ const CreateMock = () => {
       return;
     }
 
-    if (mockData.questions.length === 0) {
-      toast.error('Please add at least one question');
+    if (mockData.scenarios.length === 0) {
+      toast.error('Please add at least one scenario with questions');
       return;
     }
 
@@ -295,169 +388,236 @@ const CreateMock = () => {
           )}
         </div>
 
-        {/* Add Question Section */}
+        {/* Add Scenario Section */}
         <div className="form-section">
-          <h3>Add Question</h3>
+          <h3>Add Clinical Scenario</h3>
           
           <div className="form-group">
-            <label>Question Text *</label>
-            <textarea
-              name="questionText"
-              value={currentQuestion.questionText}
-              onChange={handleQuestionChange}
-              placeholder="Enter your question here"
-              rows="3"
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Question Type *</label>
-            <select
-              name="questionType"
-              value={currentQuestion.questionType}
-              onChange={handleQuestionChange}
-            >
-              <option value="mcq">Multiple Choice (MCQ)</option>
-              <option value="text">Text Answer</option>
-              <option value="oneWord">One Word Answer</option>
-            </select>
-          </div>
-
-          {currentQuestion.questionType === 'mcq' && (
-            <div className="form-group">
-              <label>Options</label>
-              {currentQuestion.options.map((option, index) => (
-                <div key={index} className="option-input-wrapper">
-                  <input
-                    type="text"
-                    value={option}
-                    onChange={(e) => handleOptionChange(index, e.target.value)}
-                    placeholder={`Option ${index + 1}`}
-                    className="option-input"
-                  />
-                  {currentQuestion.options.length > 2 && (
-                    <button
-                      type="button"
-                      onClick={() => removeOption(index)}
-                      className="remove-option-btn"
-                      title="Remove option"
-                    >
-                      ✕
-                    </button>
-                  )}
-                </div>
-              ))}
-              <button type="button" onClick={addOption} className="add-option-btn">
-                + Add Option
-              </button>
-            </div>
-          )}
-
-          <div className="form-group">
-            <label>Correct Answer *</label>
-            {currentQuestion.questionType === 'mcq' ? (
-              <select
-                name="correctAnswer"
-                value={currentQuestion.correctAnswer}
-                onChange={handleQuestionChange}
-              >
-                <option value="">Select correct option</option>
-                {currentQuestion.options
-                  .filter(opt => opt.trim() !== '')
-                  .map((option, index) => (
-                    <option key={index} value={option}>
-                      {option}
-                    </option>
-                  ))}
-              </select>
-            ) : (
-              <input
-                type="text"
-                name="correctAnswer"
-                value={currentQuestion.correctAnswer}
-                onChange={handleQuestionChange}
-                placeholder="Enter the correct answer"
-              />
-            )}
-          </div>
-
-          <div className="form-group">
-            <label>Marks *</label>
+            <label>Scenario Title *</label>
             <input
-              type="number"
-              name="marks"
-              value={currentQuestion.marks}
-              onChange={handleQuestionChange}
-              min="1"
+              type="text"
+              name="title"
+              value={currentScenario.title}
+              onChange={handleScenarioChange}
+              placeholder="E.g., Clinical scenario 4"
             />
           </div>
 
           <div className="form-group">
-            <label>Question Image (Optional)</label>
+            <label>Scenario Description *</label>
+            <textarea
+              name="description"
+              value={currentScenario.description}
+              onChange={handleScenarioChange}
+              placeholder="Enter the clinical scenario description here..."
+              rows="5"
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Scenario Images (Max 3)</label>
             <input
               type="file"
               accept="image/*"
-              onChange={handleImageChange}
+              multiple
+              onChange={handleScenarioImagesChange}
               style={{ display: 'none' }}
-              id="question-image-upload"
+              id="scenario-images-upload"
             />
-            {!currentQuestion.imageUrl ? (
-              <label htmlFor="question-image-upload" className="upload-image-btn">
-                📷 Upload Image
+            {currentScenario.images.length < 3 && (
+              <label htmlFor="scenario-images-upload" className="upload-image-btn">
+                📷 Upload Images ({currentScenario.images.length}/3)
               </label>
-            ) : (
-              <div className="image-preview">
-                <img src={currentQuestion.imageUrl} alt="Question" />
-                <button type="button" onClick={removeImage} className="remove-image-btn">
-                  ✕ Remove Image
+            )}
+            {currentScenario.images.length > 0 && (
+              <div className="images-preview-grid">
+                {currentScenario.images.map((img, index) => (
+                  <div key={index} className="image-preview">
+                    <img src={img} alt={`Scenario ${index + 1}`} />
+                    <button 
+                      type="button" 
+                      onClick={() => removeScenarioImage(index)} 
+                      className="remove-image-btn"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <small>Max size: 5MB per image. Supported formats: JPG, PNG, GIF</small>
+          </div>
+
+          {/* Add Question to Scenario */}
+          <div className="nested-section">
+            <h4>Add Question to Scenario</h4>
+            
+            <div className="form-group">
+              <label>Question Text *</label>
+              <textarea
+                name="questionText"
+                value={currentQuestion.questionText}
+                onChange={handleQuestionChange}
+                placeholder="Enter your question here"
+                rows="3"
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Question Type *</label>
+              <select
+                name="questionType"
+                value={currentQuestion.questionType}
+                onChange={handleQuestionChange}
+              >
+                <option value="mcq">Multiple Choice (MCQ)</option>
+                <option value="text">Text Answer</option>
+                <option value="oneWord">One Word Answer</option>
+              </select>
+            </div>
+
+            {currentQuestion.questionType === 'mcq' && (
+              <div className="form-group">
+                <label>Options</label>
+                {currentQuestion.options.map((option, index) => (
+                  <div key={index} className="option-input-wrapper">
+                    <input
+                      type="text"
+                      value={option}
+                      onChange={(e) => handleOptionChange(index, e.target.value)}
+                      placeholder={`Option ${index + 1}`}
+                      className="option-input"
+                    />
+                    {currentQuestion.options.length > 2 && (
+                      <button
+                        type="button"
+                        onClick={() => removeOption(index)}
+                        className="remove-option-btn"
+                        title="Remove option"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+                ))}
+                <button type="button" onClick={addOption} className="add-option-btn">
+                  + Add Option
                 </button>
               </div>
             )}
-            <small>Max size: 5MB. Supported formats: JPG, PNG, GIF</small>
+
+            <div className="form-group">
+              <label>Correct Answer *</label>
+              {currentQuestion.questionType === 'mcq' ? (
+                <select
+                  name="correctAnswer"
+                  value={currentQuestion.correctAnswer}
+                  onChange={handleQuestionChange}
+                >
+                  <option value="">Select correct option</option>
+                  {currentQuestion.options
+                    .filter(opt => opt.trim() !== '')
+                    .map((option, index) => (
+                      <option key={index} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                </select>
+              ) : (
+                <input
+                  type="text"
+                  name="correctAnswer"
+                  value={currentQuestion.correctAnswer}
+                  onChange={handleQuestionChange}
+                  placeholder="Enter the correct answer"
+                />
+              )}
+            </div>
+
+            <div className="form-group">
+              <label>Marks *</label>
+              <input
+                type="number"
+                name="marks"
+                value={currentQuestion.marks}
+                onChange={handleQuestionChange}
+                min="1"
+              />
+            </div>
+
+            <button type="button" onClick={addQuestionToScenario} className="add-question-btn">
+              + Add Question to Scenario
+            </button>
+
+            {/* Questions in Current Scenario */}
+            {currentScenario.questions.length > 0 && (
+              <div className="current-scenario-questions">
+                <h5>Questions in this Scenario ({currentScenario.questions.length})</h5>
+                {currentScenario.questions.map((q, index) => (
+                  <div key={index} className="question-mini-card">
+                    <span>Q{index + 1}. {q.questionText.substring(0, 50)}...</span>
+                    <button
+                      type="button"
+                      onClick={() => removeQuestionFromScenario(index)}
+                      className="remove-btn-mini"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
-          <button type="button" onClick={addQuestion} className="add-question-btn">
-            + Add Question
+          <button type="button" onClick={addScenario} className="add-scenario-btn">
+            ✓ Add Scenario to Mock
           </button>
         </div>
 
-        {/* Questions List */}
-        {mockData.questions.length > 0 && (
+        {/* Scenarios List */}
+        {mockData.scenarios.length > 0 && (
           <div className="form-section">
-            <h3>Questions Added ({mockData.questions.length})</h3>
-            <div className="questions-list">
-              {mockData.questions.map((question, index) => (
-                <div key={index} className="question-card">
-                  <div className="question-header">
-                    <h4>Q{index + 1}. {question.questionText}</h4>
+            <h3>Scenarios Added ({mockData.scenarios.length})</h3>
+            <div className="scenarios-list">
+              {mockData.scenarios.map((scenario, sIndex) => (
+                <div key={sIndex} className="scenario-card">
+                  <div className="scenario-header">
+                    <h4>Scenario {sIndex + 1}: {scenario.title}</h4>
                     <button
                       type="button"
-                      onClick={() => removeQuestion(index)}
+                      onClick={() => removeScenario(sIndex)}
                       className="remove-btn"
                     >
                       ✕
                     </button>
                   </div>
-                  {question.imageUrl && (
-                    <div className="question-image">
-                      <img src={`${import.meta.env.VITE_API_URL || 'http://localhost:7001/api'}/stream/${question.imageUrl}`} alt="Question" />
+                  
+                  <p className="scenario-description">{scenario.description}</p>
+                  
+                  {scenario.images && scenario.images.length > 0 && (
+                    <div className="scenario-images-display">
+                      {scenario.images.map((img, imgIndex) => {
+                        const token = getAuthToken();
+                        const imageUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:7001/api'}/stream/${img}${token ? `?token=${token}` : ''}`;
+                        return (
+                          <img 
+                            key={imgIndex} 
+                            src={imageUrl}
+                            alt={`Scenario ${sIndex + 1} Image ${imgIndex + 1}`}
+                          />
+                        );
+                      })}
                     </div>
                   )}
-                  <div className="question-details">
-                    <span className="question-type">{question.questionType.toUpperCase()}</span>
-                    <span className="question-marks">{question.marks} marks</span>
-                  </div>
-                  {question.questionType === 'mcq' && (
-                    <div className="question-options">
-                      {question.options.map((opt, i) => (
-                        <div key={i} className={opt === question.correctAnswer ? 'correct-option' : ''}>
-                          {i + 1}. {opt}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  <div className="correct-answer">
-                    Correct Answer: <strong>{question.correctAnswer}</strong>
+                  
+                  <div className="scenario-questions">
+                    <h5>{scenario.questions.length} Question(s)</h5>
+                    {scenario.questions.map((question, qIndex) => (
+                      <div key={qIndex} className="question-mini-preview">
+                        <strong>Q{qIndex + 1}.</strong> {question.questionText}
+                        <span className="question-marks-badge">{question.marks} marks</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
               ))}

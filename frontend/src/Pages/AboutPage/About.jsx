@@ -204,8 +204,8 @@ const About = () => {
       {/* Our Promise */}
       <section className="promise-section py-5">
         <div className="container">
-          <h2 className="section-title text-white">Our Promise</h2>
-          <p className="text-white mt-3">
+          <h2 className="section-title text-black">Our Promise</h2>
+          <p className="text-black mt-3">
             At Soul ADC, we are dedicated to making your ADC journey less overwhelming and more structured.
             Every concept is taught with clarity and purpose — helping you connect theory to real-world dental practice.
             Our goal is not just to help you pass, but to prepare you to become a confident and successful dentist in

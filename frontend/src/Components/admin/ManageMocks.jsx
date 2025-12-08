@@ -136,7 +136,18 @@ const ManageMocks = () => {
                 <div className="mock-info">
                   <div className="info-item">
                     <span className="info-label">Questions:</span>
-                    <span className="info-value">{mock.questions.length}</span>
+                    <span className="info-value">
+                      {mock.scenarios && mock.scenarios.length > 0 
+                        ? mock.scenarios.reduce((sum, s) => sum + s.questions.length, 0)
+                        : mock.questions?.length || 0
+                      }
+                    </span>
+                  </div>
+                  <div className="info-item">
+                    <span className="info-label">Scenarios:</span>
+                    <span className="info-value">
+                      {mock.scenarios?.length || 0}
+                    </span>
                   </div>
                   <div className="info-item">
                     <span className="info-label">Total Marks:</span>

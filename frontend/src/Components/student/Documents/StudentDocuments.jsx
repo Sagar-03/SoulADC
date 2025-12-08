@@ -135,7 +135,7 @@ const StudentDocuments = () => {
             <div className="documents-content">
               <div className="d-flex justify-content-between align-items-center mb-3">
                 <h5 className="section-title">
-                  MODULE {String(selectedModule).padStart(2, "0")} — Notes / Papers
+                  MODULE {String(selectedModule).padStart(2, "0")} — Reading Materials
                 </h5>
                 <span className="documents-count-badge">
                   {documents.length} Note {documents.length !== 1 ? "s" : ""}

@@ -971,6 +971,120 @@ router.get("/documents", protect, adminOnly, async (req, res) => {
 });
 
 /**
+ * PUT /api/admin/documents/:id
+ * Update a document's title by ID (supports both direct and shared content)
+ */
+router.put("/documents/:id", protect, adminOnly, async (req, res) => {
+  try {
+    const documentId = req.params.id;
+    const { title } = req.body;
+
+    if (!title || title.trim() === '') {
+      return res.status(400).json({ error: "Document title is required" });
+    }
+
+    console.log(`🔍 Searching for document ID: ${documentId} to update title to: "${title}"`);
+
+    let documentFound = false;
+    let updatedDocument = null;
+
+    // Find the document in courses
+    const courses = await Course.find({}).populate('sharedContentId');
+    
+    for (const course of courses) {
+      console.log(`📚 Checking course: ${course.title}`);
+      
+      // Determine which weeks to use (direct or from shared content)
+      let weeks = [];
+      let isSharedContent = false;
+      if (course.sharedContentId && course.sharedContentId.weeks) {
+        console.log(`  Using shared content weeks`);
+        weeks = course.sharedContentId.weeks;
+        isSharedContent = true;
+      } else if (course.weeks) {
+        console.log(`  Using direct course weeks`);
+        weeks = course.weeks;
+      }
+
+      for (const week of weeks) {
+        // Check week-level documents
+        if (week.documents && week.documents.length > 0) {
+          const doc = week.documents.find(doc => doc._id.toString() === documentId);
+          if (doc) {
+            doc.title = title.trim();
+            
+            // Save to the appropriate model
+            if (isSharedContent) {
+              const SharedContent = require("../models/SharedContent");
+              await SharedContent.findByIdAndUpdate(course.sharedContentId._id, {
+                weeks: course.sharedContentId.weeks
+              });
+              console.log(`✅ Updated document title in SharedContent week ${week.weekNumber}`);
+            } else {
+              await course.save();
+              console.log(`✅ Updated document title in Course week ${week.weekNumber}`);
+            }
+            updatedDocument = doc;
+            documentFound = true;
+            break;
+          }
+        }
+
+        // Check day-level contents
+        if (!documentFound && week.days && week.days.length > 0) {
+          for (const day of week.days) {
+            if (day.contents && day.contents.length > 0) {
+              const content = day.contents.find(content => 
+                content._id.toString() === documentId && 
+                (content.type === 'document' || content.type === 'pdf')
+              );
+              if (content) {
+                content.title = title.trim();
+                
+                // Save to the appropriate model
+                if (isSharedContent) {
+                  const SharedContent = require("../models/SharedContent");
+                  await SharedContent.findByIdAndUpdate(course.sharedContentId._id, {
+                    weeks: course.sharedContentId.weeks
+                  });
+                  console.log(`✅ Updated document title in SharedContent day ${day.dayNumber}`);
+                } else {
+                  await course.save();
+                  console.log(`✅ Updated document title in Course day ${day.dayNumber}`);
+                }
+                updatedDocument = content;
+                documentFound = true;
+                break;
+              }
+            }
+          }
+        }
+        
+        if (documentFound) break;
+      }
+      if (documentFound) break;
+    }
+
+    if (!documentFound) {
+      console.error(`❌ Document ${documentId} not found in any course`);
+      return res.status(404).json({ 
+        error: "Document not found",
+        documentId: documentId
+      });
+    }
+
+    res.json({ 
+      success: true, 
+      message: "Document title updated successfully", 
+      document: updatedDocument 
+    });
+  } catch (err) {
+    console.error("❌ Error updating document title:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
  * DELETE /api/admin/documents/:id
  * Delete a document from S3 + DB (from courses)
  */
@@ -1276,6 +1390,8 @@ router.get("/users", protect, adminOnly, async (req, res) => {
       purchasedCourses: user.purchasedCourses.map(course => course.title),
       createdAt: user.createdAt,
       streak: user.streak?.current || 0,
+      registeredIp: user.registeredIp || null,
+      deviceFingerprint: user.deviceFingerprint || null,
     }));
 
     console.log(` Admin fetched ${formattedUsers.length} users`);

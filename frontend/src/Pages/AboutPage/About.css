@@ -8,11 +8,7 @@
 
 /* ===== HERO SECTION ===== */
 .premium-hero {
-  background: linear-gradient(135deg,
-      rgba(139, 94, 60, 0.95) 0%,
-      rgba(123, 86, 61, 0.95) 100%),
-    radial-gradient(circle at 20% 80%, rgba(169, 140, 106, 0.3) 0%, transparent 50%),
-    radial-gradient(circle at 80% 20%, rgba(123, 86, 61, 0.3) 0%, transparent 50%);
+  background: linear-gradient(145deg, #A98C6A, #7B563D);
   min-height: 85vh;
   display: flex;
   align-items: center;
@@ -131,7 +127,7 @@
   border-radius: 16px;
   padding: 24px;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-  color:  #5A3825;
+  color:  #aa4b15;
   text-align: center;
 
   /* ✅ Uniform structure */
@@ -149,7 +145,7 @@
 
 .card-icon {
   font-size: 24px;
-  color: linear-gradient(145deg, #A98C6A, #7B563D);
+  color: #7B563D;
 }
 
 .floating-card.card-1 {
@@ -335,9 +331,9 @@
 
 /* ===== PROMISE SECTION ===== */
 .promise-section {
-  background: #7B563D;
+  background: #fff4d6;
   padding: 120px 0;
-  color: white;
+  color: black;
   position: relative;
 }
 
@@ -367,7 +363,7 @@
 .promise-title {
   font-size: 3rem;
   font-weight: 700;
-  color: white;
+  color: black;
   line-height: 1.2;
 }
 

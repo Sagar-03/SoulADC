@@ -7,6 +7,7 @@ const ManageStudents = () => {
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(null);
+  const [resettingDevice, setResettingDevice] = useState(null);
 
   // Fetch users from API
   useEffect(() => {
@@ -48,6 +49,30 @@ const ManageStudents = () => {
     }
   };
 
+  const handleResetDeviceLock = async (userId, userName) => {
+    const confirmReset = window.confirm(
+      `Reset device lock for ${userName}?\n\nThis will allow them to login from a new device. Their current device registration will be cleared.`
+    );
+
+    if (!confirmReset) return;
+
+    try {
+      setResettingDevice(userId);
+      const response = await api.post(`/admin/reset-device-lock/${userId}`);
+      
+      if (response.data.success) {
+        toast.success(`Device lock reset for ${userName}`);
+        // Refresh the student list to show updated device lock status
+        fetchStudents();
+      }
+    } catch (err) {
+      console.error("Error resetting device lock:", err);
+      toast.error(err.response?.data?.message || "Failed to reset device lock");
+    } finally {
+      setResettingDevice(null);
+    }
+  };
+
   return (
     <AdminLayout>
       <h3 className="fw-bold mb-4" style={{ color: "#5A3825" }}>
@@ -72,6 +97,7 @@ const ManageStudents = () => {
                 <th>Phone</th>
                 <th>Purchased Courses</th>
                 <th>Streak</th>
+                <th>Device Lock</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -90,20 +116,55 @@ const ManageStudents = () => {
                     <span className="badge bg-success">{s.streak || 0} days</span>
                   </td>
                   <td>
-                    <button
-                      className="btn btn-danger btn-sm"
-                      onClick={() => handleDeleteUser(s.id, s.name)}
-                      disabled={deleting === s.id}
-                    >
-                      {deleting === s.id ? (
-                        <>
-                          <span className="spinner-border spinner-border-sm me-1" role="status"></span>
-                          Deleting...
-                        </>
-                      ) : (
-                        "Delete"
+                    {s.registeredIp || s.deviceFingerprint ? (
+                      <div className="d-flex flex-column" style={{ fontSize: "0.85rem" }}>
+                        <span className="badge bg-warning text-dark mb-1">
+                          🔒 Locked
+                        </span>
+                        {s.registeredIp && (
+                          <small className="text-muted" style={{ fontSize: "0.75rem" }}>
+                            IP: {s.registeredIp}
+                          </small>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="badge bg-secondary">🔓 Unlocked</span>
+                    )}
+                  </td>
+                  <td>
+                    <div className="d-flex gap-2">
+                      {(s.registeredIp || s.deviceFingerprint) && (
+                        <button
+                          className="btn btn-warning btn-sm"
+                          onClick={() => handleResetDeviceLock(s.id, s.name)}
+                          disabled={resettingDevice === s.id}
+                          title="Reset device lock to allow login from new device"
+                        >
+                          {resettingDevice === s.id ? (
+                            <>
+                              <span className="spinner-border spinner-border-sm me-1" role="status"></span>
+                              Resetting...
+                            </>
+                          ) : (
+                            "🔓 Reset Device"
+                          )}
+                        </button>
                       )}
-                    </button>
+                      <button
+                        className="btn btn-danger btn-sm"
+                        onClick={() => handleDeleteUser(s.id, s.name)}
+                        disabled={deleting === s.id}
+                      >
+                        {deleting === s.id ? (
+                          <>
+                            <span className="spinner-border spinner-border-sm me-1" role="status"></span>
+                            Deleting...
+                          </>
+                        ) : (
+                          "Delete"
+                        )}
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

@@ -127,7 +127,11 @@ router.get("/info/:identifier", protectStream, async (req, res) => {
 
 router.get("/:identifier", protectStream, async (req, res) => {
   try {
-    const { identifier } = req.params;
+    let { identifier } = req.params;
+    // Decode the identifier in case it's URL encoded
+    identifier = decodeURIComponent(identifier);
+    console.log(`📥 Stream request for identifier: ${identifier}`);
+    
     const range = req.headers.range;
 
     let s3Key, mime = "application/octet-stream";
@@ -259,6 +263,12 @@ router.get("/:identifier", protectStream, async (req, res) => {
       }
     } else {
       s3Key = identifier;
+      console.log(`📁 Using identifier as S3 key directly: ${s3Key}`);
+      // Set mime type for images
+      if (s3Key.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
+        mime = `image/${s3Key.split('.').pop().toLowerCase()}`;
+        console.log(`🖼️ Detected image file, mime type: ${mime}`);
+      }
     }
 
     if (!s3Key) {

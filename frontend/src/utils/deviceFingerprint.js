@@ -5,7 +5,10 @@ import FingerprintJS from '@fingerprintjs/fingerprintjs';
 
 /**
  * Initialize and get device fingerprint
- * This should be called during login
+ * This should be called during login for regular users
+ * 
+ * NOTE: Device fingerprinting is NOT applied to admin credentials (admin@souladc.com)
+ * Admins can login from any device without restriction.
  */
 let fpPromise = null;
 
@@ -26,6 +29,26 @@ export const getDeviceFingerprint = async () => {
     return null;
   }
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // ==============================================================
 // Example Usage in Login Component

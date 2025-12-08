@@ -8,7 +8,7 @@ const { checkUserMockAccess } = require('../middleware/mockAccessMiddleware');
 // Create a new mock
 exports.createMock = async (req, res) => {
   try {
-    const { title, description, questions, duration, isPaid, price, cutPrice } = req.body;
+    const { title, description, scenarios, questions, duration, isPaid, price, cutPrice } = req.body;
 
     // Handle the case where admin might not have a valid ObjectId
     let createdById = req.user.id;
@@ -38,7 +38,8 @@ exports.createMock = async (req, res) => {
     const mock = new Mock({
       title,
       description,
-      questions: questions || [],
+      scenarios: scenarios || [], // New scenario-based structure
+      questions: questions || [], // Keep for backward compatibility
       duration: duration || 60,
       createdBy: createdById,
       status: 'draft',
@@ -304,23 +305,32 @@ exports.getMockStatistics = async (req, res) => {
 exports.getPublicMocks = async (req, res) => {
   try {
     const mocks = await Mock.find({ status: 'live' })
-      .select('title description duration totalMarks questions.length isPaid price cutPrice status liveAt')
+      .select('title description duration totalMarks scenarios questions isPaid price cutPrice status liveAt')
       .sort({ liveAt: -1 });
 
-    // Map to include question count
-    const mocksWithCount = mocks.map(mock => ({
-      _id: mock._id,
-      title: mock.title,
-      description: mock.description,
-      duration: mock.duration,
-      totalMarks: mock.totalMarks,
-      isPaid: mock.isPaid,
-      price: mock.price,
-      cutPrice: mock.cutPrice,
-      status: mock.status,
-      liveAt: mock.liveAt,
-      questions: { length: mock.questions.length }
-    }));
+    // Map to include question count (support both scenario-based and legacy)
+    const mocksWithCount = mocks.map(mock => {
+      let questionCount = 0;
+      if (mock.scenarios && mock.scenarios.length > 0) {
+        questionCount = mock.scenarios.reduce((sum, scenario) => sum + scenario.questions.length, 0);
+      } else if (mock.questions && mock.questions.length > 0) {
+        questionCount = mock.questions.length;
+      }
+
+      return {
+        _id: mock._id,
+        title: mock.title,
+        description: mock.description,
+        duration: mock.duration,
+        totalMarks: mock.totalMarks,
+        isPaid: mock.isPaid,
+        price: mock.price,
+        cutPrice: mock.cutPrice,
+        status: mock.status,
+        liveAt: mock.liveAt,
+        questions: { length: questionCount }
+      };
+    });
 
     res.status(200).json({
       success: true,

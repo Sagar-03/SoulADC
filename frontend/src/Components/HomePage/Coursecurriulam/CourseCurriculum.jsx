@@ -37,6 +37,11 @@ const CourseCurriculum = () => {
       weeks: 'Modules 7',
       title: 'Infection control',
       subjects: ['Infection control', 'Health promotion ', 'Special Categories', 'Past Papers']
+    },
+     {
+      weeks: 'Modules 8 Onwards',
+      // title: 'Infection control',
+      subjects: ['Revision', 'Past Papers Discussion', 'ADC Sample Question Bank Discussion']
     }
   ];
 

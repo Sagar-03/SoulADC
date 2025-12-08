@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import AdminLayout from "./AdminLayout";
-import { getDocuments, deleteDocument, cleanupOrphanedDocuments, api } from "../../Api/api";
+import { getDocuments, deleteDocument, cleanupOrphanedDocuments, updateDocument, api } from "../../Api/api";
 import { FaFileAlt, FaFilePdf } from "react-icons/fa";
 import "../student/Documents/StudentDocuments.css";
 import "./AdminDocuments.css";
@@ -16,6 +16,8 @@ const AdminDocuments = () => {
   const [loading, setLoading] = useState(true);
   const [coursesLoading, setCoursesLoading] = useState(true);
   const [documentLoading, setDocumentLoading] = useState(false);
+  const [editingDocId, setEditingDocId] = useState(null);
+  const [editTitle, setEditTitle] = useState("");
 
   useEffect(() => {
     fetchCourses();
@@ -117,6 +119,42 @@ const AdminDocuments = () => {
     } catch (err) {
       console.error("❌ Delete failed:", err);
       alert("Failed to delete document: " + (err.response?.data?.error || err.message));
+    }
+  };
+
+  const handleEditStart = (doc) => {
+    setEditingDocId(doc._id);
+    setEditTitle(doc.title);
+  };
+
+  const handleEditCancel = () => {
+    setEditingDocId(null);
+    setEditTitle("");
+  };
+
+  const handleEditSave = async (id) => {
+    if (!editTitle || editTitle.trim() === "") {
+      alert("Document title cannot be empty!");
+      return;
+    }
+
+    try {
+      console.log("✏️ Updating document title:", { id, newTitle: editTitle });
+      await updateDocument(id, editTitle.trim());
+      
+      // Update state with new title
+      setDocuments((prev) =>
+        prev.map((doc) =>
+          doc._id === id ? { ...doc, title: editTitle.trim() } : doc
+        )
+      );
+      
+      setEditingDocId(null);
+      setEditTitle("");
+      alert("✅ Document title updated successfully!");
+    } catch (err) {
+      console.error("❌ Update failed:", err);
+      alert("Failed to update document: " + (err.response?.data?.error || err.message));
     }
   };
 
@@ -381,7 +419,7 @@ const AdminDocuments = () => {
                   <div className="documents-content">
                     <div className="d-flex justify-content-between align-items-center mb-3">
                       <h5 className="section-title">
-                        MODULE {String(selectedModule).padStart(2, "0")} — Notes / Papers
+                        MODULE {String(selectedModule).padStart(2, "0")} — Reading Materials
                       </h5>
                       <span className="documents-count-badge">
                         {filteredDocuments.length} Notes{filteredDocuments.length !== 1 ? "s" : ""}
@@ -410,9 +448,22 @@ const AdminDocuments = () => {
                                 </div>
                                 
                                 <div className="document-info">
-                                  <h6 className="document-title" title={doc.title}>
-                                    {doc.title}
-                                  </h6>
+                                  {editingDocId === doc._id ? (
+                                    <div className="edit-document-title mb-2">
+                                      <input
+                                        type="text"
+                                        className="form-control form-control-sm"
+                                        value={editTitle}
+                                        onChange={(e) => setEditTitle(e.target.value)}
+                                        placeholder="Enter document title"
+                                        autoFocus
+                                      />
+                                    </div>
+                                  ) : (
+                                    <h6 className="document-title" title={doc.title}>
+                                      {doc.title}
+                                    </h6>
+                                  )}
                                   <span className="document-type">
                                     {doc.type?.toUpperCase() || "PDF"}
                                   </span>
@@ -433,19 +484,41 @@ const AdminDocuments = () => {
                                 </div>
 
                                 <div className="admin-actions">
-                                  {/* <button
-                                    className="btn btn-primary btn-sm document-button flex-fill"
-                                    onClick={() => handleDocumentView(doc)}
-                                  >
-                                    👁️ View
-                                  </button> */}
-                                  <button
-                                    className="admin-delete-btn"
-                                    onClick={() => handleDelete(doc._id)}
-                                    title="Delete Document"
-                                  >
-                                    🗑️
-                                  </button>
+                                  {editingDocId === doc._id ? (
+                                    <>
+                                      <button
+                                        className="btn btn-success btn-sm"
+                                        onClick={() => handleEditSave(doc._id)}
+                                        title="Save Changes"
+                                      >
+                                        ✓
+                                      </button>
+                                      <button
+                                        className="btn btn-secondary btn-sm"
+                                        onClick={handleEditCancel}
+                                        title="Cancel Edit"
+                                      >
+                                        ✕
+                                      </button>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <button
+                                        className="btn btn-primary btn-sm"
+                                        onClick={() => handleEditStart(doc)}
+                                        title="Edit Document Name"
+                                      >
+                                        ✏️
+                                      </button>
+                                      <button
+                                        className="admin-delete-btn"
+                                        onClick={() => handleDelete(doc._id)}
+                                        title="Delete Document"
+                                      >
+                                        🗑️
+                                      </button>
+                                    </>
+                                  )}
                                 </div>
                               </div>
                             </div>

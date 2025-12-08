@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { startMockAttempt, submitMockAttempt, updateFullscreenExit } from '../../Api/api';
+import { getAuthToken } from '../../utils/auth';
 import './StudentMockStyles.css';
 
 const MockAttempt = () => {
@@ -59,11 +60,23 @@ const MockAttempt = () => {
       setAttempt(response.data.attempt);
       setTimeRemaining(response.data.mock.duration * 60); // Convert to seconds
       
-      // Initialize empty answers
+      // Initialize empty answers - support both scenario-based and legacy questions
       const initialAnswers = {};
-      response.data.mock.questions.forEach(q => {
-        initialAnswers[q._id] = '';
-      });
+      
+      if (response.data.mock.scenarios && response.data.mock.scenarios.length > 0) {
+        // New scenario-based structure
+        response.data.mock.scenarios.forEach((scenario) => {
+          scenario.questions.forEach(q => {
+            initialAnswers[q._id] = '';
+          });
+        });
+      } else if (response.data.mock.questions && response.data.mock.questions.length > 0) {
+        // Legacy question structure
+        response.data.mock.questions.forEach(q => {
+          initialAnswers[q._id] = '';
+        });
+      }
+      
       setAnswers(initialAnswers);
 
       // Start timer
@@ -214,8 +227,29 @@ const MockAttempt = () => {
     setCurrentQuestion(index);
   };
 
+  // Memoize computed values to prevent re-renders
+  const totalQuestions = useMemo(() => {
+    if (!mock) return 0;
+    if (mock.scenarios && mock.scenarios.length > 0) {
+      return mock.scenarios.reduce((sum, scenario) => sum + scenario.questions.length, 0);
+    }
+    return mock.questions?.length || 0;
+  }, [mock]);
+
+  const allQuestions = useMemo(() => {
+    if (!mock) return [];
+    if (mock.scenarios && mock.scenarios.length > 0) {
+      const questions = [];
+      mock.scenarios.forEach(scenario => {
+        scenario.questions.forEach(q => questions.push({ ...q, scenarioId: scenario._id }));
+      });
+      return questions;
+    }
+    return mock.questions || [];
+  }, [mock]);
+
   const nextQuestion = () => {
-    if (currentQuestion < mock.questions.length - 1) {
+    if (currentQuestion < totalQuestions - 1) {
       setCurrentQuestion(currentQuestion + 1);
     }
   };
@@ -224,6 +258,27 @@ const MockAttempt = () => {
     if (currentQuestion > 0) {
       setCurrentQuestion(currentQuestion - 1);
     }
+  };
+
+  // Helper function to get question by index (works with scenarios or legacy)
+  const getQuestionByIndex = (index) => {
+    if (!mock) return { question: null, scenario: null };
+    if (mock.scenarios && mock.scenarios.length > 0) {
+      let count = 0;
+      for (const scenario of mock.scenarios) {
+        if (index < count + scenario.questions.length) {
+          return {
+            question: scenario.questions[index - count],
+            scenario: scenario
+          };
+        }
+        count += scenario.questions.length;
+      }
+    }
+    return {
+      question: mock.questions?.[index],
+      scenario: null
+    };
   };
 
   if (loading) {
@@ -239,7 +294,12 @@ const MockAttempt = () => {
     return null;
   }
 
-  const question = mock.questions[currentQuestion];
+  const { question, scenario } = getQuestionByIndex(currentQuestion);
+  
+  if (!question) {
+    return <div>Error loading question</div>;
+  }
+  
   const isAnswered = answers[question._id]?.trim() !== '';
 
   return (
@@ -263,7 +323,7 @@ const MockAttempt = () => {
       <div className="mock-attempt-header">
         <div className="mock-info">
           <h2>{mock.title}</h2>
-          <p>{mock.questions.length} Questions • {mock.totalMarks} Marks</p>
+          <p>{totalQuestions} Questions • {mock.totalMarks} Marks</p>
         </div>
         <div className="timer-section">
           <div className={`timer ${timeRemaining < 300 ? 'warning' : ''}`}>
@@ -278,7 +338,7 @@ const MockAttempt = () => {
         <div className="question-navigator">
           <h3>Questions</h3>
           <div className="question-grid">
-            {mock.questions.map((q, index) => (
+            {allQuestions.map((q, index) => (
               <button
                 key={q._id}
                 className={`question-nav-btn ${currentQuestion === index ? 'active' : ''} ${
@@ -304,18 +364,41 @@ const MockAttempt = () => {
 
         {/* Question Content */}
         <div className="question-content">
+          {/* Scenario Information */}
+          {scenario && (
+            <div className="scenario-section">
+              <h3 className="scenario-title">{scenario.title}</h3>
+              <div className="scenario-description">
+                <p>{scenario.description}</p>
+              </div>
+              {scenario.images && scenario.images.length > 0 && (
+                <div className="scenario-images">
+                  {scenario.images.map((img, index) => {
+                    const token = getAuthToken();
+                    // Properly encode the image path
+                    const encodedImg = encodeURIComponent(img);
+                    const imageUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:7001/api'}/stream/${encodedImg}${token ? `?token=${token}` : ''}`;
+                    return (
+                      <img 
+                        key={index}
+                        src={imageUrl}
+                        alt={`Scenario ${index + 1}`}
+                        className="scenario-image"
+                      />
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="question-header-info">
-            <span className="question-number">Question {currentQuestion + 1} of {mock.questions.length}</span>
+            <span className="question-number">Question {currentQuestion + 1} of {totalQuestions}</span>
             <span className="question-marks">{question.marks} Marks</span>
           </div>
 
           <div className="question-text">
             <h3>{question.questionText}</h3>
-            {question.imageUrl && (
-              <div className="question-image">
-                <img src={`${import.meta.env.VITE_API_URL || 'http://localhost:7001/api'}/stream/${question.imageUrl}`} alt="Question" />
-              </div>
-            )}
           </div>
 
           <div className="answer-section">
@@ -363,7 +446,7 @@ const MockAttempt = () => {
               ← Previous
             </button>
             
-            {currentQuestion === mock.questions.length - 1 ? (
+            {currentQuestion === totalQuestions - 1 ? (
               <button 
                 onClick={handleSubmit} 
                 disabled={submitting}
@@ -386,13 +469,13 @@ const MockAttempt = () => {
       {/* Progress Bar */}
       <div className="progress-section">
         <div className="progress-info">
-          <span>Answered: {Object.values(answers).filter(a => a.trim() !== '').length}/{mock.questions.length}</span>
+          <span>Answered: {Object.values(answers).filter(a => a.trim() !== '').length}/{totalQuestions}</span>
         </div>
         <div className="progress-bar">
           <div 
             className="progress-fill"
             style={{ 
-              width: `${(Object.values(answers).filter(a => a.trim() !== '').length / mock.questions.length) * 100}%` 
+              width: `${(Object.values(answers).filter(a => a.trim() !== '').length / totalQuestions) * 100}%` 
             }}
           ></div>
         </div>
