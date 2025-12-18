@@ -1483,10 +1483,10 @@ router.get("/pending-approvals", protect, adminOnly, async (req, res) => {
       });
     });
 
-    console.log(`📋 Fetched ${approvals.length} pending approvals`);
+    console.log(`Fetched ${approvals.length} pending approvals`);
     res.json(approvals);
   } catch (err) {
-    console.error("❌ Error fetching pending approvals:", err.message);
+    console.error("Error fetching pending approvals:", err.message);
     res.status(500).json({ error: "Failed to fetch pending approvals" });
   }
 });

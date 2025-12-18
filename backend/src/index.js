@@ -20,14 +20,14 @@ const sharedContentRoutes = require("./routes/sharedContentRoutes.js");
 // const doubtRoutes = require("./routes/doubtRoutes.js");
 // const Doubt = require("./models/Chat.js");
 
-// ✅ New Chat Model
+// New Chat Model
 const Chat = require("./models/Chat.js");
 const { router: chatUploadRoutes, setIoInstance } = require("./routes/chatUploadRoutes");
 const { protect } = require("./middleware/authMiddleware");
 
 // ===================== CONFIG =====================
 
-// ✅ Connect to Database (existing logic)
+// Connect to Database (existing logic)
 dBConnect();
 
 // ===================== APP + SERVER =====================
@@ -85,7 +85,7 @@ app.use("/api/mocks", mockRoutes);
 const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
 
 io.on("connection", (socket) => {
-  console.log("🟢 Chat connected:", socket.id);
+  console.log("Chat connected:", socket.id);
 
   // Join chat room
   socket.on("join_chat", async (chatId) => {
@@ -134,7 +134,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("disconnect", () => {
-    console.log("🔴 Chat disconnected:", socket.id);
+    console.log("Chat disconnected:", socket.id);
   });
 });
 
@@ -240,9 +240,7 @@ app.use("/uploads", express.static("uploads"));
 const PORT = process.env.PORT || 7001;
 
 server.listen(PORT, "0.0.0.0", () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  // console.log(`📋 Allowed CORS origins:`, allowedOrigins);
-  // console.log(`🔐 Credentials: enabled`);
+  console.log(`Server running on port ${PORT}`);
 });
 
 server.timeout = 7200000;

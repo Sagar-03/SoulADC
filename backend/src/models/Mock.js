@@ -26,6 +26,9 @@ const questionSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  images: [{
+    type: String, // S3 keys for question images
+  }],
 });
 
 const scenarioSchema = new mongoose.Schema({

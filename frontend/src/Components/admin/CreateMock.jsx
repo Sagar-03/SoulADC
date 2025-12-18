@@ -35,6 +35,8 @@ const CreateMock = () => {
     correctAnswer: '',
     marks: 1,
     orderIndex: 0,
+    images: [],
+    imageFiles: [],
   });
 
   const [editingScenarioIndex, setEditingScenarioIndex] = useState(null);
@@ -115,6 +117,52 @@ const CreateMock = () => {
     });
   };
 
+  const handleQuestionImagesChange = (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+
+    // Validate file sizes
+    for (const file of files) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Each image should be less than 5MB');
+        return;
+      }
+    }
+
+    // Limit to 3 images
+    const maxImages = 3;
+    const totalImages = currentQuestion.images.length + files.length;
+    if (totalImages > maxImages) {
+      toast.error(`You can upload a maximum of ${maxImages} images per question`);
+      return;
+    }
+
+    const newImageFiles = [...currentQuestion.imageFiles, ...files];
+    const newImageUrls = [...currentQuestion.images, ...files.map(f => URL.createObjectURL(f))];
+
+    setCurrentQuestion({
+      ...currentQuestion,
+      imageFiles: newImageFiles,
+      images: newImageUrls,
+    });
+  };
+
+  const removeQuestionImage = (index) => {
+    const newImages = currentQuestion.images.filter((_, i) => i !== index);
+    const newImageFiles = currentQuestion.imageFiles.filter((_, i) => i !== index);
+    
+    // Revoke the object URL to prevent memory leak
+    if (currentQuestion.images[index].startsWith('blob:')) {
+      URL.revokeObjectURL(currentQuestion.images[index]);
+    }
+
+    setCurrentQuestion({
+      ...currentQuestion,
+      images: newImages,
+      imageFiles: newImageFiles,
+    });
+  };
+
   const addOption = () => {
     setCurrentQuestion({
       ...currentQuestion,
@@ -134,7 +182,7 @@ const CreateMock = () => {
     });
   };
 
-  const addQuestionToScenario = () => {
+  const addQuestionToScenario = async () => {
     if (!currentQuestion.questionText.trim()) {
       toast.error('Question text is required');
       return;
@@ -153,17 +201,45 @@ const CreateMock = () => {
       }
     }
 
+    let uploadedImageKeys = [];
+
+    // Upload question images if provided
+    if (currentQuestion.imageFiles.length > 0) {
+      try {
+        const { uploadQuestionImage } = await import('../../Api/api');
+        
+        for (const file of currentQuestion.imageFiles) {
+          const response = await uploadQuestionImage(file);
+          uploadedImageKeys.push(response.data.s3Key);
+        }
+        
+        toast.success(`${uploadedImageKeys.length} image(s) uploaded successfully`);
+      } catch (error) {
+        console.error('Error uploading question images:', error);
+        toast.error('Failed to upload question images');
+        return;
+      }
+    }
+
     const newQuestion = {
       ...currentQuestion,
       orderIndex: currentScenario.questions.length,
       options: currentQuestion.questionType === 'mcq' 
         ? currentQuestion.options.filter(opt => opt.trim() !== '')
         : [],
+      images: uploadedImageKeys,
     };
 
     setCurrentScenario({
       ...currentScenario,
       questions: [...currentScenario.questions, newQuestion],
+    });
+
+    // Clean up blob URLs
+    currentQuestion.images.forEach(url => {
+      if (url.startsWith('blob:')) {
+        URL.revokeObjectURL(url);
+      }
     });
 
     // Reset current question
@@ -174,6 +250,8 @@ const CreateMock = () => {
       correctAnswer: '',
       marks: 1,
       orderIndex: 0,
+      images: [],
+      imageFiles: [],
     });
 
     toast.success('Question added to scenario');
@@ -545,6 +623,40 @@ const CreateMock = () => {
               />
             </div>
 
+            <div className="form-group">
+              <label>Question Images (Max 3)</label>
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handleQuestionImagesChange}
+                style={{ display: 'none' }}
+                id="question-images-upload"
+              />
+              {currentQuestion.images.length < 3 && (
+                <label htmlFor="question-images-upload" className="upload-image-btn">
+                  📷 Upload Images ({currentQuestion.images.length}/3)
+                </label>
+              )}
+              {currentQuestion.images.length > 0 && (
+                <div className="images-preview-grid">
+                  {currentQuestion.images.map((img, index) => (
+                    <div key={index} className="image-preview">
+                      <img src={img} alt={`Question ${index + 1}`} />
+                      <button 
+                        type="button" 
+                        onClick={() => removeQuestionImage(index)} 
+                        className="remove-image-btn"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <small>Max size: 5MB per image. Supported formats: JPG, PNG, GIF</small>
+            </div>
+
             <button type="button" onClick={addQuestionToScenario} className="add-question-btn">
               + Add Question to Scenario
             </button>
@@ -604,6 +716,10 @@ const CreateMock = () => {
                             key={imgIndex} 
                             src={imageUrl}
                             alt={`Scenario ${sIndex + 1} Image ${imgIndex + 1}`}
+                            onError={(e) => {
+                              console.error('Failed to load image:', img);
+                              e.target.style.display = 'none';
+                            }}
                           />
                         );
                       })}
@@ -615,6 +731,9 @@ const CreateMock = () => {
                     {scenario.questions.map((question, qIndex) => (
                       <div key={qIndex} className="question-mini-preview">
                         <strong>Q{qIndex + 1}.</strong> {question.questionText}
+                        {question.images && question.images.length > 0 && (
+                          <span className="question-has-images" title={`${question.images.length} image(s)`}> 📷</span>
+                        )}
                         <span className="question-marks-badge">{question.marks} marks</span>
                       </div>
                     ))}

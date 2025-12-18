@@ -82,7 +82,7 @@ const AdminSidebar = () => {
                 <SidebarItem
                     icon={<FaClipboardList />}
                     text="Mock Exams"
-                    active={location.pathname.startsWith("/admin/manage-mocks") || location.pathname.startsWith("/admin/create-mock") || location.pathname.startsWith("/admin/edit-mock")}
+                    active={location.pathname.startsWith("/admin/manage-mocks") || location.pathname.startsWith("/admin/create-mock") || location.pathname.startsWith("/admin/edit-mock") || location.pathname.startsWith("/admin/preview-mock")}
                     onClick={() => navigate("/admin/manage-mocks")}
                 />
                 <SidebarItem

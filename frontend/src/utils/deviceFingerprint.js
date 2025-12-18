@@ -9,8 +9,12 @@ import FingerprintJS from '@fingerprintjs/fingerprintjs';
  * 
  * NOTE: Device fingerprinting is NOT applied to admin credentials (admin@souladc.com)
  * Admins can login from any device without restriction.
+ * 
+ * IMPORTANT: The fingerprint is stored in localStorage to ensure consistency
+ * across sessions. This prevents the "device mismatch" error on the same device.
  */
 let fpPromise = null;
+const FINGERPRINT_STORAGE_KEY = 'device_fingerprint';
 
 export const initializeFingerprint = () => {
   if (!fpPromise) {
@@ -21,13 +25,37 @@ export const initializeFingerprint = () => {
 
 export const getDeviceFingerprint = async () => {
   try {
+    // Check if fingerprint is already stored
+    const storedFingerprint = localStorage.getItem(FINGERPRINT_STORAGE_KEY);
+    if (storedFingerprint) {
+      console.log('✅ Using stored device fingerprint');
+      return storedFingerprint;
+    }
+
+    // Generate new fingerprint
+    console.log('🔄 Generating new device fingerprint...');
     const fp = await initializeFingerprint();
     const result = await fp.get();
-    return result.visitorId;
+    const fingerprint = result.visitorId;
+    
+    // Store for future use
+    localStorage.setItem(FINGERPRINT_STORAGE_KEY, fingerprint);
+    console.log('✅ Device fingerprint generated and stored');
+    
+    return fingerprint;
   } catch (error) {
     console.error('Error getting device fingerprint:', error);
     return null;
   }
+};
+
+/**
+ * Clear stored device fingerprint
+ * Useful when user wants to reset device lock or logout completely
+ */
+export const clearDeviceFingerprint = () => {
+  localStorage.removeItem(FINGERPRINT_STORAGE_KEY);
+  console.log('🗑️ Device fingerprint cleared');
 };
 
 
@@ -378,5 +406,6 @@ catch (error) {
 
 export default {
   initializeFingerprint,
-  getDeviceFingerprint
+  getDeviceFingerprint,
+  clearDeviceFingerprint
 };

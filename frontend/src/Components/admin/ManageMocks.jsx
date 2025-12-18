@@ -188,9 +188,18 @@ const ManageMocks = () => {
 
               <div className="mock-card-actions">
                 <button 
+                  onClick={() => navigate(`/admin/preview-mock/${mock._id}`)}
+                  className="action-btn preview-action"
+                  title="Preview mock as it will appear to students"
+                >
+                  👁️ Preview
+                </button>
+
+                <button 
                   onClick={() => navigate(`/admin/edit-mock/${mock._id}`)}
                   className="action-btn edit-action"
-                  disabled={mock.status === 'live'}
+                  disabled={mock.status === 'live' || mock.status === 'ended'}
+                  title={mock.status !== 'draft' ? 'Can only edit draft mocks' : 'Edit mock'}
                 >
                   Edit
                 </button>

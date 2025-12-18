@@ -361,7 +361,7 @@ const AdminDocuments = () => {
                           <span className="stat-value">{selectedCourse.weeks?.length || 0}</span>
                         </div>
                         <div className="stat-item">
-                          <span>Total Notes:</span>
+                          <span>Total Documents:</span>
                           <span className="stat-value">
                             {loading ? '...' : documents.filter(doc => 
                               doc.courseTitle === selectedCourse.title
@@ -503,6 +503,13 @@ const AdminDocuments = () => {
                                     </>
                                   ) : (
                                     <>
+                                      <button
+                                        className="btn btn-info btn-sm"
+                                        onClick={() => handleDocumentView(doc)}
+                                        title="Preview Document"
+                                      >
+                                        👁️
+                                      </button>
                                       <button
                                         className="btn btn-primary btn-sm"
                                         onClick={() => handleEditStart(doc)}

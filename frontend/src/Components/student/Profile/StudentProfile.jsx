@@ -52,7 +52,7 @@ const StudentProfile = () => {
 
       console.log("Saving profile data:", formData);
 
-      // ✅ Only send name to API (keep email as is)
+      // Only send name to API (keep email as is)
       const response = await updateUserProfile({
         name: formData.name.trim(),
         // If your API requires email, pass the existing one:

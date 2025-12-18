@@ -113,7 +113,7 @@ const DocumentsPage = () => {
                     </div>
 
                     <button className="btn btn-primary course-button">
-                      View Notes
+                      View Documents
                     </button>
                   </div>
                 </div>

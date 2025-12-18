@@ -53,25 +53,31 @@ const About = () => {
             </Col>
             <Col lg={6}>
               <div className="hero-visual">
-                <div className="floating-card card-1">
-                  <FaBookOpen className="card-icon" />
-                  <h6>Comprehensive Resources</h6>
-                </div>
-                <div className="floating-card card-2">
-                  <FaPlay className="card-icon" />
-                  <h6>Interactive Learning</h6>
-                </div>
-                <div className="floating-card card-3">
-                  <FaChartLine className="card-icon" />
-                  <h6>Progress Tracking</h6>
-                </div>
-                <div className="floating-card card-4">
-                  <FaChartLine className="card-icon" />
-                  <h6>Mock Papers</h6>
-                </div>
-                <div className="floating-card card-5">
-                  <FaChartLine className="card-icon" />
-                  <h6>Past Paper Discussion</h6>
+                <div className="cards-grid">
+                  <div className="floating-card">
+                    <FaBookOpen className="card-icon" />
+                    <h6>Comprehensive Resources</h6>
+                  </div>
+                  <div className="floating-card">
+                    <FaPlay className="card-icon" />
+                    <h6>Interactive Learning</h6>
+                  </div>
+                  <div className="floating-card">
+                    <FaChartLine className="card-icon" />
+                    <h6>Progress Tracking</h6>
+                  </div>
+                  <div className="floating-card">
+                    <FaChartLine className="card-icon" />
+                    <h6>Mock Papers</h6>
+                  </div>
+                  <div className="floating-card">
+                    <FaChartLine className="card-icon" />
+                    <h6>Past Paper Discussion</h6>
+                  </div>
+                  <div className="floating-card">
+                    <FaUsers className="card-icon" />
+                    <h6>Personal Mentoring</h6>
+                  </div>
                 </div>
               </div>
             </Col>
@@ -131,71 +137,88 @@ const About = () => {
 
       {/* ADC Assessment Process */}
       <section id="adc-process" className="adc-process-section py-5">
-        <div className="container text-center">
-          <h2 className="section-title">
-            ADC <span className="highlight">Assessment Process</span>
-          </h2>
-
-          <p className="adc-description mx-auto">
-            The <strong>Australian Dental Council (ADC)</strong> assessment process ensures that
-            overseas-qualified dental practitioners have the competence, knowledge, and practical
-            ability to safely practise in Australia. It involves a <strong>three-step journey</strong>
-            from qualification verification to clinical assessment.
-          </p>
+        <div className="container">
+          <div className="text-center mb-5">
+            <h2 className="adc-main-title">
+              ADC Assessment
+            </h2>
+            <h2 className="adc-main-title-highlight">
+              Process
+            </h2>
+            <p className="adc-description mx-auto mt-4">
+              The Australian Dental Council ensures overseas-qualified practitioners have the<br />
+              competence to safely practise in Australia through a three-step journey.
+            </p>
+          </div>
 
           {/* Steps Section */}
-          <div className="adc-steps d-flex flex-column flex-md-row justify-content-center align-items-center mt-5">
+          <div className="adc-steps-container">
             {/* Step 1 */}
-            <div className="adc-step">
-              <div className="adc-icon-circle">
-                <i className="bi bi-clipboard-check"></i>
+            <div className="adc-step-wrapper">
+              <div className="adc-step-number">1</div>
+              <div className="adc-step-card">
+                <div className="adc-icon-box blue-gradient">
+                  <i className="bi bi-clipboard-check"></i>
+                </div>
+                <h5 className="adc-step-title">Initial Assessment</h5>
+                <p className="adc-step-description">
+                  Verification of your academic credentials and professional background to confirm eligibility.
+                </p>
               </div>
-              <h5>Initial Assessment</h5>
-              <p className="adc-step-text">
-                Verification of your academic credentials and professional background to confirm eligibility.
-              </p>
             </div>
 
-            <i className="bi bi-arrow-right adc-arrow"></i>
+            {/* Connecting Line */}
+            <div className="adc-connector-line"></div>
 
             {/* Step 2 */}
-            <div className="adc-step">
-              <div className="adc-icon-circle">
-                <i className="bi bi-journal-text"></i>
+            <div className="adc-step-wrapper">
+              <div className="adc-step-number">2</div>
+              <div className="adc-step-card highlighted">
+                <div className="adc-icon-box orange-gradient">
+                  <i className="bi bi-journal-text"></i>
+                </div>
+                <h5 className="adc-step-title">Written Examination</h5>
+                <p className="adc-step-description">
+                  A comprehensive test of theoretical and clinical dental science knowledge.
+                </p>
+                <div className="adc-additional-info">
+                  The exam covers all major dental disciplines including oral medicine, oral surgery, orthodontics, and more.
+                </div>
               </div>
-              <h5>Written Examination</h5>
-              <p className="adc-step-text">
-                A comprehensive test of theoretical and clinical dental science knowledge.
-              </p>
             </div>
 
-            <i className="bi bi-arrow-right adc-arrow"></i>
+            {/* Connecting Line */}
+            <div className="adc-connector-line"></div>
 
             {/* Step 3 */}
-            <div className="adc-step">
-              <div className="adc-icon-circle">
-                <i className="bi bi-person-lines-fill"></i>
+            <div className="adc-step-wrapper">
+              <div className="adc-step-number">3</div>
+              <div className="adc-step-card">
+                <div className="adc-icon-box green-gradient">
+                  <i className="bi bi-person-check"></i>
+                </div>
+                <h5 className="adc-step-title">Practical Examination</h5>
+                <p className="adc-step-description">
+                  Evaluation of hands-on clinical and technical skills in simulated dental practice settings.
+                </p>
               </div>
-              <h5>Practical Examination</h5>
-              <p className="adc-step-text">
-                Evaluation of hands-on clinical and technical skills in simulated dental practice settings.
-              </p>
             </div>
           </div>
 
-          <p className="adc-description mx-auto mt-4">
-            We at <strong>Soul ADC</strong> assist you in your written examination; however, we can help you throughout your ADC journey.
-          </p>
+          {/* Bottom Text and Button */}
+          <div className="text-center mt-5">
+            <p className="adc-footer-text">
+              We at <span className="highlight-text">Soul ADC</span> assist you in your written examination
+            </p>
 
-          {/* Download Button */}
-          <div className="adc-download-wrapper mt-4">
             <a
               href="https://www.adc.org.au/files/assessment/handbooks/ADC_Assessment_Process_New.pdf"
               target="_blank"
               rel="noopener noreferrer"
-              className="adc-download-btn"
+              className="adc-pdf-button"
             >
-              <i className=" me-2"></i> View Process PDF
+              View Official Process PDF
+              <i className="bi bi-box-arrow-up-right ms-2"></i>
             </a>
           </div>
         </div>

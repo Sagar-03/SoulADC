@@ -168,7 +168,7 @@ const StudentDocuments = () => {
                           className="btn btn-primary btn-sm document-button"
                           onClick={() => handleDocumentOpen(doc)}
                         >
-                          View Notes
+                          View Reading Material
                         </button>
                       </div>
                     </div>

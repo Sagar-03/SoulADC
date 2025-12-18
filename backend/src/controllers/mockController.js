@@ -119,18 +119,29 @@ exports.updateMock = async (req, res) => {
     const { id } = req.params;
     const updateData = req.body;
 
-    const mock = await Mock.findByIdAndUpdate(
-      id,
-      updateData,
-      { new: true, runValidators: true }
-    );
-
-    if (!mock) {
+    // First, check if the mock exists and its status
+    const existingMock = await Mock.findById(id);
+    
+    if (!existingMock) {
       return res.status(404).json({
         success: false,
         message: 'Mock not found',
       });
     }
+
+    // Prevent editing live or ended mocks
+    if (existingMock.status === 'live' || existingMock.status === 'ended') {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot update a ${existingMock.status} mock. Only draft mocks can be edited.`,
+      });
+    }
+
+    const mock = await Mock.findByIdAndUpdate(
+      id,
+      updateData,
+      { new: true, runValidators: true }
+    );
 
     res.status(200).json({
       success: true,

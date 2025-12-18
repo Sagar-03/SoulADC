@@ -101,6 +101,19 @@
   box-shadow: 0 2px 8px rgba(108, 117, 125, 0.3);
 }
 
+.admin-actions .btn-info {
+  background: transparent;
+  border-color: #0dcaf0;
+  color: #0dcaf0;
+}
+
+.admin-actions .btn-info:hover {
+  background: #0dcaf0;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(13, 202, 240, 0.3);
+}
+
 .admin-delete-btn {
   background: transparent;
   border: 2px solid #dc3545;
