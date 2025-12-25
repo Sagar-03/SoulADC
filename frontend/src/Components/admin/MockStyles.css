@@ -1119,12 +1119,23 @@
 
 .question-image,
 .scenario-image {
-  max-width: 300px;
-  max-height: 300px;
+  max-width: 500px;
+  max-height: 400px;
+  width: auto;
+  height: auto;
   border-radius: 8px;
   border: 2px solid #e0e0e0;
   object-fit: contain;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: #f9f9f9;
+  transition: transform 0.2s ease;
+  cursor: pointer;
+}
+
+.question-image:hover,
+.scenario-image:hover {
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .mock-summary-section {

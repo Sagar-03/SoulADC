@@ -724,6 +724,35 @@
   margin-bottom: 30px;
 }
 
+.question-images,
+.scenario-images {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+  margin: 20px 0;
+}
+
+.question-image,
+.scenario-image {
+  max-width: 600px;
+  max-height: 450px;
+  width: auto;
+  height: auto;
+  border-radius: 8px;
+  border: 2px solid #e0e0e0;
+  object-fit: contain;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: #f9f9f9;
+  transition: transform 0.2s ease;
+  cursor: pointer;
+}
+
+.question-image:hover,
+.scenario-image:hover {
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
 .question-text .question-image {
   margin: 20px 0;
   text-align: center;

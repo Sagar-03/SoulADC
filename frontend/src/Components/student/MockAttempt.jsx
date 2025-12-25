@@ -375,15 +375,17 @@ const MockAttempt = () => {
                 <div className="scenario-images">
                   {scenario.images.map((img, index) => {
                     const token = getAuthToken();
-                    // Properly encode the image path
-                    const encodedImg = encodeURIComponent(img);
-                    const imageUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:7001/api'}/stream/${encodedImg}${token ? `?token=${token}` : ''}`;
+                    // Properly encode the S3 key for URL
+                    const encodedKey = encodeURIComponent(img);
+                    const imageUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:7001/api'}/stream/${encodedKey}${token ? `?token=${token}` : ''}`;
                     return (
                       <img 
                         key={index}
                         src={imageUrl}
                         alt={`Scenario ${index + 1}`}
                         className="scenario-image"
+                        loading="eager"
+                        decoding="async"
                       />
                     );
                   })}
@@ -400,6 +402,35 @@ const MockAttempt = () => {
           <div className="question-text">
             <h3>{question.questionText}</h3>
           </div>
+
+          {/* Question Images */}
+          {question.images && question.images.length > 0 && (
+            <div className="question-images">
+              {question.images.map((img, index) => {
+                const token = getAuthToken();
+                // Properly encode the S3 key for URL
+                const encodedKey = encodeURIComponent(img);
+                const imageUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:7001/api'}/stream/${encodedKey}${token ? `?token=${token}` : ''}`;
+                return (
+                  <img 
+                    key={index}
+                    src={imageUrl}
+                    alt={`Question Image ${index + 1}`}
+                    className="question-image"
+                    loading="eager"
+                    decoding="async"
+                    onError={(e) => {
+                      console.error('Failed to load question image:', img, 'URL:', imageUrl);
+                      e.target.style.display = 'none';
+                    }}
+                    onLoad={() => {
+                      console.log('Successfully loaded question image:', img);
+                    }}
+                  />
+                );
+              })}
+            </div>
+          )}
 
           <div className="answer-section">
             {question.questionType === 'mcq' ? (

@@ -137,6 +137,89 @@ exports.updateMock = async (req, res) => {
       });
     }
 
+    // Delete removed images from S3
+    const { DeleteObjectCommand } = require('@aws-sdk/client-s3');
+    const s3 = require('../config/s3');
+    const deletePromises = [];
+    const bucketName = process.env.AWS_S3_BUCKET;
+
+    if (!bucketName) {
+      console.error('AWS_S3_BUCKET environment variable not set, skipping S3 image deletion');
+    }
+
+    // Helper function to find removed images
+    const findRemovedImages = (oldImages = [], newImages = []) => {
+      return oldImages.filter(oldImg => !newImages.includes(oldImg));
+    };
+
+    // Check scenario images
+    if (bucketName && existingMock.scenarios && updateData.scenarios) {
+      existingMock.scenarios.forEach((oldScenario, index) => {
+        const newScenario = updateData.scenarios[index];
+        if (newScenario) {
+          const removedScenarioImages = findRemovedImages(oldScenario.images, newScenario.images);
+          removedScenarioImages.forEach(imageKey => {
+            const deleteParams = {
+              Bucket: bucketName,
+              Key: imageKey,
+            };
+            deletePromises.push(
+              s3.send(new DeleteObjectCommand(deleteParams)).catch(err => {
+                console.error(`Failed to delete scenario image ${imageKey}:`, err);
+              })
+            );
+          });
+
+          // Check question images in scenario
+          if (oldScenario.questions && newScenario.questions) {
+            oldScenario.questions.forEach((oldQuestion, qIndex) => {
+              const newQuestion = newScenario.questions[qIndex];
+              if (newQuestion) {
+                const removedQuestionImages = findRemovedImages(oldQuestion.images, newQuestion.images);
+                removedQuestionImages.forEach(imageKey => {
+                  const deleteParams = {
+                    Bucket: bucketName,
+                    Key: imageKey,
+                  };
+                  deletePromises.push(
+                    s3.send(new DeleteObjectCommand(deleteParams)).catch(err => {
+                      console.error(`Failed to delete question image ${imageKey}:`, err);
+                    })
+                  );
+                });
+              }
+            });
+          }
+        }
+      });
+    }
+
+    // Check legacy question images
+    if (bucketName && existingMock.questions && updateData.questions) {
+      existingMock.questions.forEach((oldQuestion, index) => {
+        const newQuestion = updateData.questions[index];
+        if (newQuestion) {
+          const removedQuestionImages = findRemovedImages(oldQuestion.images, newQuestion.images);
+          removedQuestionImages.forEach(imageKey => {
+            const deleteParams = {
+              Bucket: bucketName,
+              Key: imageKey,
+            };
+            deletePromises.push(
+              s3.send(new DeleteObjectCommand(deleteParams)).catch(err => {
+                console.error(`Failed to delete question image ${imageKey}:`, err);
+              })
+            );
+          });
+        }
+      });
+    }
+
+    // Wait for all S3 deletions to complete
+    if (deletePromises.length > 0) {
+      await Promise.all(deletePromises);
+    }
+
     const mock = await Mock.findByIdAndUpdate(
       id,
       updateData,
@@ -163,7 +246,7 @@ exports.deleteMock = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const mock = await Mock.findByIdAndDelete(id);
+    const mock = await Mock.findById(id);
 
     if (!mock) {
       return res.status(404).json({
@@ -171,6 +254,79 @@ exports.deleteMock = async (req, res) => {
         message: 'Mock not found',
       });
     }
+
+    // Delete all images from S3
+    const { DeleteObjectCommand } = require('@aws-sdk/client-s3');
+    const s3 = require('../config/s3');
+    const deletePromises = [];
+    const bucketName = process.env.AWS_S3_BUCKET;
+
+    if (!bucketName) {
+      console.error('AWS_S3_BUCKET environment variable not set, skipping S3 image deletion');
+    }
+
+    // Delete scenario images
+    if (bucketName && mock.scenarios && mock.scenarios.length > 0) {
+      for (const scenario of mock.scenarios) {
+        if (scenario.images && scenario.images.length > 0) {
+          for (const imageKey of scenario.images) {
+            const deleteParams = {
+              Bucket: bucketName,
+              Key: imageKey,
+            };
+            deletePromises.push(
+              s3.send(new DeleteObjectCommand(deleteParams)).catch(err => {
+                console.error(`Failed to delete scenario image ${imageKey}:`, err);
+              })
+            );
+          }
+        }
+        
+        // Delete question images in scenario
+        if (scenario.questions && scenario.questions.length > 0) {
+          for (const question of scenario.questions) {
+            if (question.images && question.images.length > 0) {
+              for (const imageKey of question.images) {
+                const deleteParams = {
+                  Bucket: bucketName,
+                  Key: imageKey,
+                };
+                deletePromises.push(
+                  s3.send(new DeleteObjectCommand(deleteParams)).catch(err => {
+                    console.error(`Failed to delete question image ${imageKey}:`, err);
+                  })
+                );
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // Delete legacy question images
+    if (bucketName && mock.questions && mock.questions.length > 0) {
+      for (const question of mock.questions) {
+        if (question.images && question.images.length > 0) {
+          for (const imageKey of question.images) {
+            const deleteParams = {
+              Bucket: bucketName,
+              Key: imageKey,
+            };
+            deletePromises.push(
+              s3.send(new DeleteObjectCommand(deleteParams)).catch(err => {
+                console.error(`Failed to delete question image ${imageKey}:`, err);
+              })
+            );
+          }
+        }
+      }
+    }
+
+    // Wait for all S3 deletions to complete
+    await Promise.all(deletePromises);
+
+    // Delete the mock from database
+    await Mock.findByIdAndDelete(id);
 
     // Also delete all attempts for this mock
     await MockAttempt.deleteMany({ mockId: id });

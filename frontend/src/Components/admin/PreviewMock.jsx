@@ -158,7 +158,9 @@ const PreviewMock = () => {
                     {scenario.images.map((img, index) => {
                       const token = getAuthToken();
                       console.log('Scenario Image S3 Key:', img);
-                      const imageUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:7001/api'}/stream/${img}${token ? `?token=${token}` : ''}`;
+                      // Properly encode the S3 key for URL
+                      const encodedKey = encodeURIComponent(img);
+                      const imageUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:7001/api'}/stream/${encodedKey}${token ? `?token=${token}` : ''}`;
                       console.log('Scenario Image URL:', imageUrl);
                       return (
                         <img 
@@ -166,6 +168,8 @@ const PreviewMock = () => {
                           src={imageUrl}
                           alt={`Scenario ${index + 1}`}
                           className="scenario-image"
+                          loading="eager"
+                          decoding="async"
                           onError={(e) => {
                             console.error('Failed to load scenario image:', img, 'URL:', imageUrl);
                             e.target.style.display = 'none';
@@ -196,7 +200,9 @@ const PreviewMock = () => {
                 {question.images.map((img, index) => {
                   const token = getAuthToken();
                   console.log('Question Image S3 Key:', img);
-                  const imageUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:7001/api'}/stream/${img}${token ? `?token=${token}` : ''}`;
+                  // Properly encode the S3 key for URL
+                  const encodedKey = encodeURIComponent(img);
+                  const imageUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:7001/api'}/stream/${encodedKey}${token ? `?token=${token}` : ''}`;
                   console.log('Question Image URL:', imageUrl);
                   return (
                     <img 
@@ -204,6 +210,8 @@ const PreviewMock = () => {
                       src={imageUrl}
                       alt={`Question Image ${index + 1}`}
                       className="question-image"
+                      loading="eager"
+                      decoding="async"
                       onError={(e) => {
                         console.error('Failed to load question image:', img, 'URL:', imageUrl);
                         e.target.style.display = 'none';
