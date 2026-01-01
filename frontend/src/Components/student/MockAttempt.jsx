@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { startMockAttempt, submitMockAttempt, updateFullscreenExit } from '../../Api/api';
 import { getAuthToken } from '../../utils/auth';
-import './StudentMockStyles.css';
+import './StudentMockStyles.css'; 
 
 const MockAttempt = () => {
   const { mockId } = useParams();

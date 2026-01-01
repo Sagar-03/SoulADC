@@ -672,9 +672,10 @@ const EditMock = () => {
                   if (img.startsWith('blob:') || img.startsWith('http')) {
                     imageUrl = img;
                   } else {
-                    // It's an S3 key, add token
+                    // It's an S3 key, encode it and add token
                     const token = getAuthToken();
-                    imageUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:7001/api'}/stream/${img}${token ? `?token=${token}` : ''}`;
+                    const encodedKey = encodeURIComponent(img);
+                    imageUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:7001/api'}/stream/${encodedKey}${token ? `?token=${token}` : ''}`;
                   }
                   
                   return (
@@ -683,13 +684,16 @@ const EditMock = () => {
                         src={imageUrl} 
                         alt={`Scenario ${index + 1}`}
                         onError={(e) => {
-                          console.error('Failed to load preview image:', imageUrl);
+                          console.error('Failed to load preview image:', img, 'URL:', imageUrl);
+                          e.target.onerror = null;
+                          e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="150" height="150"%3E%3Crect fill="%23f0f0f0" width="150" height="150"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" fill="%23999" font-size="12"%3EImage unavailable%3C/text%3E%3C/svg%3E';
                         }}
                       />
                       <button 
                         type="button" 
                         onClick={() => removeScenarioImage(index)} 
                         className="remove-image-btn"
+                        title="Remove this image"
                       >
                         ✕
                       </button>
@@ -817,17 +821,27 @@ const EditMock = () => {
                 <div className="images-preview-grid">
                   {currentQuestion.images.map((img, index) => {
                     const token = getAuthToken();
-                    const isS3Key = !img.startsWith('blob:');
+                    const isS3Key = !img.startsWith('blob:') && !img.startsWith('http');
+                    const encodedKey = isS3Key ? encodeURIComponent(img) : img;
                     const imageUrl = isS3Key 
-                      ? `${import.meta.env.VITE_API_URL || 'http://localhost:7001/api'}/stream/${img}${token ? `?token=${token}` : ''}`
+                      ? `${import.meta.env.VITE_API_URL || 'http://localhost:7001/api'}/stream/${encodedKey}${token ? `?token=${token}` : ''}`
                       : img;
                     return (
                       <div key={index} className="image-preview">
-                        <img src={imageUrl} alt={`Question ${index + 1}`} />
+                        <img 
+                          src={imageUrl} 
+                          alt={`Question ${index + 1}`}
+                          onError={(e) => {
+                            console.error('Failed to load question image:', img, 'URL:', imageUrl);
+                            e.target.onerror = null;
+                            e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="150" height="150"%3E%3Crect fill="%23f0f0f0" width="150" height="150"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" fill="%23999" font-size="12"%3EImage unavailable%3C/text%3E%3C/svg%3E';
+                          }}
+                        />
                         <button 
                           type="button" 
                           onClick={() => removeQuestionImage(index)} 
                           className="remove-image-btn"
+                          title="Remove this image"
                         >
                           ✕
                         </button>

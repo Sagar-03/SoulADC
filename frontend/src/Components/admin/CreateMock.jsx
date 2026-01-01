@@ -20,6 +20,7 @@ const CreateMock = () => {
   });
 
   const [currentScenario, setCurrentScenario] = useState({
+    tempId: null, // Temporary ID for folder organization
     title: '',
     description: '',
     images: [],
@@ -29,6 +30,7 @@ const CreateMock = () => {
   });
 
   const [currentQuestion, setCurrentQuestion] = useState({
+    tempId: null, // Temporary ID for folder organization
     questionText: '',
     questionType: 'mcq',
     options: ['', '', '', ''],
@@ -46,6 +48,11 @@ const CreateMock = () => {
       ...mockData,
       [e.target.name]: e.target.value,
     });
+  };
+
+  // Generate a temporary unique ID for scenarios/questions before mock is created
+  const generateTempId = () => {
+    return `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   };
 
   const handleQuestionChange = (e) => {
@@ -208,8 +215,17 @@ const CreateMock = () => {
       try {
         const { uploadQuestionImage } = await import('../../Api/api');
         
+        // Generate temp ID if not already set (for organizing uploads)
+        const questionTempId = currentQuestion.tempId || generateTempId();
+        const scenarioTempId = currentScenario.tempId || generateTempId();
+        
+        // Use a temp mockId since the mock isn't created yet
+        const tempMockId = 'temp';
+        
         for (const file of currentQuestion.imageFiles) {
-          const response = await uploadQuestionImage(file);
+          // Upload with organized structure: mock-questions/{tempMockId}/questions/{scenarioId}-{questionId}/
+          const itemId = `${scenarioTempId}-${questionTempId}`;
+          const response = await uploadQuestionImage(file, tempMockId, 'question', itemId);
           uploadedImageKeys.push(response.data.s3Key);
         }
         
@@ -223,6 +239,7 @@ const CreateMock = () => {
 
     const newQuestion = {
       ...currentQuestion,
+      tempId: currentQuestion.tempId || generateTempId(),
       orderIndex: currentScenario.questions.length,
       options: currentQuestion.questionType === 'mcq' 
         ? currentQuestion.options.filter(opt => opt.trim() !== '')
@@ -232,6 +249,7 @@ const CreateMock = () => {
 
     setCurrentScenario({
       ...currentScenario,
+      tempId: currentScenario.tempId || generateTempId(), // Ensure scenario has tempId
       questions: [...currentScenario.questions, newQuestion],
     });
 
@@ -244,6 +262,7 @@ const CreateMock = () => {
 
     // Reset current question
     setCurrentQuestion({
+      tempId: null,
       questionText: '',
       questionType: 'mcq',
       options: ['', '', '', ''],
@@ -289,8 +308,15 @@ const CreateMock = () => {
       try {
         const { uploadQuestionImage } = await import('../../Api/api');
         
+        // Generate or use existing temp ID for the scenario
+        const scenarioTempId = currentScenario.tempId || generateTempId();
+        
+        // Use a temp mockId since the mock isn't created yet
+        const tempMockId = 'temp';
+        
         for (const file of currentScenario.imageFiles) {
-          const response = await uploadQuestionImage(file);
+          // Upload with organized structure: mock-questions/{tempMockId}/scenarios/{scenarioId}/
+          const response = await uploadQuestionImage(file, tempMockId, 'scenario', scenarioTempId);
           uploadedImageKeys.push(response.data.s3Key);
         }
         
@@ -303,6 +329,7 @@ const CreateMock = () => {
     }
 
     const newScenario = {
+      tempId: currentScenario.tempId || generateTempId(),
       title: currentScenario.title,
       description: currentScenario.description,
       images: uploadedImageKeys,
@@ -324,6 +351,7 @@ const CreateMock = () => {
 
     // Reset current scenario
     setCurrentScenario({
+      tempId: null,
       title: '',
       description: '',
       images: [],

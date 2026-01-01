@@ -255,11 +255,24 @@ export const makeMockLive = (id) => api.patch(`/mocks/live/${id}`);
 export const endMock = (id) => api.patch(`/mocks/end/${id}`);
 export const getMockStatistics = (id) => api.get(`/mocks/statistics/${id}`);
 
-// Upload question image
-export const uploadQuestionImage = async (file) => {
-  // Use presigned URL approach for consistency
+// Upload question/scenario image with organized folder structure
+// mockId: The ID of the mock
+// type: 'scenario' or 'question'
+// itemId: scenarioId or questionId (temporary ID before saving)
+export const uploadQuestionImage = async (file, mockId = null, type = 'question', itemId = null) => {
+  // Create organized folder structure: mock-questions/{mockId}/{type}/{itemId}/
+  let folder = 'mock-questions';
+  
+  if (mockId && type && itemId) {
+    // Organized structure: mock-questions/{mockId}/scenarios/{scenarioId}/ or mock-questions/{mockId}/questions/{questionId}/
+    folder = `mock-questions/${mockId}/${type}s/${itemId}`;
+  } else if (mockId) {
+    // At least organize by mockId for temp uploads before itemIds are available
+    folder = `mock-questions/${mockId}/temp`;
+  }
+  
   const fileName = `${Date.now()}-${file.name}`;
-  const presignResponse = await getPresignUrl(fileName, file.type, "mock-questions");
+  const presignResponse = await getPresignUrl(fileName, file.type, folder);
   const { uploadUrl, key } = presignResponse.data;
   
   // Upload directly to S3

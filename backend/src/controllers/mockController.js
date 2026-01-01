@@ -2,6 +2,7 @@ const Mock = require('../models/Mock');
 const MockAttempt = require('../models/MockAttempt');
 const User = require('../models/userModel');
 const { checkUserMockAccess } = require('../middleware/mockAccessMiddleware');
+const { reorganizeMockImages } = require('../utils/reorganizeMockImages');
 
 // Admin Controllers
 
@@ -49,6 +50,19 @@ exports.createMock = async (req, res) => {
     });
 
     await mock.save();
+
+    // Reorganize uploaded images from temp folders to mockId-based folders
+    if (scenarios && scenarios.length > 0) {
+      try {
+        const updatedScenarios = await reorganizeMockImages(mock._id.toString(), scenarios);
+        mock.scenarios = updatedScenarios;
+        await mock.save();
+        console.log('✅ Mock images reorganized successfully');
+      } catch (error) {
+        console.error('⚠️ Warning: Failed to reorganize mock images:', error);
+        // Continue without failing the mock creation
+      }
+    }
 
     res.status(201).json({
       success: true,

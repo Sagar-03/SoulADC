@@ -16,6 +16,7 @@ const AdminDocuments = () => {
   const [loading, setLoading] = useState(true);
   const [coursesLoading, setCoursesLoading] = useState(true);
   const [documentLoading, setDocumentLoading] = useState(false);
+  const [fetchingDoc, setFetchingDoc] = useState(false);
   const [editingDocId, setEditingDocId] = useState(null);
   const [editTitle, setEditTitle] = useState("");
 
@@ -259,32 +260,38 @@ const AdminDocuments = () => {
     }
   };
 
-  const handleDocumentView = (doc) => {
+  const handleDocumentView = async (doc) => {
     console.log("📄 Opening document:", doc);
     
-    // Check if document has a valid URL
-    if (!doc.url && !doc.s3Key) {
-      alert("❌ Document URL not available. Please contact support.");
+    const docId = doc._id || doc.id;
+    if (!docId) {
+      alert("❌ Document ID not available. Please contact support.");
       return;
     }
 
-    // Construct the full URL if needed
-    let documentUrl = doc.url;
-    if (!documentUrl && doc.s3Key) {
-      // Fallback to construct URL from s3Key
-      documentUrl = `/api/stream/${doc.s3Key}`;
-    }
-
-    // Ensure the URL is absolute
-    if (documentUrl && !documentUrl.startsWith('http')) {
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:7001';
-      documentUrl = baseUrl.replace('/api', '') + documentUrl;
-    }
-
-    console.log("🔗 Document URL:", documentUrl);
     setCurrentDocument(doc);
-    setDocumentLoading(true);
-    setPreviewUrl(documentUrl);
+    setFetchingDoc(true);
+    setPreviewUrl(""); // Clear previous URL
+    
+    try {
+      console.log('🔄 Fetching document blob for ID:', docId);
+      
+      // Fetch document as blob using the stream endpoint
+      const response = await api.get(`/stream/${docId}`, {
+        responseType: 'blob'
+      });
+      
+      console.log('✅ Document fetched successfully');
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      setPreviewUrl(url);
+    } catch (error) {
+      console.error('❌ Error fetching document blob:', error);
+      alert(`Failed to load document: ${error.response?.data?.error || error.message}`);
+      setCurrentDocument(null);
+    } finally {
+      setFetchingDoc(false);
+    }
   };
 
   const filteredDocuments = getFilteredDocuments();
@@ -552,13 +559,17 @@ const AdminDocuments = () => {
       </div>
 
       {/* Document Preview Modal */}
-      {previewUrl && (
+      {currentDocument && (
         <div
           className="modal fade show"
           style={{ display: "block", background: "rgba(0,0,0,0.5)" }}
           onClick={(e) => {
             if (e.target === e.currentTarget) {
+              if (previewUrl) {
+                URL.revokeObjectURL(previewUrl);
+              }
               setPreviewUrl("");
+              setCurrentDocument(null);
             }
           }}
         >
@@ -574,19 +585,12 @@ const AdminDocuments = () => {
                   )}
                 </div>
                 <div className="d-flex gap-2">
-                  <button
-                    type="button"
-                    className="btn btn-outline-primary btn-sm"
-                    onClick={() => window.open(previewUrl, '_blank')}
-                    title="Open in new tab"
-                  >
-                    🔗 Open in New Tab
-                  </button>
                   <a
                     href={previewUrl}
                     download={currentDocument?.title || 'document'}
                     className="btn btn-outline-success btn-sm"
                     title="Download document"
+                    style={{ display: previewUrl ? 'block' : 'none' }}
                   >
                     💾 Download
                   </a>
@@ -594,6 +598,9 @@ const AdminDocuments = () => {
                     type="button"
                     className="btn-close"
                     onClick={() => {
+                      if (previewUrl) {
+                        URL.revokeObjectURL(previewUrl);
+                      }
                       setPreviewUrl("");
                       setCurrentDocument(null);
                     }}
@@ -602,50 +609,57 @@ const AdminDocuments = () => {
                 </div>
               </div>
               <div className="modal-body p-0" style={{ height: "80vh" }}>
-                {currentDocument?.type === 'pdf' || currentDocument?.title?.toLowerCase().includes('.pdf') ? (
-                  <iframe
-                    src={previewUrl}
-                    width="100%"
-                    height="100%"
-                    title="Document Preview"
-                    style={{
-                      border: "none",
-                      borderRadius: "0 0 0.375rem 0.375rem"
-                    }}
-                    onLoad={() => console.log("📄 PDF loaded successfully")}
-                    onError={(e) => {
-                      console.error("❌ Error loading PDF:", e);
-                    }}
-                  ></iframe>
-                ) : (
-                  <div className="d-flex flex-column align-items-center justify-content-center h-100 p-4">
-                    <div className="text-center">
-                      <div className="mb-4" style={{ fontSize: "4rem" }}>
-                        {currentDocument?.type === 'doc' || currentDocument?.type === 'docx' ? '📝' :
-                         currentDocument?.type === 'xls' || currentDocument?.type === 'xlsx' ? '📊' :
-                         currentDocument?.type === 'ppt' || currentDocument?.type === 'pptx' ? '📽️' :
-                         '📄'}
-                      </div>
-                      <h5 className="mb-3">{currentDocument?.title}</h5>
-                      <p className="text-muted mb-4">
-                        This {currentDocument?.type?.toUpperCase() || 'document'} cannot be previewed directly in the browser.
-                      </p>
-                      <div className="d-flex gap-3 justify-content-center">
-                        <button
-                          className="btn btn-primary"
-                          onClick={() => window.open(previewUrl, '_blank')}
-                        >
-                          🔗 Open in New Tab
-                        </button>
-                        <a
-                          href={previewUrl}
-                          download={currentDocument?.title || 'document'}
-                          className="btn btn-success"
-                        >
-                          💾 Download
-                        </a>
+                {fetchingDoc ? (
+                  <div className="d-flex flex-column align-items-center justify-content-center h-100">
+                    <div className="spinner-border text-primary mb-3" role="status">
+                      <span className="visually-hidden">Loading document...</span>
+                    </div>
+                    <p className="text-muted">Loading document...</p>
+                  </div>
+                ) : previewUrl ? (
+                  currentDocument?.type === 'pdf' || currentDocument?.title?.toLowerCase().includes('.pdf') ? (
+                    <iframe
+                      src={previewUrl}
+                      width="100%"
+                      height="100%"
+                      title="Document Preview"
+                      style={{
+                        border: "none",
+                        borderRadius: "0 0 0.375rem 0.375rem"
+                      }}
+                      onLoad={() => console.log("📄 PDF loaded successfully")}
+                      onError={(e) => {
+                        console.error("❌ Error loading PDF:", e);
+                      }}
+                    ></iframe>
+                  ) : (
+                    <div className="d-flex flex-column align-items-center justify-content-center h-100 p-4">
+                      <div className="text-center">
+                        <div className="mb-4" style={{ fontSize: "4rem" }}>
+                          {currentDocument?.type === 'doc' || currentDocument?.type === 'docx' ? '📝' :
+                           currentDocument?.type === 'xls' || currentDocument?.type === 'xlsx' ? '📊' :
+                           currentDocument?.type === 'ppt' || currentDocument?.type === 'pptx' ? '📽️' :
+                           '📄'}
+                        </div>
+                        <h5 className="mb-3">{currentDocument?.title}</h5>
+                        <p className="text-muted mb-4">
+                          This {currentDocument?.type?.toUpperCase() || 'document'} cannot be previewed directly in the browser.
+                        </p>
+                        <div className="d-flex gap-3 justify-content-center">
+                          <a
+                            href={previewUrl}
+                            download={currentDocument?.title || 'document'}
+                            className="btn btn-success"
+                          >
+                            💾 Download
+                          </a>
+                        </div>
                       </div>
                     </div>
+                  )
+                ) : (
+                  <div className="d-flex flex-column align-items-center justify-content-center h-100">
+                    <p className="text-danger">Failed to load document</p>
                   </div>
                 )}
               </div>
