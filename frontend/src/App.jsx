@@ -42,7 +42,7 @@ import EditCourse from "./Components/admin/EditCourse";
 import CourseContentManager from "./Components/admin/CourseContentManager";
 import BulkPdfUpload from "./Components/admin/BulkPdfUpload";
 import AdminDoubtDashboard from "./Components/admin/AdminDoubtPanel";
-import AdminDocuments from "./Components/admin/admindocument";
+import AdminDocuments from "./Components/admin/AdminDocument";
 
 // Mock Exam Components
 import ManageMocks from "./Components/admin/ManageMocks";

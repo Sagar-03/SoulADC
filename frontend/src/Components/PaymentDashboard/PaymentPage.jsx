@@ -46,6 +46,9 @@ export default function PaymentPage() {
     }
     else if (code === "dhruv_350") {
       setDiscount(0.6983 * course.price);
+    }
+    else if (code === "test_10") {
+      setDiscount(0.9914 * course.price);
     } else {
       setDiscount(0);
       alert("Invalid coupon code");

@@ -14,7 +14,7 @@ const Register = () => {
     const video = videoRef.current;
     if (!video) return;
 
-    // Start muted autoplay
+    // Start muted autoplay - only once on mount
     video.muted = true;
     video.volume = 0.7; // Set a comfortable volume level
     
@@ -45,35 +45,27 @@ const Register = () => {
       setMuted(video.muted);
     };
 
-    const handlePause = () => {
-      console.log("Video paused");
-      // Only try to resume if user has already interacted
-      if (hasInteracted) {
-        setTimeout(() => {
-          if (video.paused && !video.ended) {
-            video.play().catch(err => console.log("Auto-resume failed:", err));
-          }
-        }, 10);
-      }
-    };
-
     const handlePlay = () => {
       console.log("Video started playing");
     };
 
+    const handleEnded = () => {
+      console.log("Video ended, will loop automatically");
+    };
+
     video.addEventListener('volumechange', handleVolumeChange);
     video.addEventListener('loadeddata', handleLoadedData);
-    video.addEventListener('pause', handlePause);
     video.addEventListener('play', handlePlay);
+    video.addEventListener('ended', handleEnded);
 
     return () => {
       // Clean up video event listeners
       video.removeEventListener('volumechange', handleVolumeChange);
       video.removeEventListener('loadeddata', handleLoadedData);
-      video.removeEventListener('pause', handlePause);
       video.removeEventListener('play', handlePlay);
+      video.removeEventListener('ended', handleEnded);
     };
-  }, [hasInteracted]);
+  }, []); // Empty dependency array - only run once on mount
 
   // Handle popup interaction
   const handlePopupClick = async () => {
