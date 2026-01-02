@@ -11,6 +11,10 @@ const userSchema = new mongoose.Schema(
     role: { type: String, enum: ["user", "admin"], default: "user" },
     resetToken: String,
     resetTokenExpire: Date,
+    // OTP for password reset
+    resetOTP: { type: String },
+    resetOTPExpire: { type: Date },
+    resetOTPAttempts: { type: Number, default: 0 },
     purchasedCourses: [
       {
         courseId: {

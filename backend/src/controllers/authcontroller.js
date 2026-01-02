@@ -288,6 +288,173 @@ const resetPassword = async (req, res) => {
   }
 };
 
+// ✅ NEW: Send OTP for Password Reset
+const sendResetOTP = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "User not found with this email" });
+    }
+
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Hash OTP before storing
+    const hashedOTP = await bcrypt.hash(otp, 10);
+
+    // Store hashed OTP with 10-minute expiry
+    user.resetOTP = hashedOTP;
+    user.resetOTPExpire = Date.now() + 10 * 60 * 1000; // 10 minutes
+    user.resetOTPAttempts = 0; // Reset attempts
+    await user.save();
+
+    // Send OTP via email
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #333;">Password Reset OTP</h2>
+        <p>Hello ${user.name || "User"},</p>
+        <p>You requested to reset your password. Use the OTP below to verify your identity:</p>
+        <div style="background-color: #f4f4f4; padding: 20px; text-align: center; margin: 20px 0;">
+          <h1 style="color: #7B563D; font-size: 36px; margin: 0; letter-spacing: 5px;">${otp}</h1>
+        </div>
+        <p><strong>This OTP is valid for 10 minutes.</strong></p>
+        <p>If you didn't request this, please ignore this email.</p>
+        <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
+        <p style="color: #888; font-size: 12px;">SoulADC - Dental Education Platform</p>
+      </div>
+    `;
+
+    await sendEmail(user.email, "Password Reset OTP - SoulADC", html);
+
+    console.log(`✅ OTP sent to ${email}`);
+    res.json({ 
+      message: "OTP sent to your email. Please check your inbox.",
+      email: email 
+    });
+
+  } catch (error) {
+    console.error("Error sending OTP:", error);
+    res.status(500).json({ message: "Failed to send OTP. Please try again." });
+  }
+};
+
+// ✅ NEW: Verify OTP
+const verifyResetOTP = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({ message: "Email and OTP are required" });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Check if OTP exists and is not expired
+    if (!user.resetOTP || !user.resetOTPExpire) {
+      return res.status(400).json({ message: "No OTP request found. Please request a new OTP." });
+    }
+
+    if (Date.now() > user.resetOTPExpire) {
+      return res.status(400).json({ message: "OTP has expired. Please request a new one." });
+    }
+
+    // Check attempts limit (max 5 attempts)
+    if (user.resetOTPAttempts >= 5) {
+      user.resetOTP = undefined;
+      user.resetOTPExpire = undefined;
+      user.resetOTPAttempts = 0;
+      await user.save();
+      return res.status(429).json({ message: "Too many failed attempts. Please request a new OTP." });
+    }
+
+    // Verify OTP
+    const isValid = await bcrypt.compare(otp, user.resetOTP);
+    
+    if (!isValid) {
+      user.resetOTPAttempts += 1;
+      await user.save();
+      return res.status(400).json({ 
+        message: `Invalid OTP. ${5 - user.resetOTPAttempts} attempts remaining.`,
+        attemptsRemaining: 5 - user.resetOTPAttempts
+      });
+    }
+
+    // OTP is valid - generate a temporary token for password reset
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    user.resetToken = resetToken;
+    user.resetTokenExpire = Date.now() + 15 * 60 * 1000; // 15 minutes to reset password
+    
+    // Clear OTP data (single-use)
+    user.resetOTP = undefined;
+    user.resetOTPExpire = undefined;
+    user.resetOTPAttempts = 0;
+    
+    await user.save();
+
+    console.log(`✅ OTP verified successfully for ${email}`);
+    res.json({ 
+      message: "OTP verified successfully",
+      resetToken: resetToken,
+      email: email
+    });
+
+  } catch (error) {
+    console.error("Error verifying OTP:", error);
+    res.status(500).json({ message: "Failed to verify OTP. Please try again." });
+  }
+};
+
+// ✅ NEW: Reset Password with Token (after OTP verification)
+const resetPasswordWithToken = async (req, res) => {
+  try {
+    const { resetToken, email, newPassword } = req.body;
+
+    if (!resetToken || !email || !newPassword) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: "Password must be at least 6 characters long" });
+    }
+
+    const user = await User.findOne({
+      email,
+      resetToken,
+      resetTokenExpire: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: "Invalid or expired reset token" });
+    }
+
+    // Update password (will be hashed by pre-save hook)
+    user.password = newPassword;
+    user.resetToken = undefined;
+    user.resetTokenExpire = undefined;
+    user.resetOTP = undefined;
+    user.resetOTPExpire = undefined;
+    user.resetOTPAttempts = 0;
+    
+    await user.save();
+
+    console.log(`✅ Password reset successfully for ${email}`);
+    res.json({ message: "Password reset successful. You can now log in with your new password." });
+
+  } catch (error) {
+    console.error("Error resetting password:", error);
+    res.status(500).json({ message: "Failed to reset password. Please try again." });
+  }
+};
+
 // Update user profile
 
 const updateProfile = async (req, res) => {
@@ -333,4 +500,4 @@ const updateProfile = async (req, res) => {
 };
 
 
-module.exports = { register, login, forgotPassword, resetPassword, updateProfile };
+module.exports = { register, login, forgotPassword, resetPassword, updateProfile, sendResetOTP, verifyResetOTP, resetPasswordWithToken };

@@ -97,6 +97,8 @@ router.post("/create-mock-checkout-session", protect, async (req, res) => {
         price = price * 0.9; // 10% discount
       } else if (code === "free100") {
         price = 0; // 100% discount
+      } else if (code === "dhruv_350") {
+        price = price * 0.3017; // ~69.83% discount
       }
     }
 

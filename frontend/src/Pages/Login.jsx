@@ -27,6 +27,8 @@ const Login = () => {
   const [notifications, setNotifications] = useState([]);
   const [showNotification, setShowNotification] = useState(false);
   const [userRole, setUserRole] = useState(null); // Track user role
+  const [failedLoginCount, setFailedLoginCount] = useState(0);
+  const [showForgotPasswordPopup, setShowForgotPasswordPopup] = useState(false);
 
   const [formData, setFormData] = useState({
     email: "",
@@ -78,7 +80,7 @@ const Login = () => {
         });
 
         if (deviceFingerprint) {
-          console.log('📤 Login request sent with fingerprint:', deviceFingerprint?.substring(0, 15) + '...'); // Debug log
+          console.log('Login request sent with fingerprint:', deviceFingerprint?.substring(0, 15) + '...'); // Debug log
         }
 
         if (data.token) {
@@ -181,6 +183,17 @@ const Login = () => {
         error = err.response.data.message;
       }
 
+      // Track failed login attempts (only for login, not registration)
+      if (isLogin && (err.response?.status === 400 || err.response?.status === 401)) {
+        const newFailedCount = failedLoginCount + 1;
+        setFailedLoginCount(newFailedCount);
+        
+        // Show forgot password popup after first failed attempt
+        if (newFailedCount === 1) {
+          setShowForgotPasswordPopup(true);
+        }
+      }
+
       // Handle device lock error specifically
       if (err.response?.status === 403 || err.response?.data?.errorCode === 'DEVICE_LOCK_VIOLATION') {
         toast.error(
@@ -198,6 +211,101 @@ const Login = () => {
 
   return (
     <>
+      {/* Forgot Password Popup after Failed Login */}
+      {showForgotPasswordPopup && (
+        <div 
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: "rgba(0,0,0,0.6)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 9999,
+          }}
+        >
+          <div
+            style={{
+              background: "white",
+              padding: "30px",
+              borderRadius: "12px",
+              maxWidth: "450px",
+              width: "90%",
+              textAlign: "center",
+              position: "relative",
+              boxShadow: "0 10px 40px rgba(0,0,0,0.3)",
+            }}
+          >
+            <button
+              onClick={() => setShowForgotPasswordPopup(false)}
+              style={{
+                position: "absolute",
+                top: "10px",
+                right: "15px",
+                background: "none",
+                border: "none",
+                fontSize: "28px",
+                cursor: "pointer",
+                color: "#666",
+              }}
+            >
+              ×
+            </button>
+            
+            <div style={{ fontSize: "48px", marginBottom: "15px" }}>🔒</div>
+            <h3 style={{ marginBottom: "15px", color: "#333" }}>
+              Login Failed
+            </h3>
+            <p style={{ color: "#666", marginBottom: "25px", lineHeight: "1.6" }}>
+              Incorrect password. Would you like to reset your password or try again?
+            </p>
+            
+            <div style={{ display: "flex", gap: "10px", flexDirection: "column" }}>
+              <button
+                onClick={() => {
+                  setShowForgotPasswordPopup(false);
+                  navigate("/forgot-password");
+                }}
+                style={{
+                  padding: "12px 24px",
+                  background: "linear-gradient(135deg, #7B563D 0%, #6B4C3B 100%)",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "8px",
+                  fontSize: "15px",
+                  fontWeight: "600",
+                  cursor: "pointer",
+                }}
+              >
+                Reset Password
+              </button>
+              
+              <button
+                onClick={() => {
+                  setShowForgotPasswordPopup(false);
+                  setFailedLoginCount(0);
+                }}
+                style={{
+                  padding: "12px 24px",
+                  background: "#f5f5f5",
+                  color: "#333",
+                  border: "none",
+                  borderRadius: "8px",
+                  fontSize: "15px",
+                  fontWeight: "500",
+                  cursor: "pointer",
+                }}
+              >
+                Try Again
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showNotification && notifications.length > 0 && (
         <CourseApprovalNotification
           notifications={notifications}
@@ -344,6 +452,24 @@ const Login = () => {
                     onChange={handleInputChange}
                     required
                   />
+                  {isLogin && (
+                    <div style={{ textAlign: "right", marginTop: "8px" }}>
+                      <button
+                        type="button"
+                        onClick={() => navigate("/forgot-password")}
+                        style={{
+                          background: "none",
+                          border: "none",
+                          color: "#7B563D",
+                          fontSize: "13px",
+                          cursor: "pointer",
+                          fontWeight: "500",
+                        }}
+                      >
+                        Forgot Password?
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {!isLogin && (

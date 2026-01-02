@@ -8,12 +8,12 @@ import { createCheckoutSession } from "../../Api/api"; // adjust path
 export default function PaymentPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  
+
   // Get course details from URL params
   const courseId = searchParams.get('courseId');
   const courseTitle = searchParams.get('title');
   const coursePrice = parseFloat(searchParams.get('price')) || 499;
-  
+
   // Course details (dynamic from URL params)
   const course = {
     id: courseId,
@@ -35,51 +35,54 @@ export default function PaymentPage() {
     }
   }, [navigate]);
 
- const handleApplyCoupon = () => {
-  // Real validation should be done on the backend!
-  const code = coupon.toLowerCase();
+  const handleApplyCoupon = () => {
+    // Real validation should be done on the backend!
+    const code = coupon.toLowerCase();
 
-  if (code === "soul10") {
-    setDiscount(0.1 * course.price); // 10% discount
-  } else if (code === "free100") {
-    setDiscount(course.price); // 100% discount
-  } else {
-    setDiscount(0);
-    alert("Invalid coupon code");
-  }
-};
-
-
-const handleCheckout = async () => {
-  setIsLoading(true);
-  try {
-    if (!isAuthenticated()) {
-      alert("Please login first");
-      navigate("/login");
-      return;
+    if (code === "soul10") {
+      setDiscount(0.1 * course.price); // 10% discount
+    } else if (code === "free100") {
+      setDiscount(course.price); // 100% discount
     }
-
-    const payload = {
-      courseId: course.id,
-      coupon: coupon,
-      successUrl: `${window.location.origin}/payment-success?courseId=${course.id}`,
-      cancelUrl: `${window.location.origin}/payment-cancel`
-    };
-
-    const { data } = await createCheckoutSession(payload);
-
-    if (data.url) {
-      window.location.href = data.url; // Redirect to Stripe Checkout
+    else if (code === "dhruv_350") {
+      setDiscount(0.6983 * course.price);
     } else {
-      alert("Failed to start checkout: " + (data.error || data.message || "Unknown error"));
+      setDiscount(0);
+      alert("Invalid coupon code");
     }
-  } catch (err) {
-    console.error("Checkout error:", err);
-    alert("Something went wrong. Please try again.");
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
+
+
+  const handleCheckout = async () => {
+    setIsLoading(true);
+    try {
+      if (!isAuthenticated()) {
+        alert("Please login first");
+        navigate("/login");
+        return;
+      }
+
+      const payload = {
+        courseId: course.id,
+        coupon: coupon,
+        successUrl: `${window.location.origin}/payment-success?courseId=${course.id}`,
+        cancelUrl: `${window.location.origin}/payment-cancel`
+      };
+
+      const { data } = await createCheckoutSession(payload);
+
+      if (data.url) {
+        window.location.href = data.url; // Redirect to Stripe Checkout
+      } else {
+        alert("Failed to start checkout: " + (data.error || data.message || "Unknown error"));
+      }
+    } catch (err) {
+      console.error("Checkout error:", err);
+      alert("Something went wrong. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
 
   const finalPrice = course.price - discount;

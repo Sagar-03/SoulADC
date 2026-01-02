@@ -45,7 +45,7 @@ export default function MockPaymentPage() {
     if (code === "soul10") {
       setDiscount(0.1 * mock.price); // 10% discount
     } else if (code === "free100") {
-      setDiscount(mock.price); // 100% discount
+      setDiscount(mock.price); 
     } else {
       setDiscount(0);
       alert("Invalid coupon code");

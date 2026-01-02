@@ -1,42 +1,47 @@
 # Email Configuration Guide for SoulADC
 
 ## Overview
-The forgot password feature requires email configuration to send password reset links to users.
+The forgot password feature uses Amazon SES SMTP to send password reset links to users.
 
-## Setup Options
+## Amazon SES SMTP Setup
 
-### Option 1: Gmail (Recommended for Development)
+### Step 1: Verify Your Email Address in AWS SES
 
-1. **Enable 2-Factor Authentication** on your Gmail account
-2. **Generate App Password**:
-   - Go to Google Account Settings → Security
-   - Under "2-Step Verification", click "App passwords"
-   - Select "Mail" and "Other (Custom name)"
-   - Generate and copy the 16-character password
+1. Log in to AWS Console
+2. Go to Amazon SES service
+3. Navigate to "Verified identities"
+4. Click "Create identity"
+5. Select "Email address"
+6. Enter your sender email address (e.g., noreply@yourdomain.com)
+7. Click "Create identity"
+8. Check your email and click the verification link
 
-3. **Update `.env` file**:
+**Note**: If in SES Sandbox mode, also verify recipient email addresses.
+
+### Step 2: Create SMTP Credentials
+
+1. In Amazon SES, go to "SMTP settings"
+2. Note the SMTP endpoint for your region (e.g., email-smtp.us-east-1.amazonaws.com)
+3. Click "Create SMTP credentials"
+4. Enter an IAM user name (e.g., ses-smtp-user)
+5. Click "Create"
+6. **Download and save the SMTP credentials** (username and password)
+
+### Step 3: Update `.env` File
+
+Add the following to your `.env` file:
 ```env
-EMAIL_USER=your-email@gmail.com
-EMAIL_PASSWORD=your-16-char-app-password
+SES_SMTP_HOST=email-smtp.us-east-1.amazonaws.com
+SES_SMTP_PORT=587
+SES_SMTP_USERNAME=your-smtp-username
+SES_SMTP_PASSWORD=your-smtp-password
+SES_FROM_EMAIL=noreply@yourdomain.com
 ```
 
-### Option 2: Custom SMTP Server (Production)
-
-Update your `.env` file with SMTP credentials:
-```env
-SMTP_HOST=smtp.yourserver.com
-SMTP_PORT=587
-SMTP_SECURE=false
-SMTP_USER=your-smtp-username
-SMTP_PASSWORD=your-smtp-password
-```
-
-### Option 3: Development Testing (Ethereal)
-
-If no email configuration is provided, the system automatically uses Ethereal (test email service):
-- Emails won't be delivered to real addresses
-- Check console for preview URLs
-- **Good for testing only**
+Replace:
+- `us-east-1` with your AWS region
+- SMTP credentials with the ones you downloaded
+- `SES_FROM_EMAIL` with your verified email address
 
 ## Testing the Feature
 
@@ -75,19 +80,12 @@ npm run dev
 # Frontend URL for reset links
 FRONTEND_URL=http://localhost:5173
 
-# Gmail Configuration
-EMAIL_USER=your-email@gmail.com
-EMAIL_PASSWORD=your-app-password
-
-# OR SMTP Configuration
-SMTP_HOST=smtp.example.com
-SMTP_PORT=587
-SMTP_SECURE=false
-SMTP_USER=username
-SMTP_PASSWORD=password
-
-# Email sender (displayed in "From" field)
-SES_FROM_EMAIL=info@souladc.com
+# Amazon SES SMTP Configuration
+SES_SMTP_HOST=email-smtp.us-east-1.amazonaws.com
+SES_SMTP_PORT=587
+SES_SMTP_USERNAME=your-smtp-username
+SES_SMTP_PASSWORD=your-smtp-password
+SES_FROM_EMAIL=noreply@yourdomain.com
 ```
 
 ## Important Notes

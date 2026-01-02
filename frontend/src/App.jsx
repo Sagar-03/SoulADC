@@ -8,8 +8,7 @@ import CoursesPage from "./Pages/course";
 import Login from "./Pages/Login";
 // 🔹 Protected Route Wrapper
 import { isAuthenticated, getUser, getUserRole } from "./utils/auth";
-import ForgotPassword from "./Components/student/ForgotPassword/ForgotPassword";
-import ResetPassword from "./Components/student/ForgotPassword/ForgotPassword";
+import ForgotPassword from "./Components/ForgotPassword/ForgotPassword";
 import Tnc from "./Pages/SoulADCTerms";
 import ContactUs from "./Components/ContactUs/ContactUs";
 
@@ -107,7 +106,6 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/About" element={<About />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/reset-password/:token" element={<ResetPassword />} />
         <Route path="/Tnc" element={<Tnc />} />
         <Route path="/ContactUs" element={<ContactUs />} />
         {/* <Route path="/studentdoubts" element={<StudentDoubtPanel />} />

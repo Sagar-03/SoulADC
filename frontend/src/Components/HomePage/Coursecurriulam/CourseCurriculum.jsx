@@ -6,37 +6,37 @@ const CourseCurriculum = () => {
     {
       weeks: 'Modules 1',
       title: 'Periodontology',
-      subjects: ['Periodontology', 'TG', 'Odell Cases', 'Past Papers']
+      subjects: ['Periodontology', 'TG', 'Odell Cases']
     },
     {
       weeks: 'Modules 2',
       title: 'Paediatric Dentistry and Orthodontics',
-      subjects: ['Paediatric Dentistry and Orthodontics', 'TG', 'Dental Caries', 'Odell', 'Past Papers']
+      subjects: ['Paediatric Dentistry and Orthodontics', 'TG', 'Dental Caries', 'Odell']
     },
     {
       weeks: 'Modules 3',
       title: 'Prosthodontics',
-      subjects: ['Prosthodontics', 'TG', 'Odell', 'Past Papers']
+      subjects: ['Prosthodontics', 'TG', 'Odell']
     },
     {
       weeks: 'Modules 4',
       title: 'Oral Medicine and Radiology',
-      subjects: ['Oral Medicine and Radiology', 'TG', 'Odell', 'Past Papers']
+      subjects: ['Oral Medicine and Radiology', 'TG', 'Odell']
     },
     {
       weeks: 'Modules 5',
       title: 'Oral surgery',
-      subjects: ['Oral surgery', 'TG', 'Odell', 'Past Papers']
+      subjects: ['Oral surgery', 'TG', 'Odell']
     },
     {
       weeks: 'Modules 6',
       title: 'Operative and endodontics',
-      subjects: ['Operative and endodontics', 'Odell', 'Code of Conduct', 'Past Papers']
+      subjects: ['Operative and endodontics', 'Odell', 'Code of Conduct']
     },
     {
       weeks: 'Modules 7',
       title: 'Infection control',
-      subjects: ['Infection control', 'Health promotion ', 'Special Categories', 'Past Papers']
+      subjects: ['Infection control', 'Health promotion ', 'Special Categories']
     },
      {
       weeks: 'Modules 8 Onwards',
