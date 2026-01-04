@@ -61,74 +61,89 @@ const EmbeddedVideoPlayer = () => {
   useEffect(() => {
     const fetchCourseAndVideo = async () => {
       try {
+        // Initialize variables
+        let weekId = null;
+        let dayId = null;
+        let videoTitle = "Video Lesson";
+        let courseData = null;
+
+        // Load course data first
         if (courseId) {
-          const { data: courseData } = await api.get(`/user/courses/${courseId}`);
+          const response = await api.get(`/user/courses/${courseId}`);
+          courseData = response.data;
           setCourse(courseData);
+          console.log("📚 Course data loaded");
         }
 
-        if (videoId) {
-          try {
-            const { data: videoInfo } = await api.get(`/stream/info/${videoId}`);
-            
-            // Find weekId and dayId from course data
-            let weekId = null;
-            let dayId = null;
-            
-            if (courseId) {
-              const { data: courseData } = await api.get(`/user/courses/${courseId}`);
-              setCourse(courseData);
-              
-              // Find the week and day that contains this video
-              outer: for (const week of courseData.weeks || []) {
-                if (week.days) {
-                  for (const day of week.days) {
-                    if (day.contents) {
-                      for (const content of day.contents) {
-                        if (String(content._id) === String(videoId) || content.s3Key === videoId) {
-                          weekId = week._id;
-                          dayId = day._id;
-                          console.log("📹 Found video metadata:", {
-                            weekId,
-                            dayId,
-                            contentId: videoId,
-                            weekNumber: week.weekNumber,
-                            dayNumber: day.dayNumber
-                          });
-                          break outer;
-                        }
-                      }
+        if (videoId && courseData) {
+          console.log("🔍 Searching for video ID:", videoId);
+          
+          // Search in weeks.days.contents
+          outer: for (const week of courseData.weeks || []) {
+            if (week.days) {
+              for (const day of week.days) {
+                if (day.contents) {
+                  for (const content of day.contents) {
+                    if (String(content._id) === String(videoId) || content.s3Key === videoId) {
+                      weekId = week._id;
+                      dayId = day._id;
+                      videoTitle = content.title || "Video Lesson";
+                      console.log("✅ Found video in day contents:", {
+                        title: videoTitle,
+                        contentId: content._id,
+                        weekNumber: week.weekNumber,
+                        dayNumber: day.dayNumber
+                      });
+                      break outer;
                     }
                   }
                 }
               }
             }
-            
-            setCurrentVideo({
-              id: videoId,
-              title: videoInfo.title || "Video Lesson",
-              src: getStreamUrl(videoId),
-              weekId: weekId,
-              dayId: dayId,
-              contentId: videoId
-            });
-            
-            console.log("✅ Video loaded:", {
-              title: videoInfo.title,
-              hasWeekId: !!weekId,
-              hasDayId: !!dayId,
-              courseId: courseId
-            });
-          } catch (err) {
-            console.error("⚠️ Failed to load video metadata:", err);
-            setCurrentVideo({
-              id: videoId,
-              title: "Video Lesson",
-              src: getStreamUrl(videoId),
-              weekId: null,
-              dayId: null,
-              contentId: videoId
-            });
           }
+          
+          // If not found in days, check direct week contents
+          if (!weekId) {
+            outer2: for (const week of courseData.weeks || []) {
+              if (week.contents) {
+                for (const content of week.contents) {
+                  if (String(content._id) === String(videoId) || content.s3Key === videoId) {
+                    weekId = week._id;
+                    videoTitle = content.title || "Video Lesson";
+                    console.log("✅ Found video in week contents:", {
+                      title: videoTitle,
+                      contentId: content._id,
+                      weekNumber: week.weekNumber
+                    });
+                    break outer2;
+                  }
+                }
+              }
+            }
+          }
+
+          if (!weekId) {
+            console.warn("⚠️ Video not found in course structure, using fallback title");
+          }
+
+          setCurrentVideo({
+            id: videoId,
+            title: videoTitle,
+            src: getStreamUrl(videoId),
+            weekId: weekId,
+            dayId: dayId,
+            contentId: videoId
+          });
+        } else if (videoId) {
+          // No course data, use fallback
+          setCurrentVideo({
+            id: videoId,
+            title: "Video Lesson",
+            src: getStreamUrl(videoId),
+            weekId: null,
+            dayId: null,
+            contentId: videoId
+          });
         }
 
       } catch (err) {

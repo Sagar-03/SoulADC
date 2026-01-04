@@ -317,11 +317,17 @@ const ProgressDashboard = () => {
     );
   }
 
+  const user = getUser();
+  const userName = user?.name || user?.email?.split('@')[0] || 'Student';
+
   return (
     <StudentLayout>
       <div className="progress-dashboard">
         {/* Header */}
         <div className="dashboard-header">
+          <div className="welcome-message">
+            <h2 className="greeting-text">Hi {userName}, Welcome! 👋</h2>
+          </div>
           <h1 className="dashboard-title">Your Learning Progress</h1>
           <p className="dashboard-subtitle">Track your journey and stay motivated!</p>
         </div>

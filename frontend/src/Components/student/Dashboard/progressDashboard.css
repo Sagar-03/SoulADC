@@ -14,9 +14,26 @@
   padding: 20px 0;
 }
 
+.welcome-message {
+  margin-bottom: 20px;
+}
+
+.greeting-text {
+  color: #5A3825;
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin: 0;
+  background: linear-gradient(135deg, #8B5E3C, #5A3825);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-align: left;
+  padding-left: 20px;
+}
+
 .dashboard-title {
   color: #5A3825;
-  font-size: 2.5rem;
+  font-size: 1.8rem;
   font-weight: 700;
   margin-bottom: 8px;
   background: linear-gradient(135deg, #8B5E3C, #5A3825);
