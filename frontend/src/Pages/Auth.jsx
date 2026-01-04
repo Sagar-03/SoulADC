@@ -183,6 +183,8 @@ const Auth = ({ isOpen, onClose, defaultTab = "signIn" }) => {
                     placeholder="Enter your phone number"
                     value={formData.phone}
                     onChange={handleInputChange}
+                    pattern="[0-9]{8,15}"
+                    title="Please enter a valid phone number (8-15 digits)"
                     required
                   />
                 </div>
@@ -197,6 +199,10 @@ const Auth = ({ isOpen, onClose, defaultTab = "signIn" }) => {
                   placeholder="Enter your password"
                   value={formData.password}
                   onChange={handleInputChange}
+                  {...(!isLogin && {
+                    pattern: ".{8,}",
+                    title: "Password must be at least 8 characters long"
+                  })}
                   required
                 />
               </div>
@@ -211,6 +217,8 @@ const Auth = ({ isOpen, onClose, defaultTab = "signIn" }) => {
                     placeholder="Re-enter your password"
                     value={formData.confirmPassword}
                     onChange={handleInputChange}
+                    pattern=".{8,}"
+                    title="Password must be at least 8 characters long"
                     required
                   />
                 </div>

@@ -31,6 +31,10 @@ router.post("/create-checkout-session", protect, async (req, res) => {
         price = price * 0.9; // 10% discount
       } else if (code === "free100") {
         price = 0; // 100% discount
+      } else if (code === "dhruv_350") {
+        price = price * (1 - 0.6983); // 69.83% discount
+      } else if (code === "test_10") {
+        price = price * (1 - 0.9914); // 99.14% discount
       }
     }
 
@@ -98,9 +102,9 @@ router.post("/create-mock-checkout-session", protect, async (req, res) => {
       } else if (code === "free100") {
         price = 0; // 100% discount
       } else if (code === "dhruv_350") {
-        price = price * 0.3017; // ~69.83% discount
+        price = price * (1 - 0.6983); // 69.83% discount
       } else if (code === "test_10") {
-        price = price * 0.9914; // ~0.86% discount
+        price = price * (1 - 0.9914); // 99.14% discount
       }
     }
 

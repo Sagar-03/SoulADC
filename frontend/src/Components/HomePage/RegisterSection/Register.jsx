@@ -1,22 +1,26 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, memo } from 'react';
 import { Container, Row, Col, Button } from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './registersection.css';
 import { Link } from "react-router-dom";
 
-const Register = () => {
+const Register = memo(() => {
   const videoRef = useRef(null);
   const [muted, setMuted] = useState(true);
   const [hasInteracted, setHasInteracted] = useState(false);
   const [showPopup, setShowPopup] = useState(true);
+  const hasInitialized = useRef(false); // Track if video has been initialized
 
   useEffect(() => {
     const video = videoRef.current;
-    if (!video) return;
+    if (!video || hasInitialized.current) return;
+
+    // Mark as initialized to prevent re-initialization
+    hasInitialized.current = true;
 
     // Start muted autoplay - only once on mount
     video.muted = true;
-    video.volume = 0.7; // Set a comfortable volume level
+    video.volume = 1.0; // Set a comfortable volume level
     
     const startVideo = async () => {
       try {
@@ -84,7 +88,7 @@ const Register = () => {
       const wasPlaying = !video.paused;
       
       video.muted = false;
-      video.volume = 0.7;
+      video.volume = 1.0;
       setMuted(false);
       
       // Ensure video continues playing
@@ -109,7 +113,7 @@ const Register = () => {
         const wasActuallyPaused = video.paused || video.ended;
         
         video.muted = false;
-        video.volume = 0.7; // Set to comfortable volume level
+        video.volume = 1.0; // Set to full volume, users can adjust as needed
         setMuted(false);
         
         // Only play if actually paused
@@ -222,6 +226,7 @@ const Register = () => {
               playsInline
               className="video-main"
               controls={false}
+              preload="auto"
             />
             <button
               onClick={toggleSound}
@@ -272,6 +277,9 @@ const Register = () => {
       </Row>
     </Container>
   );
-};
+});
+
+// Set display name for debugging
+Register.displayName = 'Register';
 
 export default Register;

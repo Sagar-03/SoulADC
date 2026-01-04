@@ -61,7 +61,7 @@ const Footer = () => {
 
           {/* Column 3: Course Info */}
           <Col md={3} className="mb-4">
-            <h6 className="fw-bold mb-3">Course Info</h6>
+            <h6 className="fw-bold mb-3">Courses Offered</h6>
             <Nav className="flex-column">
               {['Comprehensive 5 Month Sprint', 'Comprehensive 10 Month Sprint'].map((item, idx) => (
                 <Nav.Link key={idx} href="./courses" className="text-secondary p-0 mb-1 small">

@@ -42,16 +42,16 @@ const register = async (req, res) => {
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
-    console.log("📩 Login request:", { email, password }); // Debug log
+    console.log("Login request:", { email, password }); // Debug log
 
     // Check for hardcoded admin credentials - create or find admin user
-    if (email === "admin@souladc.com" && password === "admin123") {
+    if (email === "admin@souladc.com" && password === "souladc_admin_365") {
       let adminUser = await User.findOne({ email: "admin@souladc.com" });
       
       // Create admin user if doesn't exist
       if (!adminUser) {
         const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash("admin123", salt);
+        const hashedPassword = await bcrypt.hash("souladc_admin_365", salt);
         
         adminUser = new User({
           name: "Admin",
@@ -60,7 +60,7 @@ const login = async (req, res) => {
           role: "admin"
         });
         await adminUser.save();
-        console.log("✅ Admin user created in database");
+        console.log("Admin user created in database");
       }
       
       const token = jwt.sign(
@@ -97,11 +97,32 @@ const login = async (req, res) => {
 
     // ✅ DEVICE & IP SECURITY CHECK (only for non-admin users)
     if (user.role !== "admin") {
-      const currentIp = req.headers['x-forwarded-for']?.split(',')[0].trim() || 
-                        req.connection.remoteAddress || 
-                        req.socket.remoteAddress || 
-                        req.ip;
+      // Import at top: const { getClientIp } = require('../middleware/deviceSecurityMiddleware');
+      const getClientIp = (req) => {
+        let ip = null;
+        const forwarded = req.headers['x-forwarded-for'];
+        if (forwarded) {
+          ip = forwarded.split(',')[0].trim();
+        } else {
+          ip = req.ip || req.connection?.remoteAddress || req.socket?.remoteAddress;
+        }
+        if (ip === '::1' || ip === '::ffff:127.0.0.1') {
+          ip = '127.0.0.1';
+        }
+        if (ip && ip.startsWith('::ffff:')) {
+          ip = ip.substring(7);
+        }
+        return ip;
+      };
+      const currentIp = getClientIp(req);
       const currentFingerprint = req.body.deviceFingerprint;
+
+      console.log("🔍 Device Security Check for", user.email, ":", {
+        currentIp,
+        storedIp: user.registeredIp,
+        currentFingerprint: currentFingerprint?.substring(0, 12) + '...',
+        storedFingerprint: user.deviceFingerprint?.substring(0, 12) + '...'
+      });
 
       // If this is the first login (no stored IP/fingerprint), store them
       if (!user.registeredIp && !user.deviceFingerprint) {
@@ -117,12 +138,12 @@ const login = async (req, res) => {
         const fingerprintMatches = user.deviceFingerprint === currentFingerprint;
 
         if (!ipMatches || !fingerprintMatches) {
-          console.log("❌ Login blocked - Device/IP mismatch:", {
+          console.log("Login blocked - Device/IP mismatch:", {
             storedIp: user.registeredIp,
             currentIp,
+            ipMatches,
             storedFingerprint: user.deviceFingerprint?.substring(0, 10) + '...',
             currentFingerprint: currentFingerprint?.substring(0, 10) + '...',
-            ipMatches,
             fingerprintMatches
           });
           return res.status(403).json({ 

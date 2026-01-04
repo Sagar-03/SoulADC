@@ -22,7 +22,7 @@ exports.createMock = async (req, res) => {
       if (!adminUser) {
         const bcrypt = require('bcryptjs');
         const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash('admin123', salt);
+        const hashedPassword = await bcrypt.hash('souladc_admin_365', salt);
         
         adminUser = new User({
           name: 'Admin',

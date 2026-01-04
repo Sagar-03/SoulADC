@@ -28,6 +28,8 @@ const VideoPlayer = ({ show, onHide, videoId, videoTitle, videoSrc }) => {
     const handleLoadedData = () => {
       setLoading(false);
       setDuration(video.duration);
+      // Set video to full volume on load
+      video.volume = 1.0;
     };
     const handleTimeUpdate = () => setCurrentTime(video.currentTime);
     const handleError = (e) => {
@@ -325,7 +327,7 @@ const VideoPlayer = ({ show, onHide, videoId, videoTitle, videoSrc }) => {
                     type="range"
                     min="0"
                     max="1"
-                    step="0.1"
+                    step="0.01"
                     value={isMuted ? 0 : volume}
                     onChange={handleVolumeChange}
                     className="volume-slider"

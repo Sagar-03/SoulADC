@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, memo } from "react";
 import "./Preloader.css";
 import logo from "../../../assets/logo.svg"; // shield-only logo
 
-const Preloader = ({ onFinish }) => {
+const Preloader = memo(({ onFinish }) => {
   const [isVisible, setIsVisible] = useState(true);
   const [fadeOut, setFadeOut] = useState(false);
 
@@ -34,6 +34,8 @@ const Preloader = ({ onFinish }) => {
       </div>
     </div>
   );
-};
+});
+
+Preloader.displayName = 'Preloader';
 
 export default Preloader;

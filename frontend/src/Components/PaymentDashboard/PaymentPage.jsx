@@ -26,6 +26,7 @@ export default function PaymentPage() {
   const [coupon, setCoupon] = useState("");
   const [discount, setDiscount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const [isCouponApplied, setIsCouponApplied] = useState(false);
 
   // Check authentication on component mount
   useEffect(() => {
@@ -41,16 +42,21 @@ export default function PaymentPage() {
 
     if (code === "soul10") {
       setDiscount(0.1 * course.price); // 10% discount
+      setIsCouponApplied(true);
     } else if (code === "free100") {
       setDiscount(course.price); // 100% discount
+      setIsCouponApplied(true);
     }
     else if (code === "dhruv_350") {
       setDiscount(0.6983 * course.price);
+      setIsCouponApplied(true);
     }
     else if (code === "test_10") {
       setDiscount(0.9914 * course.price);
+      setIsCouponApplied(true);
     } else {
       setDiscount(0);
+      setIsCouponApplied(false);
       alert("Invalid coupon code");
     }
   };
@@ -108,7 +114,12 @@ export default function PaymentPage() {
           </div>
 
           {/* Coupon Section */}
-          <Form className="mb-4">
+          <Form 
+            className="mb-4"
+            onSubmit={(e) => {
+              e.preventDefault(); // Prevent form submission on Enter
+            }}
+          >
             <Form.Label className="fw-medium">Apply Coupon</Form.Label>
             <div className="d-flex gap-2">
               <Form.Control
@@ -116,8 +127,19 @@ export default function PaymentPage() {
                 placeholder="Enter coupon code"
                 value={coupon}
                 onChange={(e) => setCoupon(e.target.value)}
+                disabled={isCouponApplied}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault(); // Prevent Enter key from submitting
+                  }
+                }}
               />
-              <Button variant="primary" onClick={handleApplyCoupon}>
+              <Button 
+                variant="primary" 
+                onClick={handleApplyCoupon}
+                disabled={isCouponApplied}
+                type="button"
+              >
                 Apply
               </Button>
             </div>

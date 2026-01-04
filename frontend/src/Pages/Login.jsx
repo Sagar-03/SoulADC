@@ -56,7 +56,7 @@ const Login = () => {
     try {
       if (isLogin) {
         // Check if this is admin login - skip device fingerprint for admin
-        const isAdminLogin = formData.email === "admin@souladc.com" && formData.password === "admin123";
+        const isAdminLogin = formData.email === "admin@souladc.com" && formData.password === "souladc_admin_365";
         
         let deviceFingerprint = null;
         
@@ -436,6 +436,8 @@ const Login = () => {
                         onChange={handleInputChange}
                         required
                         placeholder="Enter phone number"
+                        pattern="[0-9]{8,15}"
+                        title="Please enter a valid phone number (8-15 digits)"
                         style={{ flex: 1 }}
                       />
                     </div>
@@ -450,6 +452,10 @@ const Login = () => {
                     placeholder="Enter your password"
                     value={formData.password}
                     onChange={handleInputChange}
+                    {...(!isLogin && {
+                      pattern: ".{8,}",
+                      title: "Password must be at least 8 characters long"
+                    })}
                     required
                   />
                   {isLogin && (
@@ -481,6 +487,8 @@ const Login = () => {
                       placeholder="Re-enter your password"
                       value={formData.confirmPassword}
                       onChange={handleInputChange}
+                      pattern=".{8,}"
+                      title="Password must be at least 8 characters long"
                       required
                     />
                   </div>

@@ -9,16 +9,33 @@
 
 /**
  * Extract client IP address from request
- * Handles various proxy scenarios
+ * Handles various proxy scenarios and normalizes IPv6 to IPv4
  */
 const getClientIp = (req) => {
+  let ip = null;
+  
+  // Try x-forwarded-for header first (for proxies/load balancers)
   const forwarded = req.headers['x-forwarded-for'];
   if (forwarded) {
-    return forwarded.split(',')[0].trim();
+    ip = forwarded.split(',')[0].trim();
+  } else {
+    // Fallback to direct connection IP
+    ip = req.ip || 
+         req.connection?.remoteAddress || 
+         req.socket?.remoteAddress;
   }
-  return req.connection.remoteAddress || 
-         req.socket.remoteAddress || 
-         req.ip;
+  
+  // Normalize IPv6 localhost to IPv4
+  if (ip === '::1' || ip === '::ffff:127.0.0.1') {
+    ip = '127.0.0.1';
+  }
+  
+  // Strip IPv6 prefix if present
+  if (ip && ip.startsWith('::ffff:')) {
+    ip = ip.substring(7);
+  }
+  
+  return ip;
 };
 
 /**

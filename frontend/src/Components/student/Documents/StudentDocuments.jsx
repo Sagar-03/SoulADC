@@ -80,7 +80,7 @@ const StudentDocuments = () => {
       <StudentLayout>
         <div className="documents-container">
           <div className="text-center py-5">
-            <h3 className="text-muted mb-3">Notes Not Available</h3>
+            <h3 className="text-muted mb-3">Dcouments Not Available</h3>
             <p className="text-muted mb-4">{error || "No course data found."}</p>
           </div>
         </div>
@@ -137,9 +137,9 @@ const StudentDocuments = () => {
                 <h5 className="section-title">
                   MODULE {String(selectedModule).padStart(2, "0")} — Reading Materials
                 </h5>
-                <span className="documents-count-badge">
+                {/* <span className="documents-count-badge">
                   {documents.length} Note {documents.length !== 1 ? "s" : ""}
-                </span>
+                </span> */}
               </div>
 
               {documents.length > 0 ? (

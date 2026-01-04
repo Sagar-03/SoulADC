@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Navbar from "../Components/Navbar/Navbar";
 import Footer from "../Components/Footer/footer";
 import Auth from "./Auth";
@@ -17,12 +17,18 @@ import Preloader from "../Components/HomePage/PreLoader/Preloader";
 const HomePage = () => {
   const [loadingDone, setLoadingDone] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
+  
+  // Memoize callbacks to prevent unnecessary re-renders
+  const handlePreloaderFinish = useCallback(() => setLoadingDone(true), []);
+  const handleSignInClick = useCallback(() => setShowAuth(true), []);
+  const handleAuthClose = useCallback(() => setShowAuth(false), []);
+  
   return (
     <>
-      {!loadingDone && <Preloader onFinish={() => setLoadingDone(true)} />}
+      {!loadingDone && <Preloader onFinish={handlePreloaderFinish} />}
       {loadingDone && (
-        <div className="animate-fade-in">
-          <Navbar onSignInClick={() => setShowAuth(true)} />
+        <div>
+          <Navbar onSignInClick={handleSignInClick} />
           <Registration />
           <About />
           <MentorCard />
@@ -31,7 +37,7 @@ const HomePage = () => {
           <CourseCurriculum />
           <Board />
           <Footer />
-          {showAuth && <Auth onClose={() => setShowAuth(false)} />}
+          {showAuth && <Auth onClose={handleAuthClose} />}
         </div>
       )}
     </>

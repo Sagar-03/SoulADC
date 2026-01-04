@@ -19,11 +19,15 @@ const Navbar = () => {
     setUserRole(role);
     
     // Check if user should see dashboard
-    if (loggedIn && role !== "admin") {
-      const user = getUser();
-      const hasPurchasedCourses = user?.purchasedCourses && user.purchasedCourses.length > 0;
-      const hasPurchasedMocks = user?.purchasedMocks && user.purchasedMocks.length > 0;
-      setShouldShowDashboard(hasPurchasedCourses || hasPurchasedMocks);
+    if (loggedIn) {
+      if (role === "admin") {
+        setShouldShowDashboard(true); // Admins always see dashboard
+      } else {
+        const user = getUser();
+        const hasPurchasedCourses = user?.purchasedCourses && user.purchasedCourses.length > 0;
+        const hasPurchasedMocks = user?.purchasedMocks && user.purchasedMocks.length > 0;
+        setShouldShowDashboard(hasPurchasedCourses || hasPurchasedMocks);
+      }
     } else {
       setShouldShowDashboard(false);
     }

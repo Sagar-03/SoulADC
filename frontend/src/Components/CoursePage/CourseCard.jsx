@@ -186,7 +186,7 @@ export default function CourseCard({ course }) {
               </button>
             ) : hasAccess ? (
               <button 
-                onClick={() => navigate(`/mycourse/${course._id}`)} 
+                onClick={() => navigate('/studentdashboard')} 
                 className="btn btn-success"
               >
                 <i className="bi bi-play-circle me-2"></i>
