@@ -227,7 +227,13 @@ const AdminDocuments = () => {
       const matchesCourse = doc.courseTitle === selectedCourse.title;
       
       // Filter by module/week - use weekNumber for more reliable matching
-      const matchesModule = doc.weekNumber === selectedModule;
+      // Special handling for "other" category
+      let matchesModule;
+      if (selectedModule === 'other') {
+        matchesModule = doc.weekNumber === null || doc.weekNumber === undefined || doc.category === 'other';
+      } else {
+        matchesModule = doc.weekNumber === selectedModule;
+      }
       
       console.log(`Document ${doc.title}:`, {
         courseMatch: matchesCourse,
@@ -417,6 +423,32 @@ const AdminDocuments = () => {
                           </button>
                         );
                       })}
+                      
+                      {/* Other Documents Section */}
+                      <button
+                        className={`module-button ${
+                          selectedModule === 'other' ? "active" : ""
+                        }`}
+                        onClick={() => setSelectedModule('other')}
+                      >
+                        {/* <span className="module-number">
+                          📋
+                        </span> */}
+                        <span className="module-title">
+                          Other Documents
+                        </span>
+                        {documents.filter(doc => 
+                          doc.courseTitle === selectedCourse.title &&
+                          (doc.weekNumber === null || doc.weekNumber === undefined || doc.category === 'other')
+                        ).length > 0 && (
+                          <span className="documents-count">
+                            {documents.filter(doc => 
+                              doc.courseTitle === selectedCourse.title &&
+                              (doc.weekNumber === null || doc.weekNumber === undefined || doc.category === 'other')
+                            ).length} docs
+                          </span>
+                        )}
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -426,11 +458,14 @@ const AdminDocuments = () => {
                   <div className="documents-content">
                     <div className="d-flex justify-content-between align-items-center mb-3">
                       <h5 className="section-title">
-                        MODULE {String(selectedModule).padStart(2, "0")} — Reading Materials
+                        {selectedModule === 'other' 
+                          ? "OTHER DOCUMENTS — Additional Resources"
+                          : `MODULE ${String(selectedModule).padStart(2, "0")} — Reading Materials`
+                        }
                       </h5>
-                      <span className="documents-count-badge">
+                      {/* <span className="documents-count-badge">
                         {filteredDocuments.length} Notes{filteredDocuments.length !== 1 ? "s" : ""}
-                      </span>
+                      </span> */}
                     </div>
 
                     {loading ? (
@@ -543,9 +578,9 @@ const AdminDocuments = () => {
                       <div className="no-documents">
                         <div className="text-center py-5">
                           <FaFileAlt className="no-docs-icon mb-3" />
-                          <h5 className="text-muted">No Notes Available</h5>
+                          <h5 className="text-muted">No Documents Available</h5>
                           <p className="text-muted">
-                            No Notes have been uploaded for Module {selectedModule} of {selectedCourse.title} yet.
+                            No Documents have been uploaded for Module {selectedModule} of {selectedCourse.title} yet.
                           </p>
                         </div>
                       </div>

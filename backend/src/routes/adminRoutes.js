@@ -286,6 +286,66 @@ router.post("/courses/:courseId/weeks/:weekId/documents", protect, adminOnly, as
 });
 
 /**
+ * POST /api/admin/courses/:courseId/other-documents
+ * Add document to course-level "other documents" (supports both direct and shared content)
+ */
+router.post("/courses/:courseId/other-documents", protect, adminOnly, async (req, res) => {
+  try {
+    const { type, title, s3Key } = req.body;
+    console.log(`📄 Adding document to "Other Documents": courseId=${req.params.courseId}`);
+    console.log(`📦 Document data: type="${type}", title="${title}", s3Key="${s3Key}"`);
+    
+    const course = await Course.findById(req.params.courseId).populate('sharedContentId');
+    if (!course) return res.status(404).json({ error: "Course not found" });
+
+    // Check if course uses shared content
+    if (course.sharedContentId) {
+      const SharedContent = require("../models/SharedContent");
+      const sharedContent = await SharedContent.findById(course.sharedContentId._id);
+      
+      if (!sharedContent) {
+        return res.status(404).json({ error: "SharedContent not found" });
+      }
+
+      if (!sharedContent.otherDocuments) {
+        sharedContent.otherDocuments = [];
+      }
+
+      sharedContent.otherDocuments.push({ type, title, s3Key });
+      await sharedContent.save();
+      
+      // Fetch the saved document to get its auto-generated _id
+      const updatedSharedContent = await SharedContent.findById(course.sharedContentId._id);
+      const savedDoc = updatedSharedContent.otherDocuments[updatedSharedContent.otherDocuments.length - 1];
+      
+      console.log(`✅ Document "${title}" added to SharedContent "Other Documents"`);
+      console.log(`📌 New document ID: ${savedDoc._id}, s3Key: ${savedDoc.s3Key}`);
+      res.json({ success: true, message: "Document added to SharedContent Other Documents", document: savedDoc });
+    } else {
+      // Course has direct content
+      if (!course.otherDocuments) {
+        course.otherDocuments = [];
+      }
+
+      const newDoc = { type, title, s3Key };
+      course.otherDocuments.push(newDoc);
+      await course.save();
+      
+      // Fetch the saved document to get its auto-generated _id
+      const savedCourse = await Course.findById(req.params.courseId);
+      const savedDoc = savedCourse.otherDocuments[savedCourse.otherDocuments.length - 1];
+      
+      console.log(`✅ Document "${title}" added to Course "Other Documents"`);
+      console.log(`📌 New document ID: ${savedDoc._id}, s3Key: ${savedDoc.s3Key}`);
+      res.json({ success: true, message: "Document added to Course Other Documents", document: savedDoc, course });
+    }
+  } catch (err) {
+    console.error("❌ Error adding other document:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
  * POST /api/admin/courses/:courseId/weeks/:weekId/days/:dayId/contents
  * Add video/document to a specific day (supports both direct and shared content)
  */
@@ -899,13 +959,37 @@ router.get("/documents", protect, adminOnly, async (req, res) => {
     courses.forEach(course => {
       // Determine which weeks to use (direct or from shared content)
       let weeks = [];
+      let otherDocuments = [];
       
       if (course.sharedContentId && course.sharedContentId.weeks) {
         // Course uses shared content
         weeks = course.sharedContentId.weeks;
+        otherDocuments = course.sharedContentId.otherDocuments || [];
       } else if (course.weeks) {
         // Course has direct content
         weeks = course.weeks;
+        otherDocuments = course.otherDocuments || [];
+      }
+
+      // Get "Other Documents" (course-level documents)
+      if (otherDocuments.length > 0) {
+        otherDocuments.forEach(doc => {
+          allDocuments.push({
+            _id: doc._id,
+            title: doc.title,
+            type: doc.type,
+            s3Key: doc.s3Key,
+            url: doc.s3Key ? `/api/stream/${doc.s3Key}` : null,
+            createdAt: doc._id.getTimestamp(),
+            uploadedBy: { name: "Admin" },
+            courseTitle: course.title,
+            weekTitle: null,
+            weekNumber: null,
+            category: 'other',
+            source: 'other',
+            isSharedContent: !!course.sharedContentId
+          });
+        });
       }
 
       // Get week-level documents
@@ -994,73 +1078,102 @@ router.put("/documents/:id", protect, adminOnly, async (req, res) => {
     for (const course of courses) {
       console.log(`📚 Checking course: ${course.title}`);
       
-      // Determine which weeks to use (direct or from shared content)
+      // Determine which content to use (direct or from shared content)
       let weeks = [];
+      let otherDocuments = [];
       let isSharedContent = false;
+      
       if (course.sharedContentId && course.sharedContentId.weeks) {
-        console.log(`  Using shared content weeks`);
+        console.log(`  Using shared content`);
         weeks = course.sharedContentId.weeks;
+        otherDocuments = course.sharedContentId.otherDocuments || [];
         isSharedContent = true;
       } else if (course.weeks) {
-        console.log(`  Using direct course weeks`);
+        console.log(`  Using direct course content`);
         weeks = course.weeks;
+        otherDocuments = course.otherDocuments || [];
       }
 
-      for (const week of weeks) {
-        // Check week-level documents
-        if (week.documents && week.documents.length > 0) {
-          const doc = week.documents.find(doc => doc._id.toString() === documentId);
-          if (doc) {
-            doc.title = title.trim();
-            
-            // Save to the appropriate model
-            if (isSharedContent) {
-              const SharedContent = require("../models/SharedContent");
-              await SharedContent.findByIdAndUpdate(course.sharedContentId._id, {
-                weeks: course.sharedContentId.weeks
-              });
-              console.log(`✅ Updated document title in SharedContent week ${week.weekNumber}`);
-            } else {
-              await course.save();
-              console.log(`✅ Updated document title in Course week ${week.weekNumber}`);
-            }
-            updatedDocument = doc;
-            documentFound = true;
-            break;
+      // Check "Other Documents" first
+      if (otherDocuments.length > 0) {
+        const doc = otherDocuments.find(doc => doc._id.toString() === documentId);
+        if (doc) {
+          doc.title = title.trim();
+          
+          // Save to the appropriate model
+          if (isSharedContent) {
+            const SharedContent = require("../models/SharedContent");
+            await SharedContent.findByIdAndUpdate(course.sharedContentId._id, {
+              otherDocuments: course.sharedContentId.otherDocuments
+            });
+            console.log(`✅ Updated document title in SharedContent "Other Documents"`);
+          } else {
+            await course.save();
+            console.log(`✅ Updated document title in Course "Other Documents"`);
           }
+          updatedDocument = doc;
+          documentFound = true;
+          break;
         }
+      }
 
-        // Check day-level contents
-        if (!documentFound && week.days && week.days.length > 0) {
-          for (const day of week.days) {
-            if (day.contents && day.contents.length > 0) {
-              const content = day.contents.find(content => 
-                content._id.toString() === documentId && 
-                (content.type === 'document' || content.type === 'pdf')
-              );
-              if (content) {
-                content.title = title.trim();
-                
-                // Save to the appropriate model
-                if (isSharedContent) {
-                  const SharedContent = require("../models/SharedContent");
-                  await SharedContent.findByIdAndUpdate(course.sharedContentId._id, {
-                    weeks: course.sharedContentId.weeks
-                  });
-                  console.log(`✅ Updated document title in SharedContent day ${day.dayNumber}`);
-                } else {
-                  await course.save();
-                  console.log(`✅ Updated document title in Course day ${day.dayNumber}`);
+      if (!documentFound) {
+        for (const week of weeks) {
+          // Check week-level documents
+          if (week.documents && week.documents.length > 0) {
+            const doc = week.documents.find(doc => doc._id.toString() === documentId);
+            if (doc) {
+              doc.title = title.trim();
+              
+              // Save to the appropriate model
+              if (isSharedContent) {
+                const SharedContent = require("../models/SharedContent");
+                await SharedContent.findByIdAndUpdate(course.sharedContentId._id, {
+                  weeks: course.sharedContentId.weeks
+                });
+                console.log(`✅ Updated document title in SharedContent week ${week.weekNumber}`);
+              } else {
+                await course.save();
+                console.log(`✅ Updated document title in Course week ${week.weekNumber}`);
+              }
+              updatedDocument = doc;
+              documentFound = true;
+              break;
+            }
+          }
+
+          // Check day-level contents
+          if (!documentFound && week.days && week.days.length > 0) {
+            for (const day of week.days) {
+              if (day.contents && day.contents.length > 0) {
+                const content = day.contents.find(content => 
+                  content._id.toString() === documentId && 
+                  (content.type === 'document' || content.type === 'pdf')
+                );
+                if (content) {
+                  content.title = title.trim();
+                  
+                  // Save to the appropriate model
+                  if (isSharedContent) {
+                    const SharedContent = require("../models/SharedContent");
+                    await SharedContent.findByIdAndUpdate(course.sharedContentId._id, {
+                      weeks: course.sharedContentId.weeks
+                    });
+                    console.log(`✅ Updated document title in SharedContent day ${day.dayNumber}`);
+                  } else {
+                    await course.save();
+                    console.log(`✅ Updated document title in Course day ${day.dayNumber}`);
+                  }
+                  updatedDocument = content;
+                  documentFound = true;
+                  break;
                 }
-                updatedDocument = content;
-                documentFound = true;
-                break;
               }
             }
           }
+          
+          if (documentFound) break;
         }
-        
-        if (documentFound) break;
       }
       if (documentFound) break;
     }
@@ -1102,71 +1215,103 @@ router.delete("/documents/:id", protect, adminOnly, async (req, res) => {
     for (const course of courses) {
       console.log(`📚 Checking course: ${course.title}`);
       
-      // Determine which weeks to use (direct or from shared content)
+      // Determine which content to use (direct or from shared content)
       let weeks = [];
+      let otherDocuments = [];
+      let isSharedContent = false;
+      
       if (course.sharedContentId && course.sharedContentId.weeks) {
-        console.log(`  Using shared content weeks`);
+        console.log(`  Using shared content`);
         weeks = course.sharedContentId.weeks;
+        otherDocuments = course.sharedContentId.otherDocuments || [];
+        isSharedContent = true;
       } else if (course.weeks) {
-        console.log(`  Using direct course weeks`);
+        console.log(`  Using direct course content`);
         weeks = course.weeks;
+        otherDocuments = course.otherDocuments || [];
       }
 
-      for (const week of weeks) {
-        // Check week-level documents
-        if (week.documents && week.documents.length > 0) {
-          const docIndex = week.documents.findIndex(doc => doc._id.toString() === documentId);
-          if (docIndex !== -1) {
-            documentToDelete = week.documents[docIndex];
-            week.documents.splice(docIndex, 1);
-            
-            // Save to the appropriate model
-            if (course.sharedContentId && course.sharedContentId.weeks) {
-              const SharedContent = require("../models/SharedContent");
-              await SharedContent.findByIdAndUpdate(course.sharedContentId._id, {
-                weeks: course.sharedContentId.weeks
-              });
-              console.log(`✅ Found and deleted from SharedContent week ${week.weekNumber}`);
-            } else {
-              await course.save();
-              console.log(`✅ Found and deleted from Course week ${week.weekNumber}`);
-            }
-            documentFound = true;
-            break;
+      // Check "Other Documents" first
+      if (otherDocuments.length > 0) {
+        const docIndex = otherDocuments.findIndex(doc => doc._id.toString() === documentId);
+        if (docIndex !== -1) {
+          documentToDelete = otherDocuments[docIndex];
+          otherDocuments.splice(docIndex, 1);
+          
+          // Save to the appropriate model
+          if (isSharedContent) {
+            const SharedContent = require("../models/SharedContent");
+            await SharedContent.findByIdAndUpdate(course.sharedContentId._id, {
+              otherDocuments: otherDocuments
+            });
+            console.log(`✅ Found and deleted from SharedContent "Other Documents"`);
+          } else {
+            course.otherDocuments = otherDocuments;
+            await course.save();
+            console.log(`✅ Found and deleted from Course "Other Documents"`);
           }
+          documentFound = true;
+          break;
         }
+      }
 
-        // Check day-level contents
-        if (!documentFound && week.days && week.days.length > 0) {
-          for (const day of week.days) {
-            if (day.contents && day.contents.length > 0) {
-              const contentIndex = day.contents.findIndex(content => 
-                content._id.toString() === documentId && 
-                (content.type === 'document' || content.type === 'pdf')
-              );
-              if (contentIndex !== -1) {
-                documentToDelete = day.contents[contentIndex];
-                day.contents.splice(contentIndex, 1);
-                
-                // Save to the appropriate model
-                if (course.sharedContentId && course.sharedContentId.weeks) {
-                  const SharedContent = require("../models/SharedContent");
-                  await SharedContent.findByIdAndUpdate(course.sharedContentId._id, {
-                    weeks: course.sharedContentId.weeks
-                  });
-                  console.log(`✅ Found and deleted from SharedContent day ${day.dayNumber}`);
-                } else {
-                  await course.save();
-                  console.log(`✅ Found and deleted from Course day ${day.dayNumber}`);
+      if (!documentFound) {
+        for (const week of weeks) {
+          // Check week-level documents
+          if (week.documents && week.documents.length > 0) {
+            const docIndex = week.documents.findIndex(doc => doc._id.toString() === documentId);
+            if (docIndex !== -1) {
+              documentToDelete = week.documents[docIndex];
+              week.documents.splice(docIndex, 1);
+              
+              // Save to the appropriate model
+              if (isSharedContent) {
+                const SharedContent = require("../models/SharedContent");
+                await SharedContent.findByIdAndUpdate(course.sharedContentId._id, {
+                  weeks: course.sharedContentId.weeks
+                });
+                console.log(`✅ Found and deleted from SharedContent week ${week.weekNumber}`);
+              } else {
+                await course.save();
+                console.log(`✅ Found and deleted from Course week ${week.weekNumber}`);
+              }
+              documentFound = true;
+              break;
+            }
+          }
+
+          // Check day-level contents
+          if (!documentFound && week.days && week.days.length > 0) {
+            for (const day of week.days) {
+              if (day.contents && day.contents.length > 0) {
+                const contentIndex = day.contents.findIndex(content => 
+                  content._id.toString() === documentId && 
+                  (content.type === 'document' || content.type === 'pdf')
+                );
+                if (contentIndex !== -1) {
+                  documentToDelete = day.contents[contentIndex];
+                  day.contents.splice(contentIndex, 1);
+                  
+                  // Save to the appropriate model
+                  if (isSharedContent) {
+                    const SharedContent = require("../models/SharedContent");
+                    await SharedContent.findByIdAndUpdate(course.sharedContentId._id, {
+                      weeks: course.sharedContentId.weeks
+                    });
+                    console.log(`✅ Found and deleted from SharedContent day ${day.dayNumber}`);
+                  } else {
+                    await course.save();
+                    console.log(`✅ Found and deleted from Course day ${day.dayNumber}`);
+                  }
+                  documentFound = true;
+                  break;
                 }
-                documentFound = true;
-                break;
               }
             }
           }
+          
+          if (documentFound) break;
         }
-        
-        if (documentFound) break;
       }
       if (documentFound) break;
     }

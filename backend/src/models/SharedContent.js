@@ -30,6 +30,7 @@ const sharedContentSchema = new mongoose.Schema({
   name: { type: String, required: true }, // e.g., "Web Development Content"
   description: String,
   weeks: [weekSchema],
+  otherDocuments: [contentSchema], // Shared content-level documents (shown after all modules)
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });

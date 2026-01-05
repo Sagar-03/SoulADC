@@ -34,9 +34,10 @@ router.get('/courses/:id', protect, checkCourseAccess, async (req, res) => {
     // Prepare response data
     const courseData = course.toObject();
     
-    // If course uses shared content, use its weeks
+    // If course uses shared content, use its weeks and otherDocuments
     if (course.sharedContentId) {
       courseData.weeks = course.sharedContentId.weeks;
+      courseData.otherDocuments = course.sharedContentId.otherDocuments || [];
     }
     
     // Return full course data with access info

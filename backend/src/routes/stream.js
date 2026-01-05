@@ -19,66 +19,86 @@ router.get("/info/:identifier", protectStream, async (req, res) => {
         $or: [
           { "weeks.contents._id": identifier },
           { "weeks.days.contents._id": identifier },
-          { "weeks.documents._id": identifier }
+          { "weeks.documents._id": identifier },
+          { "otherDocuments._id": identifier }
         ]
       }).lean();
 
       if (!course) return res.status(404).json({ error: "Content not found" });
 
-      // Find the content info
-      outer: for (const w of course.weeks) {
-        if (w.contents) {
-          for (const c of w.contents) {
-            if (String(c._id) === String(identifier)) {
-              s3Key = c.s3Key;
-              contentInfo = {
-                id: c._id,
-                title: c.title,
-                type: c.type,
-                weekNumber: w.weekNumber,
-                weekTitle: w.title
-              };
-              break outer;
-            }
+      // Check "other documents" first
+      if (course.otherDocuments) {
+        for (const doc of course.otherDocuments) {
+          if (String(doc._id) === String(identifier)) {
+            s3Key = doc.s3Key;
+            contentInfo = {
+              id: doc._id,
+              title: doc.title,
+              type: doc.type,
+              category: 'other',
+              isDocument: true
+            };
+            break;
           }
         }
+      }
 
-        if (w.days) {
-          for (const d of w.days) {
-            if (d.contents) {
-              for (const c of d.contents) {
-                if (String(c._id) === String(identifier)) {
-                  s3Key = c.s3Key;
-                  contentInfo = {
-                    id: c._id,
-                    title: c.title,
-                    type: c.type,
-                    weekNumber: w.weekNumber,
-                    weekTitle: w.title,
-                    dayNumber: d.dayNumber,
-                    dayTitle: d.title
-                  };
-                  break outer;
+      // Find the content info in weeks if not found in other documents
+      if (!contentInfo) {
+        outer: for (const w of course.weeks) {
+          if (w.contents) {
+            for (const c of w.contents) {
+              if (String(c._id) === String(identifier)) {
+                s3Key = c.s3Key;
+                contentInfo = {
+                  id: c._id,
+                  title: c.title,
+                  type: c.type,
+                  weekNumber: w.weekNumber,
+                  weekTitle: w.title
+                };
+                break outer;
+              }
+            }
+          }
+
+          if (w.days) {
+            for (const d of w.days) {
+              if (d.contents) {
+                for (const c of d.contents) {
+                  if (String(c._id) === String(identifier)) {
+                    s3Key = c.s3Key;
+                    contentInfo = {
+                      id: c._id,
+                      title: c.title,
+                      type: c.type,
+                      weekNumber: w.weekNumber,
+                      weekTitle: w.title,
+                      dayNumber: d.dayNumber,
+                      dayTitle: d.title
+                    };
+                    break outer;
+                  }
                 }
               }
             }
           }
-        }
 
-        // Check module-level documents (weeks.documents)
-        if (w.documents) {
-          for (const doc of w.documents) {
-            if (String(doc._id) === String(identifier)) {
-              s3Key = doc.s3Key;
-              contentInfo = {
-                id: doc._id,
-                title: doc.title,
-                type: doc.type,
-                weekNumber: w.weekNumber,
-                weekTitle: w.title,
-                isDocument: true
-              };
-              break outer;
+          // Check module-level documents (weeks.documents)
+          if (w.documents) {
+            for (const doc of w.documents) {
+              if (String(doc._id) === String(identifier)) {
+                s3Key = doc.s3Key;
+                contentInfo = {
+                  id: doc._id,
+                  title: doc.title,
+                  type: doc.type,
+                  weekNumber: w.weekNumber,
+                  weekTitle: w.title,
+                  isDocument: true
+                };
+                break outer;
+              }
             }
           }
         }
@@ -143,6 +163,7 @@ router.get("/:identifier", protectStream, async (req, res) => {
       // First, try to find in direct course content
       let course = await Course.findOne({
         $or: [
+          { "otherDocuments._id": identifier }, // Other documents (course-level)
           { "weeks.contents._id": identifier }, // Old structure support
           { "weeks.days.contents._id": identifier }, // New day-based structure
           { "weeks.documents._id": identifier } // Module-level documents
@@ -156,6 +177,7 @@ router.get("/:identifier", protectStream, async (req, res) => {
         
         const sharedContent = await SharedContent.findOne({
           $or: [
+            { "otherDocuments._id": identifier }, // Other documents
             { "weeks.contents._id": identifier },
             { "weeks.days.contents._id": identifier },
             { "weeks.documents._id": identifier }
@@ -165,8 +187,21 @@ router.get("/:identifier", protectStream, async (req, res) => {
         if (sharedContent) {
           console.log(`✅ Found in SharedContent: ${sharedContent.title || 'Shared Content'}`);
           
+          // Check otherDocuments first
+          if (sharedContent.otherDocuments) {
+            for (const doc of sharedContent.otherDocuments) {
+              if (String(doc._id) === String(identifier)) {
+                s3Key = doc.s3Key;
+                mime = doc.type === "pdf" ? "application/pdf" : "application/octet-stream";
+                console.log(`✅ Found document in SharedContent otherDocuments: ${doc.title}, s3Key: ${s3Key}`);
+                break;
+              }
+            }
+          }
+          
           // Search in SharedContent structure
-          outer: for (const w of sharedContent.weeks || []) {
+          if (!s3Key) {
+            outer: for (const w of sharedContent.weeks || []) {
             if (w.contents) {
               for (const c of w.contents) {
                 if (String(c._id) === String(identifier)) {
@@ -204,6 +239,7 @@ router.get("/:identifier", protectStream, async (req, res) => {
               }
             }
           }
+          }
         }
       }
 
@@ -219,8 +255,21 @@ router.get("/:identifier", protectStream, async (req, res) => {
       if (course) {
         console.log(`✅ Found course: ${course.title} (${course._id})`);
 
+        // Check otherDocuments first (course-level)
+        if (course.otherDocuments) {
+          for (const doc of course.otherDocuments) {
+            if (String(doc._id) === String(identifier)) {
+              s3Key = doc.s3Key;
+              mime = doc.type === "pdf" ? "application/pdf" : "application/octet-stream";
+              console.log(`✅ Found document in course otherDocuments: ${doc.title}, s3Key: ${s3Key}`);
+              break;
+            }
+          }
+        }
+
         // Check old structure first (weeks.contents)
-        outer: for (const w of course.weeks) {
+        if (!s3Key) {
+          outer: for (const w of course.weeks) {
           if (w.contents) {
             for (const c of w.contents) {
               if (String(c._id) === String(identifier)) {
@@ -259,6 +308,7 @@ router.get("/:identifier", protectStream, async (req, res) => {
               }
             }
           }
+        }
         }
       }
     } else {

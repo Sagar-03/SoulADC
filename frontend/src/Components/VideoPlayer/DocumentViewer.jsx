@@ -23,7 +23,7 @@ const DocumentViewer = () => {
 
         const fetchDocumentInfo = async () => {
             try {
-                console.log('📄 Fetching document info for:', { courseId, documentId });
+             //   console.log('📄 Fetching document info for:', { courseId, documentId });
                 
                 // Fetch course info first
                 const courseResponse = await api.get(`/user/courses/${courseId}`);
@@ -31,22 +31,44 @@ const DocumentViewer = () => {
 
                 // Find the document in the course data
                 let foundDocument = null;
-                for (const week of courseResponse.data.weeks) {
-                    if (week.documents) {
-                        foundDocument = week.documents.find(doc =>
-                            (doc._id || doc.id) === documentId
-                        );
-                        if (foundDocument) {
-                            foundDocument.weekNumber = week.weekNumber;
-                            foundDocument.weekTitle = week.title;
-                            console.log('✅ Found document:', {
-                                title: foundDocument.title,
-                                id: foundDocument._id || foundDocument.id,
-                                s3Key: foundDocument.s3Key,
-                                url: foundDocument.url,
-                                type: foundDocument.type
-                            });
-                            break;
+                
+                // First check "Other Documents"
+                if (courseResponse.data.otherDocuments && courseResponse.data.otherDocuments.length > 0) {
+                    foundDocument = courseResponse.data.otherDocuments.find(doc =>
+                        (doc._id || doc.id) === documentId
+                    );
+                    if (foundDocument) {
+                        foundDocument.weekNumber = null;
+                        foundDocument.weekTitle = "Other Documents";
+                        // console.log('✅ Found document in Other Documents:', {
+                        //     title: foundDocument.title,
+                        //     id: foundDocument._id || foundDocument.id,
+                        //     s3Key: foundDocument.s3Key,
+                        //     url: foundDocument.url,
+                        //     type: foundDocument.type
+                        // });
+                    }
+                }
+                
+                // If not found in other documents, check weeks
+                if (!foundDocument) {
+                    for (const week of courseResponse.data.weeks) {
+                        if (week.documents) {
+                            foundDocument = week.documents.find(doc =>
+                                (doc._id || doc.id) === documentId
+                            );
+                            if (foundDocument) {
+                                foundDocument.weekNumber = week.weekNumber;
+                                foundDocument.weekTitle = week.title;
+                                // console.log('✅ Found document in week:', {
+                                //     title: foundDocument.title,
+                                //     id: foundDocument._id || foundDocument.id,
+                                //     s3Key: foundDocument.s3Key,
+                                //     url: foundDocument.url,
+                                //     type: foundDocument.type
+                                // });
+                                break;
+                            }
                         }
                     }
                 }
@@ -54,11 +76,11 @@ const DocumentViewer = () => {
                 if (foundDocument) {
                     setDocumentData(foundDocument);
                 } else {
-                    console.error('❌ Document not found in course data');
+                    // console.error('❌ Document not found in course data');
                     setError("Document not found in course");
                 }
             } catch (err) {
-                console.error("Error fetching document:", err);
+                // console.error("Error fetching document:", err);
                 setError("Failed to load document");
             } finally {
                 setLoading(false);
@@ -81,13 +103,13 @@ const DocumentViewer = () => {
             if (!documentData) return;
             
             const docId = documentData._id || documentData.id;
-            console.log('🔄 Fetching document blob for ID:', docId);
-            console.log('📦 Document data:', {
-                title: documentData.title,
-                s3Key: documentData.s3Key,
-                url: documentData.url,
-                type: documentData.type
-            });
+            // console.log('🔄 Fetching document blob for ID:', docId);
+            // console.log('📦 Document data:', {
+            //     title: documentData.title,
+            //     s3Key: documentData.s3Key,
+            //     url: documentData.url,
+            //     type: documentData.type
+            // });
             
             try {
                 setFetchingDoc(true);
@@ -97,31 +119,31 @@ const DocumentViewer = () => {
                     responseType: 'blob'
                 });
                 
-                console.log('✅ Document fetched successfully');
+                // console.log('✅ Document fetched successfully');
                 const blob = new Blob([response.data], { type: 'application/pdf' });
                 const url = URL.createObjectURL(blob);
                 setDocumentUrl(url);
                 setFetchingDoc(false);
             } catch (error) {
-                console.error('❌ Error fetching document blob:', error);
-                console.error('Response:', error.response?.data);
-                console.error('Status:', error.response?.status);
+                // console.error('❌ Error fetching document blob:', error);
+                // console.error('Response:', error.response?.data);
+                // console.error('Status:', error.response?.status);
                 
                 // Try fallback to direct URL if available
                 if (documentData.url) {
-                    console.log('🔄 Trying fallback URL:', documentData.url);
+                    // console.log('🔄 Trying fallback URL:', documentData.url);
                     try {
                         const fallbackResponse = await fetch(documentData.url);
                         if (fallbackResponse.ok) {
                             const blob = await fallbackResponse.blob();
                             const url = URL.createObjectURL(blob);
                             setDocumentUrl(url);
-                            console.log('✅ Loaded document via fallback URL');
+                         //   console.log('✅ Loaded document via fallback URL');
                             setFetchingDoc(false);
                             return;
                         }
                     } catch (fallbackError) {
-                        console.error('❌ Fallback URL also failed:', fallbackError);
+                        // console.error('❌ Fallback URL also failed:', fallbackError);
                     }
                 }
                 
@@ -167,7 +189,7 @@ const DocumentViewer = () => {
             setShowScreenshotWarning(true);
             
             // Log the attempt (you can send this to backend)
-            console.warn('Screenshot attempt detected at:', new Date().toISOString());
+            // console.warn('Screenshot attempt detected at:', new Date().toISOString());
         };
 
         const handleKeyDown = (e) => {
@@ -195,14 +217,14 @@ const DocumentViewer = () => {
 
         // Monitor clipboard for screenshot paste attempts
         const handleCopy = (e) => {
-            console.warn('Copy event detected');
+            // console.warn('Copy event detected');
             handleScreenshotAttempt();
         };
 
         // Detect window/tab switching (often used with screenshot tools)
         const handleVisibilityChange = () => {
             if (document.hidden) {
-                console.log('Document hidden - potential screenshot tool usage');
+             //   console.log('Document hidden - potential screenshot tool usage');
                 // Set a timeout to show warning if user was gone for screenshot
                 screenshotDetectionTimeout = setTimeout(() => {
                     handleScreenshotAttempt();
@@ -217,7 +239,7 @@ const DocumentViewer = () => {
 
         // Detect blur events (screenshot tools often cause blur)
         const handleBlur = () => {
-            console.log('Window blur detected');
+            // console.log('Window blur detected');
             screenshotDetectionTimeout = setTimeout(() => {
                 handleScreenshotAttempt();
             }, 100);

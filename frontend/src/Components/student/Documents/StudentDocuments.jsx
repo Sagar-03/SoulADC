@@ -49,8 +49,13 @@ const StudentDocuments = () => {
   // Update documents when module changes
   useEffect(() => {
     if (course && selectedModule) {
-      const currentWeek = course.weeks?.find((w) => w.weekNumber === selectedModule);
-      setDocuments(currentWeek?.documents || []);
+      if (selectedModule === 'other') {
+        // Show other documents (course-level documents)
+        setDocuments(course.otherDocuments || []);
+      } else {
+        const currentWeek = course.weeks?.find((w) => w.weekNumber === selectedModule);
+        setDocuments(currentWeek?.documents || []);
+      }
     }
   }, [course, selectedModule]);
 
@@ -126,6 +131,26 @@ const StudentDocuments = () => {
                     )}
                   </button>
                 ))}
+                
+                {/* Other Documents Section */}
+                {course.otherDocuments && course.otherDocuments.length > 0 && (
+                  <button
+                    className={`module-button ${
+                      selectedModule === 'other' ? "active" : ""
+                    }`}
+                    onClick={() => setSelectedModule('other')}
+                  >
+                    {/* <span className="module-number">
+                      📋
+                    </span> */}
+                    <span className="module-title">
+                      Other Documents
+                    </span>
+                    <span className="documents-count">
+                      {course.otherDocuments.length} docs
+                    </span>
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -135,7 +160,10 @@ const StudentDocuments = () => {
             <div className="documents-content">
               <div className="d-flex justify-content-between align-items-center mb-3">
                 <h5 className="section-title">
-                  MODULE {String(selectedModule).padStart(2, "0")} — Reading Materials
+                  {selectedModule === 'other'
+                    ? "OTHER DOCUMENTS — Additional Resources"
+                    : `MODULE ${String(selectedModule).padStart(2, "0")} — Reading Materials`
+                  }
                 </h5>
                 {/* <span className="documents-count-badge">
                   {documents.length} Note {documents.length !== 1 ? "s" : ""}
@@ -178,9 +206,9 @@ const StudentDocuments = () => {
                 <div className="no-documents">
                   <div className="text-center py-5">
                     <FaFileAlt className="no-docs-icon mb-3" />
-                    <h5 className="text-muted">No Notes Available</h5>
+                    <h5 className="text-muted">No Documents Available</h5>
                     <p className="text-muted">
-                      No Notes have been uploaded for Module {selectedModule} yet.
+                      No Documents have been uploaded for Module {selectedModule} yet.
                     </p>
                   </div>
                 </div>

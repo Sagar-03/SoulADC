@@ -85,6 +85,10 @@ export const saveContent = (courseId, weekId, dayId, contentData) =>
 export const saveWeekDocument = (courseId, weekId, contentData) =>
   api.post(`/admin/courses/${courseId}/weeks/${weekId}/documents`, contentData);
 
+// Save document to "other" documents (course level)
+export const saveOtherDocument = (courseId, contentData) =>
+  api.post(`/admin/courses/${courseId}/other-documents`, contentData);
+
 // Delete a content item
 export const deleteContent = (courseId, weekId, dayId, contentId) =>
   api.delete(`/admin/courses/${courseId}/weeks/${weekId}/days/${dayId}/contents/${contentId}`);

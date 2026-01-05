@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import AdminLayout from "./AdminLayout";
-import { getCourses, getPresignUrl, saveWeekDocument } from "../../Api/api";
+import { getCourses, getPresignUrl, saveWeekDocument, saveOtherDocument } from "../../Api/api";
 import "./admin.css";
 
 const BulkPdfUpload = () => {
@@ -76,11 +76,16 @@ const BulkPdfUpload = () => {
 
   const uploadSingleFile = async (file, weekNumber, weekId) => {
     try {
+      // Determine folder path
+      const folderPath = weekNumber !== null 
+        ? `documents/week-${weekNumber}` 
+        : `documents/other`;
+      
       // 1. Get presigned URL (dayNumber not needed for module-level documents)
       const presignRes = await getPresignUrl(
         file.name,
         file.type,
-        `documents/week-${weekNumber}`, // Directly upload to week folder
+        folderPath, // Upload to week folder or other folder
         weekNumber,
         null // no day subfolder
       );
@@ -118,12 +123,22 @@ const BulkPdfUpload = () => {
         xhr.send(file);
       });
 
-      // 3. Save metadata in database at module/week level
-      await saveWeekDocument(selectedCourse, weekId, {
-        type: "pdf",
-        title: file.name.split(".")[0], // remove extension
-        s3Key: key,
-      });
+      // 3. Save metadata in database at module/week level or course level
+      if (weekId === 'other') {
+        // Save to course-level "other documents"
+        await saveOtherDocument(selectedCourse, {
+          type: "pdf",
+          title: file.name.split(".")[0], // remove extension
+          s3Key: key,
+        });
+      } else {
+        // Save to week/module documents
+        await saveWeekDocument(selectedCourse, weekId, {
+          type: "pdf",
+          title: file.name.split(".")[0], // remove extension
+          s3Key: key,
+        });
+      }
 
       return { success: true, fileName: file.name };
     } catch (err) {
@@ -150,7 +165,7 @@ const BulkPdfUpload = () => {
       for (const file of files) {
         const result = await uploadSingleFile(
           file,
-          selectedWeekData.weekNumber,
+          selectedWeek === 'other' ? null : selectedWeekData.weekNumber,
           selectedWeek
         );
         results.push(result);
@@ -257,6 +272,7 @@ const BulkPdfUpload = () => {
                       Week {week.weekNumber}: {week.title}
                     </option>
                   ))}
+                  <option value="other">📋 Other Documents</option>
                 </select>
               </div>
             </div>

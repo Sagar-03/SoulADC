@@ -21,6 +21,13 @@ router.get("/presign", protect, adminOnly, async (req, res) => {
       return res.status(400).json({ error: "fileName, fileType, folder are required" });
     }
 
+    // ✅ Check if S3 bucket name is configured
+    const bucketName = process.env.AWS_BUCKET_NAME || process.env.AWS_S3_BUCKET;
+    if (!bucketName) {
+      console.error("❌ AWS bucket name not configured!");
+      return res.status(500).json({ error: "S3 bucket not configured" });
+    }
+
     // ✅ Generate hierarchical S3 key with week and day structure
     let key;
     if (weekNumber && dayNumber) {
@@ -34,7 +41,7 @@ router.get("/presign", protect, adminOnly, async (req, res) => {
     }
 
     const command = new PutObjectCommand({
-      Bucket: process.env.AWS_S3_BUCKET,
+      Bucket: bucketName,
       Key: key,
       ContentType: fileType,
     });
@@ -44,7 +51,7 @@ router.get("/presign", protect, adminOnly, async (req, res) => {
 
     res.json({ uploadUrl, key });
   } catch (err) {
-    console.error(" Presign error:", err);
+    console.error("❌ Presign error:", err);
     res.status(500).json({ error: "Failed to generate presigned URL" });
   }
 });

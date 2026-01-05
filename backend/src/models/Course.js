@@ -37,6 +37,8 @@ const courseSchema = new mongoose.Schema({
     default: null 
   }, // Reference to shared content
   
+  otherDocuments: [contentSchema], // Course-level documents (shown after all modules)
+  
   isLive: { type: Boolean, default: false },
 });
 
