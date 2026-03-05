@@ -71,6 +71,10 @@ export const getStreamUrl = (s3Key) => {
   return token ? `${url}?token=${encodeURIComponent(token)}` : url;
 };
 
+// Get signed URL for direct S3 playback (new method - replaces streaming through Node)
+export const getSignedPlaybackUrl = (contentId) => 
+  api.get(`/video/play-url/${contentId}`);
+
 
 export const getPresignUrl = (fileName, fileType, folder, weekNumber, dayNumber) =>
   api.get("/upload/presign", {

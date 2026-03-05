@@ -45,9 +45,9 @@ const Footer = () => {
               <Nav.Link href="/" className="text-secondary p-0 mb-1 small">
                 Home
               </Nav.Link>
-              <Nav.Link href="/about" className="text-secondary p-0 mb-1 small">
+              {/* <Nav.Link href="/about" className="text-secondary p-0 mb-1 small">
                 About Us
-              </Nav.Link>
+              </Nav.Link> */}
               <Nav.Link href="/about#adc-process" className="text-secondary p-0 mb-1 small">
                 ADC Roadmap
               </Nav.Link>
@@ -100,7 +100,7 @@ const Footer = () => {
         {/* Bottom Bar */}
         <Row className="align-items-center mt-3">
           <Col md={6} className="text-center text-md-start">
-            <p className="text-secondary mb-0 small">&copy; 2025 Soul ADC. All rights reserved.</p>
+            <p className="text-secondary mb-0 small">&copy; 2026 Soul ADC. All rights reserved.</p>
           </Col>
           <Col md={6} className="text-center text-md-end">
             {/* <Nav className="justify-content-center justify-content-md-end">

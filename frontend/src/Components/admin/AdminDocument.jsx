@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import AdminLayout from "./AdminLayout";
 import { getDocuments, deleteDocument, cleanupOrphanedDocuments, updateDocument, api } from "../../Api/api";
-import { FaFileAlt, FaFilePdf } from "react-icons/fa";
+import { FaFileAlt, FaFilePdf, FaFileImage } from "react-icons/fa";
 import "../student/Documents/StudentDocuments.css";
 import "./AdminDocuments.css";
 import "../student/Dashboard/dashboard.css";
@@ -484,6 +484,9 @@ const AdminDocuments = () => {
                                 <div className="document-icon">
                                   {doc.type === "pdf" || doc.title?.toLowerCase().includes("pdf") ? (
                                     <FaFilePdf className="pdf-icon" />
+                                  ) : doc.type === "image" || 
+                                    doc.title?.match(/\.(jpg|jpeg|png|webp)$/i) ? (
+                                    <FaFileImage className="image-icon" />
                                   ) : (
                                     <FaFileAlt className="doc-icon" />
                                   )}

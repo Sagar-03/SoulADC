@@ -15,6 +15,13 @@ const userSchema = new mongoose.Schema(
     resetOTP: { type: String },
     resetOTPExpire: { type: Date },
     resetOTPAttempts: { type: Number, default: 0 },
+    // OTP for email verification during registration
+    verificationOTP: { type: String },
+    verificationOTPExpire: { type: Date },
+    verificationOTPAttempts: { type: Number, default: 0 },
+    isEmailVerified: { type: Boolean, default: false },
+    // Flag to mark temporary users created during pre-registration verification
+    isTemporary: { type: Boolean, default: false },
     purchasedCourses: [
       {
         courseId: {

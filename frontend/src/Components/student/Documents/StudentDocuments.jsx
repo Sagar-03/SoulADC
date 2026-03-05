@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { FaFileAlt, FaFilePdf } from "react-icons/fa";
-import StudentLayout from "../StudentLayout";
+import { FaFileAlt, FaFilePdf, FaFileImage } from "react-icons/fa"; import StudentLayout from "../StudentLayout";
 import { api, getStreamUrl } from "../../../Api/api";
 import "./StudentDocuments.css";
 
@@ -25,6 +24,20 @@ const StudentDocuments = () => {
 
       try {
         const { data } = await api.get(`/user/courses/${courseId}`);
+        console.log("📚 Course data received:", data);
+        console.log("📖 Weeks:", data.weeks);
+        console.log("📄 Other Documents:", data.otherDocuments);
+        
+        // Log documents in each week
+        if (data.weeks) {
+          data.weeks.forEach(week => {
+            console.log(`Module ${week.weekNumber} (${week.title}):`, {
+              documentsCount: week.documents?.length || 0,
+              documents: week.documents
+            });
+          });
+        }
+        
         setCourse(data);
 
         // Set initial module
@@ -49,12 +62,21 @@ const StudentDocuments = () => {
   // Update documents when module changes
   useEffect(() => {
     if (course && selectedModule) {
+      console.log(`🔄 Switching to module: ${selectedModule}`);
       if (selectedModule === 'other') {
         // Show other documents (course-level documents)
-        setDocuments(course.otherDocuments || []);
+        const otherDocs = course.otherDocuments || [];
+        console.log("📋 Other Documents:", otherDocs);
+        setDocuments(otherDocs);
       } else {
         const currentWeek = course.weeks?.find((w) => w.weekNumber === selectedModule);
-        setDocuments(currentWeek?.documents || []);
+        const weekDocs = currentWeek?.documents || [];
+        console.log(`📖 Module ${selectedModule} documents:`, {
+          weekTitle: currentWeek?.title,
+          documentsCount: weekDocs.length,
+          documents: weekDocs
+        });
+        setDocuments(weekDocs);
       }
     }
   }, [course, selectedModule]);
@@ -113,9 +135,8 @@ const StudentDocuments = () => {
                 {course.weeks?.map((week) => (
                   <button
                     key={week._id || week.weekNumber}
-                    className={`module-button ${
-                      selectedModule === week.weekNumber ? "active" : ""
-                    }`}
+                    className={`module-button ${selectedModule === week.weekNumber ? "active" : ""
+                      }`}
                     onClick={() => setSelectedModule(week.weekNumber)}
                   >
                     <span className="module-number">
@@ -131,13 +152,12 @@ const StudentDocuments = () => {
                     )}
                   </button>
                 ))}
-                
+
                 {/* Other Documents Section */}
                 {course.otherDocuments && course.otherDocuments.length > 0 && (
                   <button
-                    className={`module-button ${
-                      selectedModule === 'other' ? "active" : ""
-                    }`}
+                    className={`module-button ${selectedModule === 'other' ? "active" : ""
+                      }`}
                     onClick={() => setSelectedModule('other')}
                   >
                     {/* <span className="module-number">
@@ -176,19 +196,26 @@ const StudentDocuments = () => {
                     <div key={doc._id || index} className="col-sm-6 col-md-4 col-lg-3">
                       <div className="document-card">
                         <div className="document-icon">
-                          {doc.type === "pdf" || doc.title?.toLowerCase().includes("pdf") ? (
+                          {doc.type === "pdf" || doc.title?.toLowerCase().endsWith(".pdf") ? (
                             <FaFilePdf className="pdf-icon" />
+                          ) : doc.type === "image" ||
+                            doc.title?.match(/\.(jpg|jpeg|png|webp)$/i) ? (
+                            <FaFileImage className="image-icon" />
                           ) : (
                             <FaFileAlt className="doc-icon" />
                           )}
                         </div>
-                        
+
                         <div className="document-info">
                           <h6 className="document-title" title={doc.title}>
                             {doc.title}
                           </h6>
                           <span className="document-type">
-                            {doc.type?.toUpperCase() || "PDF"}
+                            {doc.type === "image"
+                              ? "IMAGE"
+                              : doc.type === "pdf"
+                                ? "PDF"
+                                : doc.type?.toUpperCase() || "FILE"}
                           </span>
                         </div>
 

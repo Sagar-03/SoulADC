@@ -4,6 +4,8 @@ const Course = require("../models/Course.js");
 const Mock = require("../models/Mock.js");
 const router = express.Router();
 const User = require("../models/userModel");
+const sendEmail = require("../utils/sendEmail");
+const { generateInvoiceEmail } = require("../utils/emailTemplates");
 
 
 /**
@@ -848,40 +850,62 @@ router.get("/admindashboard", protect, adminOnly, async (req, res) => {
  * Get real dashboard statistics (with detailed logging)
  */
 router.get("/dashboard/stats", protect, adminOnly, async (req, res) => {
-  // console.log("📊 [Dashboard] API hit received from admin:", req.user?.email || "unknown");
+  console.log("📊 [Dashboard] API hit received from admin:", req.user?.email || "unknown");
 
   try {
-    // console.log("➡️ Fetching total course count...");
+    console.log("➡️ Fetching total course count...");
     const totalCourses = await Course.countDocuments({});
-    // console.log("✅ Total courses:", totalCourses);
+    console.log("✅ Total courses:", totalCourses);
 
-    // console.log("➡️ Fetching total student count...");
+    console.log("➡️ Fetching total student count...");
     const totalStudents = await User.countDocuments({ role: { $ne: 'admin' } });
-    // console.log("✅ Total students:", totalStudents);
+    console.log("✅ Total students:", totalStudents);
 
     // console.log("➡️ Calculating total enrollments...");
     const enrollmentData = await User.aggregate([
-      { $match: { role: { $ne: 'admin' }, purchasedCourses: { $exists: true, $ne: [] } } },
-      { $unwind: "$purchasedCourses" },
+      { $match: { role: { $ne: 'admin' } } },
+      { $unwind: { path: "$purchasedCourses", preserveNullAndEmptyArrays: false } },
       { $group: { _id: null, totalEnrollments: { $sum: 1 } } }
     ]);
     const totalEnrollments = enrollmentData.length > 0 ? enrollmentData[0].totalEnrollments : 0;
-    // console.log("✅ Total enrollments:", totalEnrollments);
+    console.log("✅ Total enrollments:", totalEnrollments);
 
-    // console.log("➡️ Fetching recent students...");
-    const recentStudents = await User.find({ role: { $ne: 'admin' } })
-      .sort({ createdAt: -1 })
-      .limit(5)
-      .select('name email createdAt');
-    // console.log("✅ Recent students fetched:", recentStudents.length);
+    // console.log("➡️ Fetching recent enrollments...");
+    const recentEnrollments = await User.aggregate([
+      { $match: { role: { $ne: 'admin' } } },
+      { $unwind: { path: "$purchasedCourses", preserveNullAndEmptyArrays: false } },
+      { $sort: { "purchasedCourses.purchaseDate": -1 } },
+      { $limit: 5 },
+      {
+        $lookup: {
+          from: 'courses',
+          localField: 'purchasedCourses.courseId',
+          foreignField: '_id',
+          as: 'courseDetails'
+        }
+      },
+      {
+        $project: {
+          name: 1,
+          email: 1,
+          courseName: { $arrayElemAt: ['$courseDetails.title', 0] },
+          purchaseDate: '$purchasedCourses.purchaseDate'
+        }
+      }
+    ]);
+    console.log("✅ Recent enrollments fetched:", recentEnrollments.length);
 
     // console.log("➡️ Fetching top enrolled courses...");
     const topCourses = await Course.aggregate([
       {
         $lookup: {
           from: 'users',
-          localField: '_id',
-          foreignField: 'purchasedCourses',
+          let: { courseId: '$_id' },
+          pipeline: [
+            { $match: { role: { $ne: 'admin' } } },
+            { $unwind: '$purchasedCourses' },
+            { $match: { $expr: { $eq: ['$purchasedCourses.courseId', '$$courseId'] } } }
+          ],
           as: 'enrollments'
         }
       },
@@ -894,55 +918,128 @@ router.get("/dashboard/stats", protect, adminOnly, async (req, res) => {
       { $sort: { studentCount: -1 } },
       { $limit: 5 }
     ]);
-    // console.log("✅ Top courses fetched:", topCourses.length);
+    console.log("✅ Top courses fetched:", topCourses.length);
 
-    // console.log("➡️ Calculating mock revenue data...");
-    const revenue = totalEnrollments * 15000; // Example static pricing
-    // console.log("✅ Estimated revenue: ₹" + revenue.toLocaleString());
+    console.log("➡️ Fetching pending approvals count...");
+    const pendingApprovalsCount = await User.aggregate([
+      { $match: { role: { $ne: 'admin' } } },
+      { $unwind: { path: "$pendingApprovals", preserveNullAndEmptyArrays: false } },
+      { $match: { "pendingApprovals.status": "pending" } },
+      { $group: { _id: null, total: { $sum: 1 } } }
+    ]);
+    const totalPendingApprovals = pendingApprovalsCount.length > 0 ? pendingApprovalsCount[0].total : 0;
+    console.log("✅ Pending approvals:", totalPendingApprovals);
 
-    // console.log("➡️ Generating enrollment trend (mock)...");
-    const enrollmentTrend = [
-      { month: "Jan", enrollments: Math.floor(totalEnrollments * 0.1) },
-      { month: "Feb", enrollments: Math.floor(totalEnrollments * 0.15) },
-      { month: "Mar", enrollments: Math.floor(totalEnrollments * 0.2) },
-      { month: "Apr", enrollments: Math.floor(totalEnrollments * 0.25) },
-      { month: "May", enrollments: Math.floor(totalEnrollments * 0.3) },
-    ];
-    // console.log("✅ Enrollment trend ready");
+    // console.log("➡️ Generating enrollment trend from real data...");
+    // Get enrollments grouped by month for the last 6 months
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+    
+    const monthlyEnrollments = await User.aggregate([
+      { $match: { role: { $ne: 'admin' } } },
+      { $unwind: { path: "$purchasedCourses", preserveNullAndEmptyArrays: false } },
+      { 
+        $match: { 
+          "purchasedCourses.purchaseDate": { $gte: sixMonthsAgo } 
+        } 
+      },
+      {
+        $group: {
+          _id: { 
+            year: { $year: "$purchasedCourses.purchaseDate" },
+            month: { $month: "$purchasedCourses.purchaseDate" }
+          },
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { "_id.year": 1, "_id.month": 1 } }
+    ]);
 
-    const revenueTrend = enrollmentTrend.map(item => ({
-      month: item.month,
-      revenue: item.enrollments * 15000
-    }));
+    // Create enrollment trend with proper month names
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const enrollmentTrend = [];
+    
+    // Fill in the last 6 months
+    for (let i = 5; i >= 0; i--) {
+      const date = new Date();
+      date.setMonth(date.getMonth() - i);
+      const monthIndex = date.getMonth();
+      const year = date.getFullYear();
+      
+      const monthData = monthlyEnrollments.find(
+        m => m._id.month === monthIndex + 1 && m._id.year === year
+      );
+      
+      enrollmentTrend.push({
+        month: monthNames[monthIndex],
+        enrollments: monthData ? monthData.count : 0
+      });
+    }
+    
+    console.log("✅ Enrollment trend ready with real data");
 
-    // console.log("✅ Revenue trend ready. Sending response...");
+    // Get student registration trend for the last 6 months
+    const monthlyRegistrations = await User.aggregate([
+      { $match: { role: { $ne: 'admin' }, createdAt: { $gte: sixMonthsAgo } } },
+      {
+        $group: {
+          _id: { 
+            year: { $year: "$createdAt" },
+            month: { $month: "$createdAt" }
+          },
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { "_id.year": 1, "_id.month": 1 } }
+    ]);
+
+    const registrationTrend = [];
+    for (let i = 5; i >= 0; i--) {
+      const date = new Date();
+      date.setMonth(date.getMonth() - i);
+      const monthIndex = date.getMonth();
+      const year = date.getFullYear();
+      
+      const monthData = monthlyRegistrations.find(
+        m => m._id.month === monthIndex + 1 && m._id.year === year
+      );
+      
+      registrationTrend.push({
+        month: monthNames[monthIndex],
+        students: monthData ? monthData.count : 0
+      });
+    }
+    console.log("✅ Student registration trend ready");
+
+    console.log("✅ Sending response...");
 
     res.json({
       stats: [
         { label: "Total Courses", value: totalCourses },
         { label: "Total Students", value: totalStudents },
         { label: "Active Enrollments", value: totalEnrollments },
-        { label: "Revenue (₹)", value: revenue.toLocaleString() },
+        { label: "Pending Approvals", value: totalPendingApprovals },
       ],
       enrollmentTrend,
-      revenueTrend,
+      registrationTrend,
       topCourses: topCourses.map(course => ({
         title: course.title,
         students: course.studentCount
       })),
-      recentStudents: recentStudents.map(student => ({
-        name: student.name,
-        course: "Course Access", // placeholder
-        date: student.createdAt.toLocaleDateString('en-GB', {
+      recentStudents: recentEnrollments.map(enrollment => ({
+        name: enrollment.name,
+        course: enrollment.courseName || "Unknown Course",
+        date: enrollment.purchaseDate ? enrollment.purchaseDate.toLocaleDateString('en-GB', {
           day: '2-digit',
-          month: 'short'
-        })
+          month: 'short',
+          year: 'numeric'
+        }) : 'N/A'
       }))
     });
 
-    // console.log("✅ [Dashboard] Data sent successfully.\n");
+    console.log("✅ [Dashboard] Data sent successfully.\n");
   } catch (err) {
-    // console.error("❌ Error fetching dashboard stats:", err);
+    console.error("❌ Error fetching dashboard stats:", err);
     res.status(500).json({ error: "Failed to fetch dashboard statistics", details: err.message });
   }
 });
@@ -1737,6 +1834,51 @@ router.post("/approve-payment/:userId/:approvalId", protect, adminOnly, async (r
 
     await user.save();
 
+    // ✅ Send invoice/bill email to the student
+    try {
+      let invoiceData;
+      
+      if (approval.itemType === 'mock') {
+        const mock = await Mock.findById(approval.mockId);
+        invoiceData = {
+          userName: user.name,
+          userEmail: user.email,
+          itemTitle: mock.title,
+          itemType: 'mock',
+          amount: approval.paymentAmount,
+          purchaseDate: approval.paymentDate,
+          transactionId: approval.paymentSessionId,
+          expiryDate: null // Mocks don't have expiry
+        };
+      } else {
+        const course = await Course.findById(approval.courseId);
+        const purchasedCourse = user.purchasedCourses.find(
+          pc => pc.courseId.toString() === approval.courseId.toString()
+        );
+        invoiceData = {
+          userName: user.name,
+          userEmail: user.email,
+          itemTitle: course.title,
+          itemType: 'course',
+          amount: approval.paymentAmount,
+          purchaseDate: approval.paymentDate,
+          transactionId: approval.paymentSessionId,
+          expiryDate: purchasedCourse ? purchasedCourse.expiryDate : null
+        };
+      }
+
+      const invoiceHtml = generateInvoiceEmail(invoiceData);
+      await sendEmail(
+        user.email,
+        `Payment Receipt - ${invoiceData.itemTitle}`,
+        invoiceHtml
+      );
+      console.log(`✅ Invoice email sent to ${user.email}`);
+    } catch (emailError) {
+      console.error("❌ Error sending invoice email:", emailError);
+      // Continue even if email fails
+    }
+
     console.log(`✅ Admin ${req.user.email} approved payment for user ${user.email}, ${approval.itemType}: ${itemTitle}`);
     res.json({ 
       success: true, 
@@ -1831,14 +1973,22 @@ router.post("/reset-device-lock/:userId", protect, adminOnly, async (req, res) =
     const previousIp = user.registeredIp;
     const previousFingerprint = user.deviceFingerprint;
 
-    // Clear device lock
+    // Clear device lock - use explicit null to ensure proper reset
     user.registeredIp = null;
     user.deviceFingerprint = null;
+    
+    // Force save and bypass any middleware that might interfere
     await user.save();
-
+    
+    // Verify the reset was successful by reloading from DB
+    const verifyUser = await User.findById(userId);
+    
     console.log(`✅ Admin ${req.user.email} reset device lock for user ${user.email}`, {
       previousIp,
-      previousFingerprint: previousFingerprint?.substring(0, 10) + '...'
+      previousFingerprint: previousFingerprint?.substring(0, 10) + '...',
+      newIp: verifyUser.registeredIp,
+      newFingerprint: verifyUser.deviceFingerprint,
+      resetSuccessful: verifyUser.registeredIp === null && verifyUser.deviceFingerprint === null
     });
 
     res.json({ 

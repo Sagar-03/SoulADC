@@ -366,6 +366,19 @@
   transition: background-color 5000s ease-in-out 0s;
 }
 
+/* Verify Email Button */
+.verify-email-btn {
+  display: inline-block !important;
+  visibility: visible !important;
+  height: auto !important;
+  line-height: 1.5 !important;
+}
+
+.verify-email-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+}
+
 /* Submit Button */
 .submit-btn {
   background: linear-gradient(145deg, #A98C6A, #7B563D) !important;

@@ -1,37 +1,66 @@
-import React, { useEffect, useState, memo } from "react";
+import React, { useEffect, useState, useRef, memo } from "react";
 import "./Preloader.css";
-import logo from "../../../assets/logo.svg"; // shield-only logo
 
 const Preloader = memo(({ onFinish }) => {
   const [isVisible, setIsVisible] = useState(true);
   const [fadeOut, setFadeOut] = useState(false);
+  const videoRef = useRef(null);
 
   useEffect(() => {
-    // Start fade out after 3.2 seconds
-    const fadeTimer = setTimeout(() => {
-      setFadeOut(true);
-    }, 3200);
+    const video = videoRef.current;
+    if (!video) return;
 
-    // Completely remove preloader after 4 seconds
-    const removeTimer = setTimeout(() => {
-      setIsVisible(false);
-      if (onFinish) onFinish();
-    }, 2000);
+    // Auto-play the video
+    video.muted = false; // Play with sound
+    video.volume = 1.0;
+    
+    const startVideo = async () => {
+      try {
+        await video.play();
+        console.log("Starting video playing");
+      } catch (err) {
+        console.log("Video autoplay error:", err);
+        // If autoplay fails, try muted
+        video.muted = true;
+        video.play().catch(e => console.log("Muted autoplay also failed:", e));
+      }
+    };
+
+    if (video.readyState >= 2) {
+      startVideo();
+    } else {
+      video.addEventListener('canplay', startVideo, { once: true });
+    }
+
+    // When video ends, start fade out then hide preloader
+    const handleVideoEnd = () => {
+      setFadeOut(true);
+      setTimeout(() => {
+        setIsVisible(false);
+        if (onFinish) onFinish();
+      }, 0); // Wait for fade out animation to complete
+    };
+
+    video.addEventListener('ended', handleVideoEnd);
 
     return () => {
-      clearTimeout(fadeTimer);
-      clearTimeout(removeTimer);
+      video.removeEventListener('ended', handleVideoEnd);
     };
   }, [onFinish]);
 
   if (!isVisible) return null;
 
   return (
-    <div className={`preloader ${fadeOut ? "fade-out" : ""}`}>
-      <div className="logo-container">
-        <img src={logo} alt="Soul ADC Logo" className="logo-shield" />
-        <div className="sun-glow"></div>
-      </div>
+    <div className={`preloader ${fadeOut ? 'fade-out' : ''}`}>
+      <video 
+        ref={videoRef}
+        className="preloader-video"
+        playsInline
+        preload="auto"
+      >
+        <source src="/starting_video.mp4" type="video/mp4" />
+        Your browser does not support the video tag.
+      </video>
     </div>
   );
 });

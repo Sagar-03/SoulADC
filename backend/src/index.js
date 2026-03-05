@@ -75,6 +75,7 @@ app.use("/api/admin/shared-content", sharedContentRoutes);
 app.use("/api/payment", paymentRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/stream", streamRoutes);
+app.use("/api/video", streamRoutes); // Route for new signed URL endpoint
 app.use("/api/multipart-upload", multipartUploadRoutes);
 app.use("/api/mocks", mockRoutes);
 // app.use("/api/doubts", doubtRoutes);

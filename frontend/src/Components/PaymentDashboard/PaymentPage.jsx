@@ -43,18 +43,11 @@ export default function PaymentPage() {
     if (code === "soul10") {
       setDiscount(0.1 * course.price); // 10% discount
       setIsCouponApplied(true);
-    } else if (code === "free100") {
+    } else if (code === "souladc_admin_discount365") {
       setDiscount(course.price); // 100% discount
       setIsCouponApplied(true);
     }
-    else if (code === "dhruv_350") {
-      setDiscount(0.6983 * course.price);
-      setIsCouponApplied(true);
-    }
-    else if (code === "test_10") {
-      setDiscount(0.9914 * course.price);
-      setIsCouponApplied(true);
-    } else {
+    else {
       setDiscount(0);
       setIsCouponApplied(false);
       alert("Invalid coupon code");

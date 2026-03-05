@@ -27,7 +27,7 @@ const HomePage = () => {
     <>
       {!loadingDone && <Preloader onFinish={handlePreloaderFinish} />}
       {loadingDone && (
-        <div>
+        <div className="main-content fade-in">
           <Navbar onSignInClick={handleSignInClick} />
           <Registration />
           <About />

@@ -1,6 +1,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const { HeadObjectCommand, GetObjectCommand, ListObjectsV2Command } = require("@aws-sdk/client-s3");
+const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 const Course = require("../models/Course.js");
 const s3 = require("../config/s3.js");
 const { protect, protectStream } = require("../middleware/authMiddleware");
@@ -580,6 +581,162 @@ router.get("/debug/db-keys", async (req, res) => {
   } catch (err) {
     console.error("DB keys debug error:", err);
     res.status(500).json({ error: "Error fetching database keys" });
+  }
+});
+
+// ============================================
+// NEW ENDPOINT: Generate Signed URL for playback
+// ============================================
+// GET /api/video/play-url/:identifier
+// Authenticate user, resolve s3Key from MongoDB, return signed S3 URL
+router.get("/play-url/:identifier", protectStream, async (req, res) => {
+  try {
+    const { identifier } = req.params;
+    let s3Key = null;
+
+    // Check if identifier is a MongoDB ObjectId
+    if (mongoose.Types.ObjectId.isValid(identifier)) {
+      // Search in Course
+      let course = await Course.findOne({
+        $or: [
+          { "otherDocuments._id": identifier },
+          { "weeks.contents._id": identifier },
+          { "weeks.days.contents._id": identifier },
+          { "weeks.documents._id": identifier }
+        ]
+      }).lean();
+
+      if (!course) {
+        // Search in SharedContent
+        const SharedContent = require("../models/SharedContent");
+        const sharedContent = await SharedContent.findOne({
+          $or: [
+            { "otherDocuments._id": identifier },
+            { "weeks.contents._id": identifier },
+            { "weeks.days.contents._id": identifier },
+            { "weeks.documents._id": identifier }
+          ]
+        }).lean();
+
+        if (sharedContent) {
+          // Check otherDocuments
+          if (sharedContent.otherDocuments) {
+            for (const doc of sharedContent.otherDocuments) {
+              if (String(doc._id) === String(identifier)) {
+                s3Key = doc.s3Key;
+                break;
+              }
+            }
+          }
+
+          // Search in weeks structure
+          if (!s3Key) {
+            outer: for (const w of sharedContent.weeks || []) {
+              if (w.contents) {
+                for (const c of w.contents) {
+                  if (String(c._id) === String(identifier)) {
+                    s3Key = c.s3Key;
+                    break outer;
+                  }
+                }
+              }
+
+              if (w.days) {
+                for (const d of w.days) {
+                  if (d.contents) {
+                    for (const c of d.contents) {
+                      if (String(c._id) === String(identifier)) {
+                        s3Key = c.s3Key;
+                        break outer;
+                      }
+                    }
+                  }
+                }
+              }
+
+              if (w.documents) {
+                for (const doc of w.documents) {
+                  if (String(doc._id) === String(identifier)) {
+                    s3Key = doc.s3Key;
+                    break outer;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
+      if (course) {
+        // Check otherDocuments
+        if (course.otherDocuments) {
+          for (const doc of course.otherDocuments) {
+            if (String(doc._id) === String(identifier)) {
+              s3Key = doc.s3Key;
+              break;
+            }
+          }
+        }
+
+        // Check weeks structure
+        if (!s3Key) {
+          outer: for (const w of course.weeks) {
+            if (w.contents) {
+              for (const c of w.contents) {
+                if (String(c._id) === String(identifier)) {
+                  s3Key = c.s3Key;
+                  break outer;
+                }
+              }
+            }
+
+            if (w.days) {
+              for (const d of w.days) {
+                if (d.contents) {
+                  for (const c of d.contents) {
+                    if (String(c._id) === String(identifier)) {
+                      s3Key = c.s3Key;
+                      break outer;
+                    }
+                  }
+                }
+              }
+            }
+
+            if (w.documents) {
+              for (const doc of w.documents) {
+                if (String(doc._id) === String(identifier)) {
+                  s3Key = doc.s3Key;
+                  break outer;
+                }
+              }
+            }
+          }
+        }
+      }
+    } else {
+      // If identifier is not a MongoDB ID, treat it as s3Key directly
+      s3Key = identifier;
+    }
+
+    if (!s3Key) {
+      return res.status(404).json({ error: "Content not found" });
+    }
+
+    // Generate signed URL with 5-hour expiry (18000 seconds)
+    const signedUrl = await getSignedUrl(
+      s3,
+      new GetObjectCommand({
+        Bucket: process.env.AWS_S3_BUCKET,
+        Key: s3Key,
+      }),
+      { expiresIn: 18000 } // 5 hours
+    );
+
+    res.json({ url: signedUrl });
+  } catch (err) {
+    console.error("Error generating playback URL:", err);
+    res.status(500).json({ error: "Error generating playback URL" });
   }
 });
 

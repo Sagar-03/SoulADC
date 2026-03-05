@@ -15,24 +15,64 @@ const register = async (req, res) => {
       return res.status(400).json({ message: "All fields are required" });
     }
 
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
+    // Check if there's a verified temporary user
+    const tempUser = await User.findOne({ email, isTemporary: true });
+    
+    if (!tempUser || !tempUser.isEmailVerified) {
+      return res.status(400).json({ 
+        message: "Email not verified. Please verify your email before registration.",
+        requiresVerification: true
+      });
+    }
+
+    // Check if a real user already exists
+    const existingRealUser = await User.findOne({ email, isTemporary: { $ne: true } });
+    if (existingRealUser) {
       console.log("User already exists:", email);
       return res.status(400).json({ message: "User already exists" });
     }
 
-    // No need to hash here - the pre-save hook in userModel will handle it
+    // Delete the temporary user and create the real user
+    await User.deleteOne({ _id: tempUser._id });
+
+    // Create the actual user with verified email
     const user = new User({
       name,
       email,
       password: password, // Pass plain password - will be hashed by pre-save hook
       phone: phone || "", // phone is optional
-      role: "user" // default role
+      role: "user", // default role
+      isEmailVerified: true, // Already verified
+      isTemporary: false
     });
     await user.save();
 
+    // Send welcome email
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #4F46E5;">Welcome to SoulADC</h2>
+        <p>Hello ${name},</p>
+        <p>Your registration is complete! Welcome to SoulADC LMS.</p>
+        <p>You can now log in and start your learning journey with us.</p>
+        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
+        <p style="color: #6b7280; font-size: 12px;">SoulADC LMS - Your Learning Partner</p>
+      </div>
+    `;
+
+    try {
+      await sendEmail(email, "Welcome to SoulADC LMS", html);
+      console.log(`Welcome email sent to ${email}`);
+    } catch (emailError) {
+      console.error(" Error sending welcome email:", emailError);
+      // Continue registration even if email fails
+    }
+
     console.log(" User registered successfully:", email);
-    res.status(201).json({ message: "User registered successfully" });
+    res.status(201).json({ 
+      message: "Registration successful! You can now log in.",
+      success: true,
+      email: email
+    });
   } catch (error) {
     console.error("Register error:", error);
     res.status(500).json({ message: "Registration failed", error: error.message });
@@ -57,10 +97,15 @@ const login = async (req, res) => {
           name: "Admin",
           email: "admin@souladc.com",
           password: hashedPassword,
-          role: "admin"
+          role: "admin",
+          isEmailVerified: true // Admin doesn't need verification
         });
         await adminUser.save();
         console.log("Admin user created in database");
+      } else if (!adminUser.isEmailVerified) {
+        // Ensure existing admin has email verified
+        adminUser.isEmailVerified = true;
+        await adminUser.save();
       }
       
       const token = jwt.sign(
@@ -88,11 +133,29 @@ const login = async (req, res) => {
       return res.status(400).json({ message: "Invalid email or password" });
     }
 
-    // Check password
+    // Check password first (before email verification check)
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       console.log("Password mismatch for user:", email);
       return res.status(400).json({ message: "Invalid email or password" });
+    }
+
+    // Check if email is verified (only for users created through new registration flow)
+    // Skip check for admin and existing users (who don't have isTemporary flag)
+    if (user.role !== "admin" && user.isTemporary === true && !user.isEmailVerified) {
+      console.log("Email not verified for temporary user:", email);
+      return res.status(403).json({ 
+        message: "Please verify your email before logging in. Check your email for the verification OTP.",
+        requiresVerification: true,
+        email: email
+      });
+    }
+
+    // Auto-verify existing users (those without isTemporary flag or with isTemporary: false)
+    if (user.role !== "admin" && !user.isEmailVerified && user.isTemporary !== true) {
+      console.log("Auto-verifying existing user:", email);
+      user.isEmailVerified = true;
+      await user.save();
     }
 
     // ✅ DEVICE & IP SECURITY CHECK (only for non-admin users)
@@ -119,18 +182,29 @@ const login = async (req, res) => {
 
       console.log("🔍 Device Security Check for", user.email, ":", {
         currentIp,
-        storedIp: user.registeredIp,
-        currentFingerprint: currentFingerprint?.substring(0, 12) + '...',
-        storedFingerprint: user.deviceFingerprint?.substring(0, 12) + '...'
+        storedIp: user.registeredIp || 'null',
+        hasStoredIp: !!user.registeredIp,
+        currentFingerprint: currentFingerprint?.substring(0, 12) + '...' || 'null',
+        storedFingerprint: user.deviceFingerprint?.substring(0, 12) + '...' || 'null',
+        hasStoredFingerprint: !!user.deviceFingerprint
       });
 
-      // If this is the first login (no stored IP/fingerprint), store them
-      if (!user.registeredIp && !user.deviceFingerprint) {
+      // Check if device was reset by admin or first-time login
+      // Use explicit null/undefined checks to handle all cases properly
+      const isFirstLoginOrReset = (user.registeredIp === null || user.registeredIp === undefined) && 
+                                   (user.deviceFingerprint === null || user.deviceFingerprint === undefined);
+
+      if (isFirstLoginOrReset) {
         if (currentFingerprint) {
           user.registeredIp = currentIp;
           user.deviceFingerprint = currentFingerprint;
           await user.save();
-          console.log("✅ First login - Device and IP registered:", { ip: currentIp, fingerprint: currentFingerprint.substring(0, 10) + '...' });
+          console.log("✅ Device registered (first login or after reset):", { 
+            ip: currentIp, 
+            fingerprint: currentFingerprint.substring(0, 10) + '...' 
+          });
+        } else {
+          console.log("⚠️ Warning: No device fingerprint provided on first login");
         }
       } else {
         // Subsequent logins - verify IP and fingerprint match
@@ -138,7 +212,7 @@ const login = async (req, res) => {
         const fingerprintMatches = user.deviceFingerprint === currentFingerprint;
 
         if (!ipMatches || !fingerprintMatches) {
-          console.log("Login blocked - Device/IP mismatch:", {
+          console.log("❌ Login blocked - Device/IP mismatch:", {
             storedIp: user.registeredIp,
             currentIp,
             ipMatches,
@@ -147,11 +221,13 @@ const login = async (req, res) => {
             fingerprintMatches
           });
           return res.status(403).json({ 
-            message: "Login blocked: Unauthorized device or IP.",
-            details: "This account is locked to a specific device and IP address. Please contact support if you need to access from a different device."
+            success: false,
+            message: "🔒 Login blocked: Unauthorized device or IP detected.",
+            details: "This account is locked to a specific device. Contact support to unlock your account or login from your registered device.",
+            errorCode: "DEVICE_LOCK_VIOLATION"
           });
         }
-        console.log("✅ Device and IP verified successfully");
+        console.log("✅ Device and IP verified successfully for", user.email);
       }
     }
 
@@ -520,5 +596,257 @@ const updateProfile = async (req, res) => {
   }
 };
 
+// ✅ NEW: Send OTP Before Registration (Pre-Registration Email Verification)
+const sendPreRegistrationOTP = async (req, res) => {
+  try {
+    const { email } = req.body;
 
-module.exports = { register, login, forgotPassword, resetPassword, updateProfile, sendResetOTP, verifyResetOTP, resetPasswordWithToken };
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: "Email is already registered. Please log in." });
+    }
+
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Store OTP temporarily in a temporary user record or in-memory cache
+    // For simplicity, we'll create a temporary unverified user with minimal data
+    const tempUser = new User({
+      email: email,
+      name: "Temporary",
+      password: crypto.randomBytes(20).toString('hex'), // Random password, will be replaced
+      isEmailVerified: false,
+      verificationOTP: otp,
+      verificationOTPExpire: Date.now() + 10 * 60 * 1000, // 10 minutes
+      verificationOTPAttempts: 0,
+      isTemporary: true // Flag to identify this as temporary
+    });
+    
+    await tempUser.save();
+
+    // Send OTP via email
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #4F46E5;">Email Verification - SoulADC LMS</h2>
+        <p>Hello,</p>
+        <p>Thank you for choosing SoulADC LMS! Please use the OTP below to verify your email address:</p>
+        <div style="background-color: #f3f4f6; padding: 20px; text-align: center; margin: 20px 0; border-radius: 8px;">
+          <h1 style="color: #4F46E5; margin: 0; font-size: 32px; letter-spacing: 5px;">${otp}</h1>
+        </div>
+        <p>This OTP will expire in <strong>10 minutes</strong>.</p>
+        <p>If you didn't request this verification, please ignore this email.</p>
+        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
+        <p style="color: #6b7280; font-size: 12px;">SoulADC LMS - Your Learning Partner</p>
+      </div>
+    `;
+
+    await sendEmail(email, "Verify Your Email - SoulADC LMS", html);
+
+    console.log(`✅ Pre-registration OTP sent to ${email}`);
+    res.json({ 
+      message: "Verification OTP sent to your email. Please check your inbox.",
+      success: true
+    });
+  } catch (error) {
+    console.error("❌ Error sending pre-registration OTP:", error);
+    res.status(500).json({ message: "Failed to send verification OTP" });
+  }
+};
+
+// ✅ Verify OTP Before Registration
+const verifyPreRegistrationOTP = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({ message: "Email and OTP are required" });
+    }
+
+    const tempUser = await User.findOne({ email, isTemporary: true });
+    if (!tempUser) {
+      return res.status(404).json({ message: "No verification request found. Please request OTP again." });
+    }
+
+    // Check if OTP exists and not expired
+    if (!tempUser.verificationOTP || !tempUser.verificationOTPExpire) {
+      return res.status(400).json({ message: "No OTP found. Please request a new one." });
+    }
+
+    if (Date.now() > tempUser.verificationOTPExpire) {
+      return res.status(400).json({ message: "OTP has expired. Please request a new one." });
+    }
+
+    // Check max attempts (prevent brute force)
+    if (tempUser.verificationOTPAttempts >= 5) {
+      return res.status(400).json({ 
+        message: "Too many incorrect attempts. Please request a new OTP." 
+      });
+    }
+
+    // Verify OTP
+    if (tempUser.verificationOTP !== otp) {
+      tempUser.verificationOTPAttempts += 1;
+      await tempUser.save();
+      return res.status(400).json({ 
+        message: "Invalid OTP",
+        attemptsRemaining: 5 - tempUser.verificationOTPAttempts
+      });
+    }
+
+    // OTP is correct - mark email as verified
+    tempUser.isEmailVerified = true;
+    tempUser.verificationOTP = undefined;
+    tempUser.verificationOTPExpire = undefined;
+    tempUser.verificationOTPAttempts = 0;
+    await tempUser.save();
+
+    console.log(`✅ Pre-registration email verified for ${email}`);
+    res.json({ 
+      message: "Email verified successfully! You can now complete registration.",
+      success: true 
+    });
+  } catch (error) {
+    console.error("❌ Error verifying pre-registration OTP:", error);
+    res.status(500).json({ message: "Failed to verify OTP" });
+  }
+};
+
+// ✅ Send Verification OTP for Email Verification during Registration
+const sendVerificationOTP = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+
+    // Check if user exists
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Check if already verified
+    if (user.isEmailVerified) {
+      return res.status(400).json({ message: "Email is already verified" });
+    }
+
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Save OTP to user (expires in 10 minutes)
+    user.verificationOTP = otp;
+    user.verificationOTPExpire = Date.now() + 10 * 60 * 1000; // 10 minutes
+    user.verificationOTPAttempts = 0;
+    await user.save();
+
+    // Send OTP via email
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #4F46E5;">Email Verification - SoulADC LMS</h2>
+        <p>Hello ${user.name || "User"},</p>
+        <p>Thank you for registering with SoulADC LMS! Please use the OTP below to verify your email address:</p>
+        <div style="background-color: #f3f4f6; padding: 20px; text-align: center; margin: 20px 0; border-radius: 8px;">
+          <h1 style="color: #4F46E5; margin: 0; font-size: 32px; letter-spacing: 5px;">${otp}</h1>
+        </div>
+        <p>This OTP will expire in <strong>10 minutes</strong>.</p>
+        <p>If you didn't request this verification, please ignore this email.</p>
+        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
+        <p style="color: #6b7280; font-size: 12px;">SoulADC LMS - Your Learning Partner</p>
+      </div>
+    `;
+
+    await sendEmail(email, "Verify Your Email - SoulADC LMS", html);
+
+    console.log(`✅ Verification OTP sent to ${email}`);
+    res.json({ message: "Verification OTP sent to your email" });
+  } catch (error) {
+    console.error("❌ Error sending verification OTP:", error);
+    res.status(500).json({ message: "Failed to send verification OTP" });
+  }
+};
+
+// ✅ Verify OTP for Email Verification
+const verifyEmailOTP = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({ message: "Email and OTP are required" });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Check if already verified
+    if (user.isEmailVerified) {
+      return res.status(400).json({ message: "Email is already verified" });
+    }
+
+    // Check if OTP exists and not expired
+    if (!user.verificationOTP || !user.verificationOTPExpire) {
+      return res.status(400).json({ message: "No OTP found. Please request a new one." });
+    }
+
+    if (Date.now() > user.verificationOTPExpire) {
+      return res.status(400).json({ message: "OTP has expired. Please request a new one." });
+    }
+
+    // Check max attempts (prevent brute force)
+    if (user.verificationOTPAttempts >= 5) {
+      return res.status(400).json({ 
+        message: "Too many incorrect attempts. Please request a new OTP." 
+      });
+    }
+
+    // Verify OTP
+    if (user.verificationOTP !== otp) {
+      user.verificationOTPAttempts += 1;
+      await user.save();
+      return res.status(400).json({ 
+        message: "Invalid OTP",
+        attemptsRemaining: 5 - user.verificationOTPAttempts
+      });
+    }
+
+    // OTP is correct - mark email as verified
+    user.isEmailVerified = true;
+    user.verificationOTP = undefined;
+    user.verificationOTPExpire = undefined;
+    user.verificationOTPAttempts = 0;
+    await user.save();
+
+    console.log(`✅ Email verified for ${email}`);
+    res.json({ 
+      message: "Email verified successfully! You can now log in.",
+      success: true 
+    });
+  } catch (error) {
+    console.error("❌ Error verifying email OTP:", error);
+    res.status(500).json({ message: "Failed to verify OTP" });
+  }
+};
+
+
+module.exports = { 
+  register, 
+  login, 
+  forgotPassword, 
+  resetPassword, 
+  updateProfile, 
+  sendResetOTP, 
+  verifyResetOTP, 
+  resetPasswordWithToken,
+  sendVerificationOTP,
+  verifyEmailOTP,
+  sendPreRegistrationOTP,
+  verifyPreRegistrationOTP
+};
+

@@ -16,7 +16,7 @@ import { getAdminDashboardStats } from "../../Api/api";
 const Dashboard = () => {
   const [stats, setStats] = useState([]);
   const [enrollmentTrend, setEnrollmentTrend] = useState([]);
-  const [revenueTrend, setRevenueTrend] = useState([]);
+  const [registrationTrend, setRegistrationTrend] = useState([]);
   const [topCourses, setTopCourses] = useState([]);
   const [recentStudents, setRecentStudents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -33,7 +33,7 @@ const Dashboard = () => {
       
       setStats(data.stats);
       setEnrollmentTrend(data.enrollmentTrend);
-      setRevenueTrend(data.revenueTrend);
+      setRegistrationTrend(data.registrationTrend);
       setTopCourses(data.topCourses);
       setRecentStudents(data.recentStudents);
     } catch (err) {
@@ -48,7 +48,7 @@ const Dashboard = () => {
         { label: "Revenue (₹)", value: "0" },
       ]);
       setEnrollmentTrend([]);
-      setRevenueTrend([]);
+      setRegistrationTrend([]);
       setTopCourses([]);
       setRecentStudents([]);
     } finally {
@@ -122,7 +122,7 @@ const Dashboard = () => {
                   <XAxis dataKey="month" />
                   <YAxis />
                   <Tooltip />
-                  <Line type="monotone" dataKey="enrollments" stroke="linear-gradient(145deg, #A98C6A, #7B563D)" />
+                  <Line type="monotone" dataKey="enrollments" stroke="#A98C6A" strokeWidth={2} />
                 </LineChart>
               </ResponsiveContainer>
             ) : (
@@ -136,21 +136,21 @@ const Dashboard = () => {
         <div className="col-md-6">
           <div className="card shadow-sm p-3 h-100">
             <h5 className="fw-bold mb-3" style={{ color: "#5A3825" }}>
-              Revenue Trend (₹)
+              Student Registration Trend
             </h5>
-            {revenueTrend.length > 0 ? (
+            {registrationTrend.length > 0 ? (
               <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={revenueTrend}>
+                <BarChart data={registrationTrend}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="month" />
                   <YAxis />
                   <Tooltip />
-                  <Bar dataKey="revenue" fill="linear-gradient(145deg, #A98C6A, #7B563D)" />
+                  <Bar dataKey="students" fill="#7B563D" />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
               <div className="d-flex align-items-center justify-content-center" style={{ height: "250px" }}>
-                <p className="text-muted">No revenue data available</p>
+                <p className="text-muted">No registration data available</p>
               </div>
             )}
           </div>

@@ -4,7 +4,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import "./EmbeddedVideoPlayer.css";
 import StudentLayout from "../student/StudentLayout";
-import { api, getStreamUrl, updateVideoProgress } from "../../Api/api";
+import { api, getSignedPlaybackUrl, getStreamUrl, updateVideoProgress } from "../../Api/api";
 import { toast } from 'react-toastify';
 import ScreenshotWarning from "../common/ScreenshotWarning";
 import {
@@ -39,11 +39,13 @@ const EmbeddedVideoPlayer = () => {
     id: videoId || null,
     title: "",
     src: "",
+    signedUrl: null,
     weekId: null,
     dayId: null,
-    contentId: null
+    contentId: null,
+    weekNumber: null
   });
-  const [selectedWeek, setSelectedWeek] = useState(1);
+  const [selectedWeek, setSelectedWeek] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -94,6 +96,8 @@ const EmbeddedVideoPlayer = () => {
                         weekNumber: week.weekNumber,
                         dayNumber: day.dayNumber
                       });
+                      // Auto-expand the correct module
+                      setSelectedWeek(week.weekNumber);
                       break outer;
                     }
                   }
@@ -115,6 +119,8 @@ const EmbeddedVideoPlayer = () => {
                       contentId: content._id,
                       weekNumber: week.weekNumber
                     });
+                    // Auto-expand the correct module
+                    setSelectedWeek(week.weekNumber);
                     break outer2;
                   }
                 }
@@ -124,26 +130,54 @@ const EmbeddedVideoPlayer = () => {
 
           if (!weekId) {
             console.warn("⚠️ Video not found in course structure, using fallback title");
+            // Default to first week if video not found
+            if (courseData.weeks && courseData.weeks.length > 0) {
+              setSelectedWeek(courseData.weeks[0].weekNumber);
+            }
           }
 
-          setCurrentVideo({
-            id: videoId,
-            title: videoTitle,
-            src: getStreamUrl(videoId),
-            weekId: weekId,
-            dayId: dayId,
-            contentId: videoId
-          });
+          // Fetch signed URL from backend
+          try {
+            const urlResponse = await getSignedPlaybackUrl(videoId);
+            const signedUrl = urlResponse.data.url;
+            
+            setCurrentVideo({
+              id: videoId,
+              title: videoTitle,
+              src: signedUrl,
+              signedUrl: signedUrl,
+              weekId: weekId,
+              dayId: dayId,
+              contentId: videoId,
+              weekNumber: null
+            });
+            console.log("✅ Signed URL fetched for playback");
+          } catch (urlError) {
+            console.error("Error fetching signed URL:", urlError);
+            setError("Failed to load video");
+          }
         } else if (videoId) {
-          // No course data, use fallback
-          setCurrentVideo({
-            id: videoId,
-            title: "Video Lesson",
-            src: getStreamUrl(videoId),
-            weekId: null,
-            dayId: null,
-            contentId: videoId
-          });
+          // No course data, try to fetch signed URL directly
+          try {
+            const urlResponse = await getSignedPlaybackUrl(videoId);
+            const signedUrl = urlResponse.data.url;
+            
+            setCurrentVideo({
+              id: videoId,
+              title: "Video Lesson",
+              src: signedUrl,
+              signedUrl: signedUrl,
+              weekId: null,
+              dayId: null,
+              contentId: videoId,
+              weekNumber: null
+            });
+          } catch (urlError) {
+            console.error("Error fetching signed URL:", urlError);
+            setError("Failed to load video");
+          }
+          // Default to first week
+          setSelectedWeek(1);
         }
 
       } catch (err) {
@@ -174,7 +208,13 @@ const EmbeddedVideoPlayer = () => {
             id: videoId,
             title: "Sample Video Lesson",
             src: "/video.mp4",
+            signedUrl: "/video.mp4",
+            weekNumber: null
           });
+        }
+        // Set default week to 1 for fallback
+        if (!selectedWeek) {
+          setSelectedWeek(1);
         }
       } finally {
         setLoading(false);

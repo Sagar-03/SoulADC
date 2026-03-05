@@ -33,19 +33,26 @@ const BulkPdfUpload = () => {
   const selectedWeekData = selectedCourseData?.weeks.find(week => week._id === selectedWeek);
 
   const validateAndSetFiles = (selectedFiles) => {
-    // Filter only PDF files
-    const pdfFiles = selectedFiles.filter(file => file.type === "application/pdf");
+    const allowedTypes = [
+      "application/pdf",
+      "image/png",
+      "image/jpeg",
+      "image/jpg",
+      "image/webp"
+    ];
 
-    if (pdfFiles.length !== selectedFiles.length) {
-      setError("Only PDF files are allowed. Non-PDF files have been filtered out.");
+    const validFiles = selectedFiles.filter(file =>
+      allowedTypes.includes(file.type)
+    );
+
+    if (validFiles.length !== selectedFiles.length) {
+      setError("Only PDF and Image files (PNG, JPG, JPEG, WEBP) are allowed.");
     } else {
       setError(null);
     }
 
-    // No file size limit - accept all PDF files
-    setFiles(pdfFiles);
+    setFiles(validFiles);
   };
-
   const handleFileChange = (e) => {
     const selectedFiles = Array.from(e.target.files);
     validateAndSetFiles(selectedFiles);
@@ -77,10 +84,10 @@ const BulkPdfUpload = () => {
   const uploadSingleFile = async (file, weekNumber, weekId) => {
     try {
       // Determine folder path
-      const folderPath = weekNumber !== null 
-        ? `documents/week-${weekNumber}` 
+      const folderPath = weekNumber !== null
+        ? `documents/week-${weekNumber}`
         : `documents/other`;
-      
+
       // 1. Get presigned URL (dayNumber not needed for module-level documents)
       const presignRes = await getPresignUrl(
         file.name,
@@ -123,18 +130,21 @@ const BulkPdfUpload = () => {
         xhr.send(file);
       });
 
-      // 3. Save metadata in database at module/week level or course level
+      // 3. Determine file type based on MIME type
+      const fileType = file.type.startsWith('image/') ? 'image' : 'pdf';
+
+      // 4. Save metadata in database at module/week level or course level
       if (weekId === 'other') {
         // Save to course-level "other documents"
         await saveOtherDocument(selectedCourse, {
-          type: "pdf",
+          type: fileType,
           title: file.name.split(".")[0], // remove extension
           s3Key: key,
         });
       } else {
         // Save to week/module documents
         await saveWeekDocument(selectedCourse, weekId, {
-          type: "pdf",
+          type: fileType,
           title: file.name.split(".")[0], // remove extension
           s3Key: key,
         });
@@ -178,7 +188,7 @@ const BulkPdfUpload = () => {
 
       if (failed === 0) {
         setError(null);
-        alert(`Success! ${successful} PDF files uploaded successfully to module documents.`);
+        alert(`Success! ${successful} file uploaded successfully to module documents.`);
       } else {
         setError(`Upload completed with ${failed} failures out of ${files.length} files.`);
       }
@@ -284,7 +294,7 @@ const BulkPdfUpload = () => {
           <div className="card-header bg-info text-white">
             <h5 className="mb-0">
               <i className="bi bi-files me-2"></i>
-              Select PDF Files
+              Select PDF or Image Files
             </h5>
           </div>
           <div className="card-body">
@@ -297,7 +307,7 @@ const BulkPdfUpload = () => {
               onClick={openFileDialog}
             >
               <i className="bi bi-cloud-upload display-4 text-muted mb-3"></i>
-              <h5 className="text-muted">Drag and drop PDF files here</h5>
+              <h5 className="text-muted">Drag and drop PDF or Image files here</h5>
               <p className="text-muted mb-3">or click to browse files</p>
               <button type="button" className="btn btn-outline-primary">
                 <i className="bi bi-folder me-2"></i>
@@ -308,9 +318,8 @@ const BulkPdfUpload = () => {
                 type="file"
                 className="d-none"
                 multiple
-                accept=".pdf"
+                accept=".pdf,.png,.jpg,.jpeg,.webp"
                 onChange={handleFileChange}
-                disabled={uploading}
               />
             </div>
 
@@ -343,8 +352,10 @@ const BulkPdfUpload = () => {
                       <div className="file-list-item p-3">
                         <div className="d-flex justify-content-between align-items-start mb-2">
                           <div className="flex-grow-1">
-                            <i className="bi bi-file-earmark-pdf text-danger me-2"></i>
-                            <strong className="d-block text-truncate" title={file.name}>
+                            <i className={`bi ${file.type.startsWith("image")
+                                ? "bi-file-earmark-image text-primary"
+                                : "bi-file-earmark-pdf text-danger"
+                              } me-2`}></i>                            <strong className="d-block text-truncate" title={file.name}>
                               {file.name}
                             </strong>
                             <small className="text-muted">

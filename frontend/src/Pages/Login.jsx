@@ -29,6 +29,11 @@ const Login = () => {
   const [userRole, setUserRole] = useState(null); // Track user role
   const [failedLoginCount, setFailedLoginCount] = useState(0);
   const [showForgotPasswordPopup, setShowForgotPasswordPopup] = useState(false);
+  const [showOTPVerification, setShowOTPVerification] = useState(false);
+  const [isEmailVerified, setIsEmailVerified] = useState(false);
+  const [isVerifyingEmail, setIsVerifyingEmail] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [resendTimer, setResendTimer] = useState(0);
 
   const [formData, setFormData] = useState({
     email: "",
@@ -42,12 +47,113 @@ const Login = () => {
 
   const navigate = useNavigate();
 
+  // Resend timer countdown
+  React.useEffect(() => {
+    let interval;
+    if (resendTimer > 0) {
+      interval = setInterval(() => {
+        setResendTimer((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [resendTimer]);
+
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
+    
+    // Reset email verification if email is changed during signup
+    if (name === "email" && !isLogin && isEmailVerified) {
+      setIsEmailVerified(false);
+    }
+    
     setFormData((prev) => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
+  };
+  const handleSendEmailOTP = async () => {
+    if (!formData.email) {
+      toast.error("Please enter your email address");
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+
+    // Show OTP screen immediately for better UX
+    toast.info("Sending verification code...");
+    setIsVerifyingEmail(true);
+    setShowOTPVerification(true);
+    setResendTimer(60);
+
+    // Send OTP in background
+    try {
+      const { data } = await api.post("/auth/send-pre-registration-otp", {
+        email: formData.email,
+      });
+
+      if (data.success) {
+        toast.success("Verification code sent! Check your email.");
+      } else {
+        toast.warning("Code sent, but there may be a delay in delivery.");
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to send verification code");
+      // Keep OTP screen open even if email fails - user can try resend
+    }
+  };
+
+  const handleVerifyEmailOTP = async () => {
+    if (!otp || otp.length !== 6) {
+      toast.error("Please enter a valid 6-digit OTP");
+      return;
+    }
+
+    try {
+      const { data } = await api.post("/auth/verify-pre-registration-otp", {
+        email: formData.email,
+        otp: otp,
+      });
+
+      if (data.success) {
+        toast.success("Email verified! Now complete your registration form.");
+        setIsEmailVerified(true);
+        setIsVerifyingEmail(false);
+        setShowOTPVerification(false);
+        setOtp("");
+      }
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || "Invalid OTP";
+      const attemptsRemaining = err.response?.data?.attemptsRemaining;
+      
+      if (attemptsRemaining !== undefined) {
+        toast.error(`${errorMessage} (${attemptsRemaining} attempts remaining)`);
+      } else {
+        toast.error(errorMessage);
+      }
+    }
+  };
+
+  const handleResendOTP = async () => {
+    if (resendTimer > 0) {
+      toast.info(`Please wait ${resendTimer} seconds before requesting a new code`);
+      return;
+    }
+
+    try {
+      const { data } = await api.post("/auth/send-pre-registration-otp", {
+        email: formData.email,
+      });
+
+      toast.success(data.message || "New verification code sent!");
+      setOtp("");
+      setResendTimer(60);
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to resend code");
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -128,6 +234,12 @@ const Login = () => {
           toast.error(data.message || "Login failed");
         }
       } else {
+        // Check if email is verified
+        if (!isEmailVerified) {
+          toast.error("Please verify your email before registration");
+          return;
+        }
+
         if (formData.password !== formData.confirmPassword) {
           toast.error("Passwords do not match!");
           return;
@@ -142,8 +254,8 @@ const Login = () => {
           phone: formData.countryCode + formData.phone,
         });
 
-        if (data) {
-          toast.success(data.message || "Registered successfully!");
+        if (data.success) {
+          toast.success("Registration successful! Logging you in...");
           
           // Automatically log in the user after registration with device fingerprint
           try {
@@ -196,11 +308,13 @@ const Login = () => {
 
       // Handle device lock error specifically
       if (err.response?.status === 403 || err.response?.data?.errorCode === 'DEVICE_LOCK_VIOLATION') {
+        const errorDetails = err.response?.data?.details || "This account is locked to a specific device. Contact support to unlock your account.";
         toast.error(
-          "🔒 Login blocked: Unauthorized device or IP. Please contact support to unlock your account.",
+          `${err.response?.data?.message || '🔒 Login blocked: Unauthorized device or IP.'}\n\n${errorDetails}`,
           { 
-            autoClose: 8000,
-            position: "top-center"
+            autoClose: 10000,
+            position: "top-center",
+            style: { whiteSpace: 'pre-line' }
           }
         );
       } else {
@@ -371,21 +485,129 @@ const Login = () => {
                 <button
                   type="button"
                   className={`tab-btn ${isLogin ? "active" : ""}`}
-                  onClick={() => setIsLogin(true)}
+                  onClick={() => {
+                    setIsLogin(true);
+                    setIsEmailVerified(false);
+                    setShowOTPVerification(false);
+                    setIsVerifyingEmail(false);
+                  }}
                 >
                   Sign In
                 </button>
                 <button
                   type="button"
                   className={`tab-btn ${!isLogin ? "active" : ""}`}
-                  onClick={() => setIsLogin(false)}
+                  onClick={() => {
+                    setIsLogin(false);
+                    setIsEmailVerified(false);
+                    setShowOTPVerification(false);
+                    setIsVerifyingEmail(false);
+                  }}
                 >
                   Sign Up
                 </button>
               </div>
 
+              {/* OTP VERIFICATION OR FORM */}
+              {showOTPVerification ? (
+                <>
+                  <div className="form-header" style={{ marginTop: '20px' }}>
+                    <h2>Verify Your Email</h2>
+                    <p>Enter the 6-digit code sent to {formData.email}</p>
+                  </div>
+
+                  <form onSubmit={(e) => {
+                    e.preventDefault();
+                    handleVerifyEmailOTP();
+                  }} className="auth-form">
+                    <div className="input-group">
+                      <label htmlFor="otp">Verification Code</label>
+                      <input
+                        type="text"
+                        id="otp"
+                        name="otp"
+                        placeholder="Enter 6-digit code"
+                        value={otp}
+                        onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                        pattern="[0-9]{6}"
+                        maxLength="6"
+                        required
+                        autoFocus
+                        style={{ 
+                          fontSize: '24px', 
+                          letterSpacing: '8px', 
+                          textAlign: 'center',
+                          fontWeight: 'bold'
+                        }}
+                      />
+                      <small style={{ color: '#6b7280', fontSize: '12px', marginTop: '8px', display: 'block' }}>
+                        Code expires in 10 minutes
+                      </small>
+                    </div>
+
+                    <button type="submit" className="submit-btn">
+                      Verify Email
+                    </button>
+
+                    <div className="auth-switch" style={{ marginTop: '20px', textAlign: 'center' }}>
+                      <p style={{ marginBottom: '10px' }}>
+                        Didn't receive the code?
+                      </p>
+                      <button
+                        type="button"
+                        className="switch-btn"
+                        onClick={handleResendOTP}
+                        disabled={resendTimer > 0}
+                        style={{
+                          opacity: resendTimer > 0 ? 0.5 : 1,
+                          cursor: resendTimer > 0 ? 'not-allowed' : 'pointer'
+                        }}
+                      >
+                        {resendTimer > 0 ? `Resend in ${resendTimer}s` : 'Resend Code'}
+                      </button>
+                    </div>
+
+                    <div className="auth-switch" style={{ marginTop: '15px' }}>
+                      <button
+                        type="button"
+                        className="switch-btn"
+                        onClick={() => {
+                          setShowOTPVerification(false);
+                          setOtp("");
+                          setIsVerifyingEmail(false);
+                        }}
+                      >
+                        ← Back to Sign Up
+                      </button>
+                    </div>
+                  </form>
+                </>
+              ) : (
+              <>
               {/* FORM */}
               <form onSubmit={handleSubmit} className="auth-form">
+                {!isLogin && isEmailVerified && (
+                  <div style={{
+                    background: '#EFF6FF',
+                    border: '1px solid #93C5FD',
+                    borderRadius: '8px',
+                    padding: '12px 16px',
+                    marginBottom: '16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px'
+                  }}>
+                    <span style={{ fontSize: '20px' }}>ℹ️</span>
+                    <p style={{ 
+                      margin: 0, 
+                      fontSize: '14px', 
+                      color: '#1E40AF',
+                      lineHeight: '1.5'
+                    }}>
+                      Email verified! Now fill in your details and click "Create Account" to complete registration.
+                    </p>
+                  </div>
+                )}
                 {!isLogin && (
                   <div className="input-group">
                     <label>Full Name</label>
@@ -402,14 +624,64 @@ const Login = () => {
 
                 <div className="input-group">
                   <label>Email Address</label>
-                  <input
-                    type="email"
-                    name="email"
-                    placeholder="Enter your email address"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    required
-                  />
+                  <div style={{ 
+                    display: 'flex', 
+                    gap: '10px', 
+                    alignItems: 'stretch',
+                    width: '100%'
+                  }}>
+                    <input
+                      type="email"
+                      name="email"
+                      placeholder="Enter your email address"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      disabled={isEmailVerified && !isLogin}
+                      required
+                      style={{ 
+                        flex: '1',
+                        minWidth: '0'
+                      }}
+                    />
+                   {!isLogin && (
+  <button
+    type="button"
+    onClick={handleSendEmailOTP}
+    disabled={isEmailVerified || !formData.email}
+    className="verify-email-btn"
+    style={{
+      padding: '10px 16px',
+      background: isEmailVerified
+        ? '#10B981'
+        : formData.email
+          ? 'linear-gradient(145deg, #A98C6A, #7B563D)'
+          : '#b0b0b5',
+      color: 'white',
+      border: 'none',
+      borderRadius: '8px',
+      cursor:
+        isEmailVerified || !formData.email
+          ? 'not-allowed'
+          : 'pointer',
+      fontSize: '14px',
+      fontWeight: '600',
+      whiteSpace: 'nowrap',
+      opacity: !formData.email ? 0.8 : 1,
+      transition: 'all 0.3s ease',
+      flexShrink: 0,
+      minWidth: '120px'
+    }}
+  >
+    {isEmailVerified ? '✓ Verified' : 'Verify Email'}
+  </button>
+)}
+
+                  </div>
+                  {!isLogin && isEmailVerified && (
+                    <small style={{ color: '#10B981', fontSize: '12px', marginTop: '4px', display: 'block' }}>
+                      ✓ Email verified successfully
+                    </small>
+                  )}
                 </div>
 
                 {!isLogin && (
@@ -529,6 +801,8 @@ const Login = () => {
                   </button>
                 </p>
               </div>
+              </>
+              )}
             </div>
           </div>
         </div>

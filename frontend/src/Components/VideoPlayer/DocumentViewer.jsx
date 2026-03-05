@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { FaArrowLeft, FaExpand, FaCompress } from "react-icons/fa";
 import StudentLayout from "../student/StudentLayout";
-import { api, getStreamUrl } from "../../Api/api";
+import { api, getSignedPlaybackUrl } from "../../Api/api";
 import ScreenshotWarning from "../common/ScreenshotWarning";
 import "./DocumentViewer.css";
 
@@ -114,38 +114,25 @@ const DocumentViewer = () => {
             try {
                 setFetchingDoc(true);
                 
-                // Try fetching via stream endpoint
-                const response = await api.get(`/stream/${docId}`, {
-                    responseType: 'blob'
-                });
+                // Get signed URL for direct S3 access
+                const urlResponse = await getSignedPlaybackUrl(docId);
+                const signedUrl = urlResponse.data.url;
                 
-                // console.log('✅ Document fetched successfully');
-                const blob = new Blob([response.data], { type: 'application/pdf' });
+                // Fetch the document using the signed URL
+                const response = await fetch(signedUrl);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const blob = await response.blob();
                 const url = URL.createObjectURL(blob);
                 setDocumentUrl(url);
+                console.log('✅ Document fetched successfully via signed URL');
                 setFetchingDoc(false);
             } catch (error) {
                 // console.error('❌ Error fetching document blob:', error);
                 // console.error('Response:', error.response?.data);
                 // console.error('Status:', error.response?.status);
-                
-                // Try fallback to direct URL if available
-                if (documentData.url) {
-                    // console.log('🔄 Trying fallback URL:', documentData.url);
-                    try {
-                        const fallbackResponse = await fetch(documentData.url);
-                        if (fallbackResponse.ok) {
-                            const blob = await fallbackResponse.blob();
-                            const url = URL.createObjectURL(blob);
-                            setDocumentUrl(url);
-                         //   console.log('✅ Loaded document via fallback URL');
-                            setFetchingDoc(false);
-                            return;
-                        }
-                    } catch (fallbackError) {
-                        // console.error('❌ Fallback URL also failed:', fallbackError);
-                    }
-                }
                 
                 // Set appropriate error message
                 if (error.response?.status === 404) {
@@ -423,12 +410,27 @@ const DocumentViewerContent = ({
 
             {/* Document Viewer */}
             <div className="document-content">
-                <iframe
-                    id="documentFrame"
-                    src={`${documentUrl}#toolbar=0&navpanes=0&scrollbar=1`}
-                    className="document-iframe"
-                    title={documentData.title}
-                />
+                {documentData.type === "image" || 
+                 documentData.title?.match(/\.(jpg|jpeg|png|webp)$/i) ? (
+                    <img
+                        src={documentUrl}
+                        alt={documentData.title}
+                        className="document-image"
+                        style={{
+                            maxWidth: '100%',
+                            height: 'auto',
+                            display: 'block',
+                            margin: '0 auto'
+                        }}
+                    />
+                ) : (
+                    <iframe
+                        id="documentFrame"
+                        src={`${documentUrl}#toolbar=0&navpanes=0&scrollbar=1`}
+                        className="document-iframe"
+                        title={documentData.title}
+                    />
+                )}
             </div>
         </div>
     );

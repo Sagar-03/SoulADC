@@ -29,12 +29,8 @@ router.post("/create-checkout-session", protect, async (req, res) => {
       const code = coupon.toLowerCase();
       if (code === "soul10") {
         price = price * 0.9; // 10% discount
-      } else if (code === "free100") {
+      } else if (code === "souladc_admin_discount365") {
         price = 0; // 100% discount
-      } else if (code === "dhruv_350") {
-        price = price * (1 - 0.6983); // 69.83% discount
-      } else if (code === "test_10") {
-        price = price * (1 - 0.9914); // 99.14% discount
       }
     }
 

@@ -31,6 +31,9 @@ router.get('/courses/:id', protect, checkCourseAccess, async (req, res) => {
       return res.status(404).json({ error: 'Course not found' });
     }
     
+    console.log(`📚 User fetching course: ${course.title}`);
+    console.log(`🔗 Has SharedContent: ${!!course.sharedContentId}`);
+    
     // Prepare response data
     const courseData = course.toObject();
     
@@ -38,6 +41,26 @@ router.get('/courses/:id', protect, checkCourseAccess, async (req, res) => {
     if (course.sharedContentId) {
       courseData.weeks = course.sharedContentId.weeks;
       courseData.otherDocuments = course.sharedContentId.otherDocuments || [];
+      
+      console.log(`📖 SharedContent weeks: ${courseData.weeks?.length || 0}`);
+      console.log(`📄 SharedContent otherDocuments: ${courseData.otherDocuments?.length || 0}`);
+      
+      // Log documents in each week
+      if (courseData.weeks) {
+        courseData.weeks.forEach(week => {
+          console.log(`  Week ${week.weekNumber}: ${week.documents?.length || 0} docs`);
+        });
+      }
+    } else {
+      console.log(`📖 Direct course weeks: ${courseData.weeks?.length || 0}`);
+      console.log(`📄 Direct course otherDocuments: ${courseData.otherDocuments?.length || 0}`);
+      
+      // Log documents in each week
+      if (courseData.weeks) {
+        courseData.weeks.forEach(week => {
+          console.log(`  Week ${week.weekNumber}: ${week.documents?.length || 0} docs`);
+        });
+      }
     }
     
     // Return full course data with access info
@@ -46,6 +69,7 @@ router.get('/courses/:id', protect, checkCourseAccess, async (req, res) => {
       accessInfo: req.courseAccess // Contains purchaseDate, expiryDate, daysRemaining
     });
   } catch (err) {
+    console.error('❌ Error fetching course:', err);
     res.status(500).json({ error: err.message });
   }
 });
