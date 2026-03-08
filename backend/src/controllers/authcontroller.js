@@ -1,4 +1,5 @@
 const User = require("../models/userModel");
+const PreRegistrationOTP = require("../models/PreRegistrationOTP");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
@@ -11,41 +12,41 @@ const register = async (req, res) => {
     console.log("Register request:", { name, email, phone }); // log incoming data (without password)
 
     if (!name || !email || !password) {
-      console.log(" Missing required fields");
+      console.log("❌ Missing required fields");
       return res.status(400).json({ message: "All fields are required" });
     }
 
-    // Check if there's a verified temporary user
-    const tempUser = await User.findOne({ email, isTemporary: true });
+    // Check if email was verified through pre-registration OTP
+    const preRegOTP = await PreRegistrationOTP.findOne({ email });
     
-    if (!tempUser || !tempUser.isEmailVerified) {
+    if (!preRegOTP || !preRegOTP.isVerified) {
       return res.status(400).json({ 
         message: "Email not verified. Please verify your email before registration.",
         requiresVerification: true
       });
     }
 
-    // Check if a real user already exists
-    const existingRealUser = await User.findOne({ email, isTemporary: { $ne: true } });
-    if (existingRealUser) {
-      console.log("User already exists:", email);
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      console.log("❌ User already exists:", email);
       return res.status(400).json({ message: "User already exists" });
     }
 
-    // Delete the temporary user and create the real user
-    await User.deleteOne({ _id: tempUser._id });
-
-    // Create the actual user with verified email
+    // Create the user with verified email
     const user = new User({
       name,
       email,
       password: password, // Pass plain password - will be hashed by pre-save hook
       phone: phone || "", // phone is optional
       role: "user", // default role
-      isEmailVerified: true, // Already verified
+      isEmailVerified: true, // Already verified through OTP
       isTemporary: false
     });
     await user.save();
+
+    // Delete the pre-registration OTP record after successful registration
+    await PreRegistrationOTP.deleteOne({ email });
 
     // Send welcome email
     const html = `
@@ -140,19 +141,8 @@ const login = async (req, res) => {
       return res.status(400).json({ message: "Invalid email or password" });
     }
 
-    // Check if email is verified (only for users created through new registration flow)
-    // Skip check for admin and existing users (who don't have isTemporary flag)
-    if (user.role !== "admin" && user.isTemporary === true && !user.isEmailVerified) {
-      console.log("Email not verified for temporary user:", email);
-      return res.status(403).json({ 
-        message: "Please verify your email before logging in. Check your email for the verification OTP.",
-        requiresVerification: true,
-        email: email
-      });
-    }
-
-    // Auto-verify existing users (those without isTemporary flag or with isTemporary: false)
-    if (user.role !== "admin" && !user.isEmailVerified && user.isTemporary !== true) {
+    // Auto-verify existing users who don't have verified status (for backward compatibility)
+    if (user.role !== "admin" && !user.isEmailVerified) {
       console.log("Auto-verifying existing user:", email);
       user.isEmailVerified = true;
       await user.save();
@@ -614,20 +604,29 @@ const sendPreRegistrationOTP = async (req, res) => {
     // Generate 6-digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-    // Store OTP temporarily in a temporary user record or in-memory cache
-    // For simplicity, we'll create a temporary unverified user with minimal data
-    const tempUser = new User({
-      email: email,
-      name: "Temporary",
-      password: crypto.randomBytes(20).toString('hex'), // Random password, will be replaced
-      isEmailVerified: false,
-      verificationOTP: otp,
-      verificationOTPExpire: Date.now() + 10 * 60 * 1000, // 10 minutes
-      verificationOTPAttempts: 0,
-      isTemporary: true // Flag to identify this as temporary
-    });
-    
-    await tempUser.save();
+    // Check if there's an existing OTP record for this email
+    let otpRecord = await PreRegistrationOTP.findOne({ email });
+
+    if (otpRecord) {
+      // Update existing OTP record
+      otpRecord.otp = otp;
+      otpRecord.otpExpire = Date.now() + 10 * 60 * 1000; // 10 minutes
+      otpRecord.otpAttempts = 0;
+      otpRecord.isVerified = false; // Reset verification status
+      await otpRecord.save();
+      console.log(`♻️ Resending OTP to: ${email}`);
+    } else {
+      // Create new OTP record
+      otpRecord = new PreRegistrationOTP({
+        email: email,
+        otp: otp,
+        otpExpire: Date.now() + 10 * 60 * 1000, // 10 minutes
+        otpAttempts: 0,
+        isVerified: false
+      });
+      await otpRecord.save();
+      console.log(`✅ Created OTP record for: ${email}`);
+    }
 
     // Send OTP via email
     const html = `
@@ -667,43 +666,44 @@ const verifyPreRegistrationOTP = async (req, res) => {
       return res.status(400).json({ message: "Email and OTP are required" });
     }
 
-    const tempUser = await User.findOne({ email, isTemporary: true });
-    if (!tempUser) {
+    const otpRecord = await PreRegistrationOTP.findOne({ email });
+    if (!otpRecord) {
       return res.status(404).json({ message: "No verification request found. Please request OTP again." });
     }
 
     // Check if OTP exists and not expired
-    if (!tempUser.verificationOTP || !tempUser.verificationOTPExpire) {
+    if (!otpRecord.otp || !otpRecord.otpExpire) {
       return res.status(400).json({ message: "No OTP found. Please request a new one." });
     }
 
-    if (Date.now() > tempUser.verificationOTPExpire) {
+    if (Date.now() > otpRecord.otpExpire) {
       return res.status(400).json({ message: "OTP has expired. Please request a new one." });
     }
 
     // Check max attempts (prevent brute force)
-    if (tempUser.verificationOTPAttempts >= 5) {
+    if (otpRecord.otpAttempts >= 5) {
       return res.status(400).json({ 
         message: "Too many incorrect attempts. Please request a new OTP." 
       });
     }
 
     // Verify OTP
-    if (tempUser.verificationOTP !== otp) {
-      tempUser.verificationOTPAttempts += 1;
-      await tempUser.save();
+    if (otpRecord.otp !== otp) {
+      otpRecord.otpAttempts += 1;
+      await otpRecord.save();
       return res.status(400).json({ 
         message: "Invalid OTP",
-        attemptsRemaining: 5 - tempUser.verificationOTPAttempts
+        attemptsRemaining: 5 - otpRecord.otpAttempts
       });
     }
 
-    // OTP is correct - mark email as verified
-    tempUser.isEmailVerified = true;
-    tempUser.verificationOTP = undefined;
-    tempUser.verificationOTPExpire = undefined;
-    tempUser.verificationOTPAttempts = 0;
-    await tempUser.save();
+    // OTP is correct - mark as verified
+    otpRecord.isVerified = true;
+    otpRecord.verifiedAt = new Date();
+    otpRecord.otp = undefined; // Clear OTP after verification
+    otpRecord.otpExpire = undefined;
+    otpRecord.otpAttempts = 0;
+    await otpRecord.save();
 
     console.log(`✅ Pre-registration email verified for ${email}`);
     res.json({ 

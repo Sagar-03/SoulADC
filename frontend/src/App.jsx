@@ -111,7 +111,7 @@ function App() {
         {/* <Route path="/studentdoubts" element={<StudentDoubtPanel />} />
         <Route path="/admindoubts" element={<AdminDoubtPanel />} /> */}
 
-
+        <Route path="*" element={<Navigate to="/" replace />} />
 
 
         {/* Student Dashboard (Protected: must have purchased course) */}

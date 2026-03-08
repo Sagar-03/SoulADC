@@ -1619,7 +1619,11 @@ router.post("/documents/cleanup-orphaned", protect, adminOnly, async (req, res) 
  */
 router.get("/users", protect, adminOnly, async (req, res) => {
   try {
-    const users = await User.find({ role: { $ne: 'admin' } })
+    // Only fetch fully registered users (verified users only)
+    const users = await User.find({ 
+      role: { $ne: 'admin' },
+      isEmailVerified: true // Only include verified users
+    })
       .populate('purchasedCourses', 'title')
       .select('-password -resetToken -resetTokenExpire -activeSession')
       .sort({ createdAt: -1 });
@@ -1636,7 +1640,7 @@ router.get("/users", protect, adminOnly, async (req, res) => {
       deviceFingerprint: user.deviceFingerprint || null,
     }));
 
-    console.log(` Admin fetched ${formattedUsers.length} users`);
+    console.log(` Admin fetched ${formattedUsers.length} fully registered users`);
     res.json(formattedUsers);
   } catch (err) {
     console.error(" Error fetching users:", err.message);

@@ -31,13 +31,13 @@ const MentorCard = () => {
               <li>Regular assessments and progress tracking</li>
               <li>Continuous support throughout your journey</li>
             </ul> */}
-            <button
+            {/* <button
               as={Link}
               to="/courses"   
               variant="dark"
               className="mentor-button">
               Start Your Preparation Today
-            </button>
+            </button> */}
           </div>
         </div>
 
