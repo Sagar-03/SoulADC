@@ -206,16 +206,57 @@
 
     .register-title {
         font-size: 2.0rem;
-        /* Even smaller on mobile */
     }
 
     .video-player-container {
         margin-top: 2rem;
+        transform: none;
     }
 
     .badge-over-video-top-left {
         top: -1.5rem;
         left: 0.5rem;
         transform: none;
+    }
+}
+
+@media (max-width: 576px) {
+    .register-section-container {
+        padding: 1.25rem !important;
+        padding-bottom: 2rem !important;
+    }
+
+    .register-title {
+        font-size: 1.7rem;
+        text-align: center;
+    }
+
+    .register-text {
+        text-align: center;
+        font-size: 0.9rem;
+    }
+
+    .register-text li {
+        text-align: left;
+    }
+
+    .video-player-container {
+        height: 230px;
+        transform: none;
+        margin-top: 0;
+        border-radius: 1rem;
+    }
+
+    .register-button-dark,
+    .register-button-outline {
+        width: 100%;
+        text-align: center;
+        margin-right: 0 !important;
+        margin-bottom: 0.5rem;
+    }
+
+    .badge-over-video-top-left {
+        top: -1rem;
+        left: 0.5rem;
     }
 }

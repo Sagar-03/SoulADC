@@ -108,3 +108,22 @@ body {
         font-size: 1rem;
     }
 }
+
+@media (max-width: 576px) {
+    .mission-section {
+        padding: 1.5rem 0;
+    }
+
+    .main-heading {
+        font-size: 1.7rem;
+    }
+
+    .sub-heading {
+        font-size: 0.92rem;
+        margin-bottom: 24px;
+    }
+
+    .feature-card {
+        padding: 12px 14px;
+    }
+}

@@ -27,23 +27,32 @@ class ScreenProtection {
     });
   }
 
-  // 🔑 Allow only A–Z, 0–9, and Enter key
+  // 🔑 Block screenshot-related key combos only, never block inside input fields
   preventKeyboardScreenCapture() {
-    const allowKeys = new Set();
-
-    // Numbers (0-9)
-    for (let i = 48; i <= 57; i++) allowKeys.add(i);
-    // Alphabets (A-Z)
-    for (let i = 65; i <= 90; i++) allowKeys.add(i);
-    // Enter
-    allowKeys.add(13);
-
     const blockKeys = (e) => {
-      if (!allowKeys.has(e.keyCode)) {
+      // Never block keys when user is typing in an input, textarea, or select
+      const tag = e.target?.tagName?.toLowerCase();
+      if (
+        tag === "input" ||
+        tag === "textarea" ||
+        tag === "select" ||
+        e.target?.isContentEditable
+      ) {
+        return;
+      }
+
+      // Block Print Screen (44)
+      if (e.keyCode === 44) {
         e.preventDefault();
         e.stopPropagation();
-        e.stopImmediatePropagation();
-        this.showWarning(`Key "${e.key}" is disabled`);
+        this.showWarning("Screenshots are disabled for security purposes");
+        return false;
+      }
+
+      // Block Windows + Shift + S (Snipping Tool)
+      if (e.shiftKey && e.metaKey && e.key === "s") {
+        e.preventDefault();
+        this.showWarning("Screenshots are disabled for security purposes");
         return false;
       }
     };

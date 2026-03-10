@@ -70,3 +70,26 @@ body {
     text-fill-color: transparent;
     font-weight: 700;
 }
+
+@media (max-width: 576px) {
+    .feature-section {
+        padding: 1.25rem 0.75rem;
+    }
+
+    .section-title {
+        font-size: 1.7rem;
+    }
+
+    .section-subtitle {
+        font-size: 0.92rem;
+        margin-bottom: 24px;
+    }
+
+    .feature-card {
+        padding: 20px;
+    }
+
+    .program-badge {
+        font-size: 0.85rem;
+    }
+}

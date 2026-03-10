@@ -2,12 +2,13 @@ import React from 'react';
 import { Container, Row, Col, Nav, Button } from 'react-bootstrap';
 import { FaFacebookF, FaTwitter, FaInstagram, FaLinkedinIn, FaEnvelope, FaPhone, FaMapMarkerAlt } from 'react-icons/fa';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import './footer.css';
 import logo from '../../assets/logo.png';
 import { Link } from "react-router-dom";
 
 const Footer = () => {
   return (
-    <footer className="bg-white pt-5 pb-3 mt-auto shadow-sm">
+    <footer className="footer bg-white pt-5 pb-3 mt-auto shadow-sm">
       <Container className="footer-smaller-text">
         <Row className="mb-4">
           {/* Column 1: Logo and Social Media */}

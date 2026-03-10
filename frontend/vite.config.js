@@ -6,12 +6,8 @@ export default defineConfig({
   server: {
     port: 5173,
   },
-  build: {
-    terserOptions: {
-      compress: {
-        drop_console: true,
-        drop_debugger: true
-      }
-    }
-  }
+  // Strip all console.log / console.* and debugger statements from production builds
+  esbuild: {
+    drop: ["console", "debugger"],
+  },
 });

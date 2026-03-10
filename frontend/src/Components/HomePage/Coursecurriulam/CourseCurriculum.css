@@ -67,3 +67,25 @@ body {
 .subject-item svg {
   color: #a1887f;
 }
+
+@media (max-width: 576px) {
+  .curriculum-card {
+    padding: 1rem 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .card-title-section {
+    font-size: 1rem;
+  }
+
+  .week-badge {
+    width: 34px;
+    height: 34px;
+    font-size: 0.85rem;
+    margin-right: 0.75rem;
+  }
+
+  .curriculum-title {
+    font-size: 1.6rem !important;
+  }
+}

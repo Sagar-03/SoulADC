@@ -212,10 +212,10 @@ const Register = memo(() => {
         </div>
       )}
       
-      <Row className="g-5 align-items-center">
+      <Row className="g-4 g-md-5 align-items-center">
         <Col
           md={6}
-          className="d-flex flex-column justify-content-center align-items-center position-relative"
+          className="d-flex flex-column justify-content-center align-items-center position-relative order-2 order-md-1"
         >
           <div className="video-player-container position-relative">
             <video
@@ -249,7 +249,7 @@ const Register = memo(() => {
           </div>
         </Col>
 
-        <Col md={6}>
+        <Col md={6} className="order-1 order-md-2">
           <h1 className="register-title">
             Master the <span className="gradient-text-adc">ADC Part 1</span> with Expert Guidance
           </h1>

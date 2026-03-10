@@ -54,3 +54,13 @@ body {
   color: #000000;
   font-size: 0.9rem;
 }
+
+@media (max-width: 576px) {
+  .price-value {
+    font-size: 1.5rem;
+  }
+
+  .card-custom {
+    margin-bottom: 1rem;
+  }
+}

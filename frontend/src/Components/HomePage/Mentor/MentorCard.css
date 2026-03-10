@@ -115,11 +115,40 @@
 
 .mentor-image {
     width: 100%;
-    /* Removed max-width to allow the image to fill the container */
-    /* max-width: 340px; */
-    height: 100%; /* Changed to 100% to fill the vertical space */
-    border-radius: 24px; /* Ensure this matches the parent's border-radius for a seamless look */
+    height: 100%;
+    border-radius: 24px;
     object-fit: cover;
-    /* Removed the box-shadow as the main card already has one */
-    /* box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1); */
+}
+
+@media (max-width: 576px) {
+    .mentor-wrapper {
+        min-height: auto;
+        padding: 1rem 0.75rem;
+    }
+
+    .mentor-card {
+        padding: 1rem;
+        gap: 1rem;
+    }
+
+    .mentor-title {
+        font-size: 1.5rem;
+    }
+
+    .commitment-title {
+        font-size: 1.2rem;
+    }
+
+    .commitment-description {
+        font-size: 0.9rem;
+    }
+
+    .mentor-right {
+        max-width: 100%;
+    }
+
+    .mentor-image {
+        max-height: 280px;
+        object-position: top;
+    }
 }
