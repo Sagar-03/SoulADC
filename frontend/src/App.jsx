@@ -6,6 +6,7 @@ import Home from "./Pages/Home";
 import About from "./Pages/AboutPage/About";
 import CoursesPage from "./Pages/course";
 import Login from "./Pages/Login";
+import ChromeOnlyRoute from "./Components/common/ChromeOnlyRoute";
 // 🔹 Protected Route Wrapper
 import { isAuthenticated, getUser, getUserRole } from "./utils/auth";
 import ForgotPassword from "./Components/ForgotPassword/ForgotPassword";
@@ -114,118 +115,143 @@ function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
 
 
-        {/* Student Dashboard (Protected: must have purchased course) */}
+        {/* Student Dashboard (Protected: must have purchased course) — Chrome only */}
         <Route
           path="/studentdashboard"
           element={
-            <ProtectedRoute requirePurchased={true}>
-              <Studentdashboard />
-            </ProtectedRoute>
+            <ChromeOnlyRoute>
+              <ProtectedRoute requirePurchased={true}>
+                <Studentdashboard />
+              </ProtectedRoute>
+            </ChromeOnlyRoute>
           }
         />
         <Route
           path="/Dashboard"
           element={
-            <ProtectedRoute requirePurchased={true}>
-              <Dashboard />
-            </ProtectedRoute>
+            <ChromeOnlyRoute>
+              <ProtectedRoute requirePurchased={true}>
+                <Dashboard />
+              </ProtectedRoute>
+            </ChromeOnlyRoute>
           }
         />
         <Route
           path="/progress"
           element={
-            <ProtectedRoute requirePurchased={true}>
-              <ProgressDashboard />
-            </ProtectedRoute>
+            <ChromeOnlyRoute>
+              <ProtectedRoute requirePurchased={true}>
+                <ProgressDashboard />
+              </ProtectedRoute>
+            </ChromeOnlyRoute>
           }
         />
         <Route
           path="/Mycourse"
           element={
-            <ProtectedRoute requirePurchased={true}>
-              <Mycourse />
-            </ProtectedRoute>
+            <ChromeOnlyRoute>
+              <ProtectedRoute requirePurchased={true}>
+                <Mycourse />
+              </ProtectedRoute>
+            </ChromeOnlyRoute>
           }
         />
         <Route
           path="/mycourse/:courseId"
           element={
-            <ProtectedRoute requirePurchased={true}>
-              <Mycourse />
-            </ProtectedRoute>
+            <ChromeOnlyRoute>
+              <ProtectedRoute requirePurchased={true}>
+                <Mycourse />
+              </ProtectedRoute>
+            </ChromeOnlyRoute>
           }
         />
         <Route
           path="/student/course/:courseId"
           element={
-            <ProtectedRoute requirePurchased={true}>
-              <Mycourse />
-            </ProtectedRoute>
+            <ChromeOnlyRoute>
+              <ProtectedRoute requirePurchased={true}>
+                <Mycourse />
+              </ProtectedRoute>
+            </ChromeOnlyRoute>
           }
         />
         <Route
           path="/student/course/:courseId/video/:videoId"
           element={
-            <ProtectedRoute requirePurchased={true}>
-              <EmbeddedVideoPlayer />
-            </ProtectedRoute>
+            <ChromeOnlyRoute>
+              <ProtectedRoute requirePurchased={true}>
+                <EmbeddedVideoPlayer />
+              </ProtectedRoute>
+            </ChromeOnlyRoute>
           }
         />
         <Route
           path="/studentdashboard/doubtpanel"
           element={
-            <ProtectedRoute>
-              <StudentDoubtPanel />
-            </ProtectedRoute>
+            <ChromeOnlyRoute>
+              <ProtectedRoute>
+                <StudentDoubtPanel />
+              </ProtectedRoute>
+            </ChromeOnlyRoute>
           }
         />
         <Route
           path="/profile"
           element={
-            <ProtectedRoute>
-              <StudentProfile />
-            </ProtectedRoute>
+            <ChromeOnlyRoute>
+              <ProtectedRoute>
+                <StudentProfile />
+              </ProtectedRoute>
+            </ChromeOnlyRoute>
           }
         />
         <Route
           path="/documents"
           element={
-            <ProtectedRoute requirePurchased={true}>
-              <DocumentsPage />
-            </ProtectedRoute>
+            <ChromeOnlyRoute>
+              <ProtectedRoute requirePurchased={true}>
+                <DocumentsPage />
+              </ProtectedRoute>
+            </ChromeOnlyRoute>
           }
         />
         <Route
           path="/documents/:courseId"
           element={
-            <ProtectedRoute requirePurchased={true}>
-              <StudentDocuments />
-            </ProtectedRoute>
+            <ChromeOnlyRoute>
+              <ProtectedRoute requirePurchased={true}>
+                <StudentDocuments />
+              </ProtectedRoute>
+            </ChromeOnlyRoute>
           }
         />
         <Route
           path="/documents/:courseId/view/:documentId"
           element={
-            <ProtectedRoute requirePurchased={true}>
-              <DocumentViewer />
-            </ProtectedRoute>
+            <ChromeOnlyRoute>
+              <ProtectedRoute requirePurchased={true}>
+                <DocumentViewer />
+              </ProtectedRoute>
+            </ChromeOnlyRoute>
           }
         />
-        {/* Payment Routes (Protected: must be logged in, no need for purchased yet) */}
+        {/* Payment Routes (Protected: must be logged in) — Chrome only */}
         <Route
           path="/payment"
           element={
-            <ProtectedRoute>
-              <PaymentPage />
-            </ProtectedRoute>
+              <ProtectedRoute>
+                <PaymentPage />
+              </ProtectedRoute>
           }
         />
         <Route
           path="/payment/mock"
           element={
-            <ProtectedRoute>
-              <MockPaymentPage />
-            </ProtectedRoute>
+
+              <ProtectedRoute>
+                <MockPaymentPage />
+              </ProtectedRoute>
           }
         />
         <Route path="/payment-success" element={<PaymentSuccess />} />
@@ -361,29 +387,35 @@ function App() {
           }
         />
 
-        {/* Student Mock Routes */}
+        {/* Student Mock Routes — Chrome only */}
         <Route
           path="/student/mocks"
           element={
-            <ProtectedRoute requirePurchased={true}>
-              <StudentMocks />
-            </ProtectedRoute>
+            <ChromeOnlyRoute>
+              <ProtectedRoute requirePurchased={true}>
+                <StudentMocks />
+              </ProtectedRoute>
+            </ChromeOnlyRoute>
           }
         />
         <Route
           path="/student/mock-attempt/:mockId"
           element={
-            <ProtectedRoute requirePurchased={true}>
-              <MockAttempt />
-            </ProtectedRoute>
+            <ChromeOnlyRoute>
+              <ProtectedRoute requirePurchased={true}>
+                <MockAttempt />
+              </ProtectedRoute>
+            </ChromeOnlyRoute>
           }
         />
         <Route
           path="/student/mock-result/:attemptId"
           element={
-            <ProtectedRoute requirePurchased={true}>
-              <MockResult />
-            </ProtectedRoute>
+            <ChromeOnlyRoute>
+              <ProtectedRoute requirePurchased={true}>
+                <MockResult />
+              </ProtectedRoute>
+            </ChromeOnlyRoute>
           }
         />
       </Routes>
