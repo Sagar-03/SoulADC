@@ -12,8 +12,6 @@ import { isAuthenticated, getUser, getUserRole } from "./utils/auth";
 import ForgotPassword from "./Components/ForgotPassword/ForgotPassword";
 import Tnc from "./Pages/SoulADCTerms";
 import ContactUs from "./Components/ContactUs/ContactUs";
-
-
 // Student Dashboard
 import Studentdashboard from "./Components/student/Studentdashboard";
 import Mycourse from "./Components/student/Mycourse/mycourse";
@@ -25,13 +23,11 @@ import StudentProfile from "./Components/student/Profile/StudentProfile";
 import DocumentsPage from "./Components/student/Documents/DocumentsPage";
 import StudentDocuments from "./Components/student/Documents/StudentDocuments";
 import DocumentViewer from "./Components/VideoPlayer/DocumentViewer";
-
 // Payment Components
 import PaymentPage from "./Components/PaymentDashboard/PaymentPage";
 import MockPaymentPage from "./Components/PaymentDashboard/MockPaymentPage";
 import PaymentSuccess from "./Components/PaymentDashboard/PaymentSuccess";
 import PaymentCancel from "./Components/PaymentDashboard/PaymentCancel";
-
 // Admin Dashboard
 import Admindashboard from "./Components/admin/Admindashboard";
 import A_Dashboard from "./Components/admin/Dashboard";
@@ -44,7 +40,6 @@ import CourseContentManager from "./Components/admin/CourseContentManager";
 import BulkPdfUpload from "./Components/admin/BulkPdfUpload";
 import AdminDoubtDashboard from "./Components/admin/AdminDoubtPanel";
 import AdminDocuments from "./Components/admin/AdminDocument";
-
 // Mock Exam Components
 import ManageMocks from "./Components/admin/ManageMocks";
 import CreateMock from "./Components/admin/CreateMock";

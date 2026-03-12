@@ -2,9 +2,13 @@
 // Cookie Helpers
 // -------------------
 
+// Use Secure flag only on HTTPS — Safari silently drops cookies with Secure on HTTP
+const isSecure = window.location.protocol === "https:";
+const secureFlag = isSecure ? "; Secure" : "";
+
 // Set cookie (session only unless days provided)
 export const setCookie = (name, value, days) => {
-  let cookieStr = `${name}=${encodeURIComponent(value)}; path=/; SameSite=Strict; Secure`;
+  let cookieStr = `${name}=${encodeURIComponent(value)}; path=/; SameSite=Lax${secureFlag}`;
   if (days) {
     const date = new Date();
     date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
@@ -26,5 +30,5 @@ export const getCookie = (name) => {
 };
 
 export const removeCookie = (name) => {
-  document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Strict; Secure`;
+  document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax${secureFlag}`;
 };
