@@ -33,6 +33,10 @@ const CourseContentManager = () => {
   const [showEditPopup, setShowEditPopup] = useState(false);
   const [editContext, setEditContext] = useState({ weekId: null, dayId: null, contentId: null });
 
+  // Delete confirmation popup state
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteContext, setDeleteContext] = useState({ weekId: null, dayId: null, contentId: null });
+
 
   const fetchCourse = async () => {
     try {
@@ -399,10 +403,16 @@ const CourseContentManager = () => {
     }
   };
 
-  const handleDeleteContent = async (weekId, dayId, contentId) => {
-    if (!confirm("Are you sure you want to delete this content?")) return;
+  const handleDeleteContent = (weekId, dayId, contentId) => {
+    setDeleteContext({ weekId, dayId, contentId });
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDeleteContent = async () => {
+    const { weekId, dayId, contentId } = deleteContext;
+    setShowDeleteConfirm(false);
     try {
-      await deleteContent(id, weekId, dayId, contentId); // ✅ now this refers to the API function
+      await deleteContent(id, weekId, dayId, contentId);
       fetchCourse();
     } catch (err) {
       setError("Failed to delete content");
@@ -431,6 +441,7 @@ const CourseContentManager = () => {
     setUpdatingTitle(true);
     try {
       await updateContentTitle(id, weekId, dayId, contentId, editingTitle);
+      setShowEditPopup(false);
       setEditingContentId(null);
       setEditingTitle("");
       fetchCourse();
@@ -1426,6 +1437,34 @@ const CourseContentManager = () => {
                       Save
                     </>
                   )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showDeleteConfirm && (
+        <div
+          className="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center"
+          style={{ backgroundColor: "rgba(0,0,0,0.4)", zIndex: 1060 }}
+        >
+          <div className="card shadow" style={{ width: "300px", borderRadius: "10px" }}>
+            <div className="card-body py-3 px-4 text-center">
+              <i className="bi bi-trash3 text-danger" style={{ fontSize: "1.8rem" }}></i>
+              <p className="mt-2 mb-3" style={{ fontSize: "0.9rem" }}>Are you sure you want to delete this content?</p>
+              <div className="d-flex justify-content-center gap-2">
+                <button
+                  className="btn btn-sm btn-outline-secondary"
+                  onClick={() => setShowDeleteConfirm(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="btn btn-sm btn-danger"
+                  onClick={confirmDeleteContent}
+                >
+                  Delete
                 </button>
               </div>
             </div>
