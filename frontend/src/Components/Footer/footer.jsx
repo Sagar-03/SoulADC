@@ -14,28 +14,38 @@ const Footer = () => {
           {/* Column 1: Logo and Social Media */}
           <Col md={3} className="mb-4">
             <Link to="/">
-            <img
-              src={logo}
-              alt="Soul ADC Logo"
-              className="img-fluid mb-3"
-              style={{ maxWidth: '320px', height: 'auto', marginRight: '20px' }}
-            />
+              <img
+                src={logo}
+                alt="Soul ADC Logo"
+                className="img-fluid mb-3"
+                style={{ maxWidth: '320px', height: 'auto', marginRight: '20px' }}
+              />
             </Link>
 
             <p className="text-secondary fs-7">
               Empowering future Australian dentists with expert ADC Part 1 preparation. Your success is our mission.
             </p>
             <div className="d-flex gap-2 mt-3">
-              {[FaFacebookF, FaInstagram].map((Icon, i) => (
-                <Button
-                  key={i}
-                  variant="outline-secondary"
-                  className="rounded-circle d-flex align-items-center justify-content-center"
-                  style={{ width: '36px', height: '36px', fontSize: '12px' }}
-                >
-                  <Icon />
-                </Button>
-              ))}
+              {[
+                { icon: FaFacebookF, link: "https://www.facebook.com/souladc" },
+                { icon: FaInstagram, link: "https://www.instagram.com/souladc/" }
+              ].map((item, i) => {
+                const Icon = item.icon;
+                return (
+                  <Button
+                    key={i}
+                    as="a"
+                    href={item.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    variant="outline-secondary"
+                    className="rounded-circle d-flex align-items-center justify-content-center"
+                    style={{ width: "36px", height: "36px", fontSize: "12px" }}
+                  >
+                    <Icon />
+                  </Button>
+                );
+              })}
             </div>
           </Col>
 
@@ -86,7 +96,7 @@ const Footer = () => {
                 <FaMapMarkerAlt className="me-2" /> Canberra, Australia
               </Nav.Link>
             </Nav>
-            <Button style={{ background: "linear-gradient(145deg, #A98C6A, #7B563D)" , outline: "none", border: "none" }}
+            <Button style={{ background: "linear-gradient(145deg, #A98C6A, #7B563D)", outline: "none", border: "none" }}
               as={Link}
               to="/courses"
               variant='dark'

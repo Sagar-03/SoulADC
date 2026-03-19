@@ -132,6 +132,227 @@
   margin: 20px 0 10px;
 }
 
+/* No Mocks - Locked State */
+.no-mocks-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.unlock-banner {
+  background: linear-gradient(135deg, #A98C6A 0%, #7B563D 100%);
+  border-radius: 12px;
+  padding: 24px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  box-shadow: 0 4px 16px rgba(169, 140, 106, 0.3);
+  flex-wrap: wrap;
+}
+
+.unlock-banner-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  color: white;
+  flex: 1;
+  min-width: 220px;
+}
+
+.unlock-icon {
+  font-size: 40px;
+  flex-shrink: 0;
+}
+
+.unlock-banner-left h3 {
+  margin: 0 0 4px;
+  font-size: 20px;
+  font-weight: 700;
+  color: white;
+}
+
+.unlock-banner-left p {
+  margin: 0;
+  font-size: 14px;
+  opacity: 0.92;
+  line-height: 1.4;
+  color: white;
+}
+
+.purchase-course-btn {
+  padding: 12px 28px;
+  background: white;
+  color: #7B563D;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.purchase-course-btn:hover {
+  background: #f5f5f5;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Locked Mock Cards Grid */
+.locked-mocks-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 28px;
+}
+
+.locked-mock-card {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e5e5e5;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.locked-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(3px);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border-radius: 16px;
+}
+
+.lock-icon-circle {
+  width: 60px;
+  height: 60px;
+  background: #fff8f3;
+  border: 2px solid #A98C6A;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.locked-label {
+  font-size: 15px;
+  font-weight: 700;
+  color: #7B563D;
+  margin: 0;
+}
+
+.locked-enroll-btn {
+  padding: 10px 22px;
+  background: #A98C6A;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.locked-enroll-btn:hover {
+  background: #7B563D;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(169, 140, 106, 0.35);
+}
+
+.locked-card-content {
+  padding: 28px 28px 16px;
+  flex: 1;
+  filter: blur(1.5px);
+  user-select: none;
+  pointer-events: none;
+}
+
+.locked-mock-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 10px;
+}
+
+.locked-mock-desc {
+  color: #6b6b6b;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0 0 20px;
+}
+
+.locked-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.locked-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.locked-info-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #2a2a2a;
+}
+
+.locked-info-value {
+  font-size: 13px;
+  color: #5a5a5a;
+}
+
+.locked-card-footer {
+  display: flex;
+  gap: 12px;
+  padding: 18px 28px;
+  border-top: 1px solid #ececec;
+  background: #fafafa;
+  filter: blur(1.5px);
+  user-select: none;
+  pointer-events: none;
+}
+
+.locked-contact-btn {
+  flex: 1;
+  padding: 12px;
+  background: white;
+  color: #1a1a1a;
+  border: 2px solid #A98C6A;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.locked-enroll-footer-btn {
+  flex: 1;
+  padding: 12px;
+  background: #A98C6A;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.coming-soon-note {
+  text-align: center;
+  color: #888;
+  font-size: 13px;
+  margin: 0;
+}
+
 /* Mocks Grid */
 .mocks-grid {
   display: grid;
@@ -316,11 +537,26 @@
     width: 100%;
   }
 
+  .locked-mocks-grid,
   .mocks-grid {
     grid-template-columns: 1fr;
     gap: 24px;
   }
-  
+
+  .unlock-banner {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .unlock-banner-left {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .purchase-course-btn {
+    width: 100%;
+  }
+
   .mock-card-content {
     padding: 24px;
     gap: 24px;

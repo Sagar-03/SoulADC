@@ -54,7 +54,7 @@ const MocksPage = () => {
 
         {/* Info Banner */}
         <div className="container info-banner-container">
-          <div className="info-banner">
+          {/* <div className="info-banner">
             <div className="info-banner-icon">💡</div>
             <div className="info-banner-content">
               <h3>Get ALL Mocks FREE with Any Course!</h3>
@@ -63,7 +63,7 @@ const MocksPage = () => {
             <button className="view-courses-btn" onClick={() => navigate('/courses')}>
               View Courses
             </button>
-          </div>
+          </div> */}
         </div>
 
         {/* Mocks Grid */}
@@ -74,10 +74,75 @@ const MocksPage = () => {
               <p>Loading mock exams...</p>
             </div>
           ) : mocks.length === 0 ? (
-            <div className="no-mocks-container">
-              <div className="no-mocks-icon">📝</div>
-              <h3>No Mock Exams Available</h3>
-              <p>Check back soon for new mock exams!</p>
+            <div className="no-mocks-wrapper">
+              {/* CTA Banner */}
+              <div className="unlock-banner">
+                <div className="unlock-banner-left">
+                  <div className="unlock-icon">🎓</div>
+                  <div>
+                    <h3>Unlock All Mock Exams</h3>
+                    <p>Purchase any course to get instant free access to all mock exams, or buy individually.</p>
+                  </div>
+                </div>
+                <button className="purchase-course-btn" onClick={() => navigate('/courses')}>
+                  Purchase a Course
+                </button>
+              </div>
+
+              {/* Locked Preview Cards */}
+              <div className="locked-mocks-grid">
+                {[
+                  { title: 'Full Mock Exam – Set 1', questions: 65, duration: '3.0 hours', price: 'AUD 49' },
+                  { title: 'Full Mock Exam – Set 2', questions: 65, duration: '3.0 hours', price: 'AUD 49' },
+                  { title: 'Full Mock Exam – Set 3', questions: 65, duration: '3.0 hours', price: 'AUD 49' },
+                ].map((item, i) => (
+                  <div key={i} className="locked-mock-card">
+                    <div className="locked-overlay">
+                      <div className="lock-icon-circle">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                          <rect x="3" y="11" width="18" height="11" rx="2" fill="#A98C6A"/>
+                          <path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="#A98C6A" strokeWidth="2" strokeLinecap="round"/>
+                          <circle cx="12" cy="16" r="1.5" fill="white"/>
+                        </svg>
+                      </div>
+                      <p className="locked-label">Locked</p>
+                      <button className="locked-enroll-btn" onClick={() => navigate('/courses')}>
+                        Purchase to Unlock
+                      </button>
+                    </div>
+                    <div className="locked-card-content">
+                      <h3 className="locked-mock-title">{item.title}</h3>
+                      <p className="locked-mock-desc">Comprehensive mock exam to test your knowledge and exam readiness.</p>
+                      <div className="locked-info-grid">
+                        <div className="locked-info-item">
+                          <span className="locked-info-label">Questions</span>
+                          <span className="locked-info-value">{item.questions}</span>
+                        </div>
+                        <div className="locked-info-item">
+                          <span className="locked-info-label">Duration</span>
+                          <span className="locked-info-value">{item.duration}</span>
+                        </div>
+                        <div className="locked-info-item">
+                          <span className="locked-info-label">Fee*</span>
+                          <span className="locked-info-value">{item.price}</span>
+                        </div>
+                        <div className="locked-info-item">
+                          <span className="locked-info-label">Location</span>
+                          <span className="locked-info-value">Online</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="locked-card-footer">
+                      <button className="locked-contact-btn">Contact Us</button>
+                      <button className="locked-enroll-footer-btn" onClick={() => navigate('/courses')}>
+                        🔒 Enroll
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <p className="coming-soon-note">* More mock exams coming soon. Purchase a course to access all available mocks for free.</p>
             </div>
           ) : (
             <div className="mocks-grid">

@@ -79,7 +79,7 @@ export default function CoursesPage() {
                     View Courses
                   </a>
                   <a
-                    href="https://wa.me/"
+                    href="https://wa.me/61411671599"
                     className="btn btn-gradient-outline"
                     target="_blank"
                     rel="noopener noreferrer"

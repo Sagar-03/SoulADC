@@ -3,9 +3,39 @@ const { protect } = require("../middleware/authMiddleware");
 const User = require("../models/userModel");
 const Course = require("../models/Course");
 const Mock = require("../models/Mock");
+const DiscountCode = require("../models/DiscountCode");
 const router = express.Router();
 
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+
+// Helper: resolve discount percent from DB (returns 0 if code invalid/inactive)
+async function resolveDiscount(couponCode) {
+  if (!couponCode) return 0;
+  const dc = await DiscountCode.findOne({ code: couponCode.trim().toUpperCase() });
+  if (!dc || !dc.isActive) return 0;
+  // Increment usage counter (fire-and-forget)
+  DiscountCode.findByIdAndUpdate(dc._id, { $inc: { usageCount: 1 } }).catch(() => {});
+  return dc.discountPercent;
+}
+
+/**
+ * POST /api/payment/validate-discount
+ * Validate a discount code and return the discount percentage.
+ * Used by the frontend payment page before checkout.
+ */
+router.post("/validate-discount", protect, async (req, res) => {
+  try {
+    const { code } = req.body;
+    if (!code) return res.status(400).json({ error: "No code provided" });
+    const dc = await DiscountCode.findOne({ code: code.trim().toUpperCase() });
+    if (!dc || !dc.isActive) {
+      return res.status(404).json({ valid: false, error: "Invalid or inactive discount code" });
+    }
+    res.json({ valid: true, discountPercent: dc.discountPercent, code: dc.code });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 /**
  * POST /api/payment/create-checkout-session
@@ -23,14 +53,12 @@ router.post("/create-checkout-session", protect, async (req, res) => {
       return res.status(404).json({ error: "Course not found" });
     }
 
-    // Calculate price (apply coupon if valid)
+    // Calculate price (apply coupon if valid via DB)
     let price = course.price;
     if (coupon) {
-      const code = coupon.toLowerCase();
-      if (code === "soul10") {
-        price = price * 0.9; // 10% discount
-      } else if (code === "souladc_admin_discount365") {
-        price = 0; // 100% discount
+      const discountPercent = await resolveDiscount(coupon);
+      if (discountPercent > 0) {
+        price = price * (1 - discountPercent / 100);
       }
     }
 
@@ -89,18 +117,12 @@ router.post("/create-mock-checkout-session", protect, async (req, res) => {
       return res.status(400).json({ error: "This mock is free" });
     }
 
-    // Calculate price (apply coupon if valid)
+    // Calculate price (apply coupon if valid via DB)
     let price = mock.price;
     if (coupon) {
-      const code = coupon.toLowerCase();
-      if (code === "soul10") {
-        price = price * 0.9; // 10% discount
-      } else if (code === "free100") {
-        price = 0; // 100% discount
-      } else if (code === "dhruv_350") {
-        price = price * (1 - 0.6983); // 69.83% discount
-      } else if (code === "test_10") {
-        price = price * (1 - 0.9914); // 99.14% discount
+      const discountPercent = await resolveDiscount(coupon);
+      if (discountPercent > 0) {
+        price = price * (1 - discountPercent / 100);
       }
     }
 

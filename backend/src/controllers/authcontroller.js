@@ -4,6 +4,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const sendEmail = require("../utils/sendEmail");
+const { generateDiscountCouponEmail } = require("../utils/emailTemplates");
 
 // REGISTER controller
 const register = async (req, res) => {
@@ -700,10 +701,10 @@ const verifyPreRegistrationOTP = async (req, res) => {
     // OTP is correct - mark as verified
     otpRecord.isVerified = true;
     otpRecord.verifiedAt = new Date();
-    otpRecord.otp = undefined; // Clear OTP after verification
-    otpRecord.otpExpire = undefined;
     otpRecord.otpAttempts = 0;
-    await otpRecord.save();
+    await otpRecord.save({ validateBeforeSave: false });
+    // Clear OTP fields after saving to prevent reuse
+    await otpRecord.updateOne({ $unset: { otp: "", otpExpire: "" } });
 
     console.log(`✅ Pre-registration email verified for ${email}`);
     res.json({ 
@@ -835,18 +836,52 @@ const verifyEmailOTP = async (req, res) => {
 };
 
 
-module.exports = { 
-  register, 
-  login, 
-  forgotPassword, 
-  resetPassword, 
-  updateProfile, 
-  sendResetOTP, 
-  verifyResetOTP, 
+const submitDiscountLead = async (req, res) => {
+  const rawEmail = req.body?.email;
+  const email = typeof rawEmail === "string" ? rawEmail.trim().toLowerCase() : "";
+
+  if (!email) {
+    return res.status(400).json({ message: "Email is required" });
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return res.status(400).json({ message: "Please provide a valid email address" });
+  }
+
+  if (!process.env.SES_FROM_EMAIL) {
+    console.error("Discount lead email failed: SES_FROM_EMAIL is missing");
+    return res.status(500).json({ success: false, message: "Email service is not configured" });
+  }
+
+  const couponCode = process.env.DISCOUNT_COUPON_CODE || "SOUL-T8FOQ57I";
+
+  try {
+    await sendEmail(
+      email,
+      "Your SoulADC Discount Coupon Code",
+      generateDiscountCouponEmail(email, couponCode)
+    );
+    return res.json({ success: true });
+  } catch (err) {
+    console.error("Discount lead email failed:", err?.message || err);
+    return res.status(500).json({ success: false, message: "Failed to submit discount request" });
+  }
+};
+
+module.exports = {
+  register,
+  login,
+  forgotPassword,
+  resetPassword,
+  updateProfile,
+  sendResetOTP,
+  verifyResetOTP,
   resetPasswordWithToken,
   sendVerificationOTP,
   verifyEmailOTP,
   sendPreRegistrationOTP,
-  verifyPreRegistrationOTP
+  verifyPreRegistrationOTP,
+  submitDiscountLead
 };
 

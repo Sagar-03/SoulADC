@@ -8,21 +8,31 @@ const Preloader = memo(({ onFinish }) => {
 
   useEffect(() => {
     const video = videoRef.current;
-    if (!video) return;
 
-    // Auto-play the video
-    video.muted = false; // Play with sound
+    const finish = () => {
+      setFadeOut(true);
+      setTimeout(() => {
+        setIsVisible(false);
+        if (onFinish) onFinish();
+      }, 0);
+    };
+
+    // Fallback: always show home after 6 seconds regardless of video
+    const fallbackTimer = setTimeout(finish, 6000);
+
+    if (!video) return () => clearTimeout(fallbackTimer);
+
+    // Auto-play the video (try muted first for autoplay policy)
+    video.muted = true;
     video.volume = 1.0;
-    
+
     const startVideo = async () => {
       try {
         await video.play();
-        console.log("Starting video playing");
       } catch (err) {
-        console.log("Video autoplay error:", err);
-        // If autoplay fails, try muted
-        video.muted = true;
-        video.play().catch(e => console.log("Muted autoplay also failed:", e));
+        // If autoplay fails entirely, finish immediately
+        clearTimeout(fallbackTimer);
+        finish();
       }
     };
 
@@ -32,19 +42,25 @@ const Preloader = memo(({ onFinish }) => {
       video.addEventListener('canplay', startVideo, { once: true });
     }
 
-    // When video ends, start fade out then hide preloader
+    // When video ends, finish preloader
     const handleVideoEnd = () => {
-      setFadeOut(true);
-      setTimeout(() => {
-        setIsVisible(false);
-        if (onFinish) onFinish();
-      }, 0); // Wait for fade out animation to complete
+      clearTimeout(fallbackTimer);
+      finish();
+    };
+
+    // If video fails to load, finish immediately
+    const handleError = () => {
+      clearTimeout(fallbackTimer);
+      finish();
     };
 
     video.addEventListener('ended', handleVideoEnd);
+    video.addEventListener('error', handleError);
 
     return () => {
+      clearTimeout(fallbackTimer);
       video.removeEventListener('ended', handleVideoEnd);
+      video.removeEventListener('error', handleError);
     };
   }, [onFinish]);
 
@@ -58,7 +74,7 @@ const Preloader = memo(({ onFinish }) => {
         playsInline
         preload="auto"
       >
-        <source src="/starting_video.mp4" type="video/mp4" />
+      <source src="/starting_video.MP4" type="video/MP4" />
         Your browser does not support the video tag.
       </video>
     </div>

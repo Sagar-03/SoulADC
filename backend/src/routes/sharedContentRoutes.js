@@ -2,6 +2,9 @@ const express = require("express");
 const { protect, adminOnly } = require("../middleware/authMiddleware");
 const SharedContent = require("../models/SharedContent");
 const Course = require("../models/Course");
+const s3 = require("../config/s3");
+const { DeleteObjectCommand } = require("@aws-sdk/client-s3");
+const { deleteAsset } = require("../services/gumlet.service");
 const router = express.Router();
 
 /**
@@ -108,7 +111,16 @@ router.post("/:id/weeks", protect, adminOnly, async (req, res) => {
  */
 router.post("/:contentId/weeks/:weekId/days/:dayId/contents", protect, adminOnly, async (req, res) => {
   try {
-    const { type, title, s3Key } = req.body;
+    const { type, title, s3Key, asset_id } = req.body;
+
+    if (type === "video" && !asset_id) {
+      return res.status(400).json({ error: "asset_id is required for video content" });
+    }
+
+    if (type !== "video" && !s3Key) {
+      return res.status(400).json({ error: "s3Key is required for non-video content" });
+    }
+
     const sharedContent = await SharedContent.findById(req.params.contentId);
     
     if (!sharedContent) {
@@ -121,7 +133,11 @@ router.post("/:contentId/weeks/:weekId/days/:dayId/contents", protect, adminOnly
     const day = week.days.id(req.params.dayId);
     if (!day) return res.status(404).json({ error: "Day not found" });
 
-    day.contents.push({ type, title, s3Key });
+    if (type === "video") {
+      day.contents.push({ type, title, asset_id });
+    } else {
+      day.contents.push({ type, title, s3Key });
+    }
     await sharedContent.save();
     res.json(sharedContent);
   } catch (err) {
@@ -151,17 +167,21 @@ router.delete("/:contentId/weeks/:weekId/days/:dayId/contents/:contentItemId", p
     const content = day.contents.id(contentItemId);
     if (!content) return res.status(404).json({ error: "Content not found" });
 
-    // Delete from S3 if available
-    try {
-      const s3 = require("../config/s3");
-      const { DeleteObjectCommand } = require("@aws-sdk/client-s3");
-      const deleteParams = {
-        Bucket: process.env.AWS_S3_BUCKET,
-        Key: content.s3Key
-      };
-      await s3.send(new DeleteObjectCommand(deleteParams));
-    } catch (s3Error) {
-      console.warn("Failed to delete from S3:", s3Error.message);
+    if (content.type === "video" && content.asset_id) {
+      try {
+        await deleteAsset(content.asset_id);
+      } catch (gumletError) {
+        console.warn("Failed to delete from Gumlet:", gumletError.message);
+      }
+    } else if (content.s3Key) {
+      try {
+        await s3.send(new DeleteObjectCommand({
+          Bucket: process.env.AWS_S3_BUCKET,
+          Key: content.s3Key,
+        }));
+      } catch (s3Error) {
+        console.warn("Failed to delete from S3:", s3Error.message);
+      }
     }
 
     content.deleteOne();

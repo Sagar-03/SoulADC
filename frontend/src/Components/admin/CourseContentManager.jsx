@@ -2,7 +2,9 @@ import React, { useState, useEffect } from "react";
 import AdminLayout from "./AdminLayout";
 import { useParams } from "react-router-dom";
 import "./admin.css";
-import { getStreamUrl, addWeek, addDay, getCourses, getPresignUrl, deleteContent, deleteWeekApi, deleteDayApi, saveContent, updateContentTitle, initiateMultipartUpload, getPresignedPartUrl, completeMultipartUpload, abortMultipartUpload } from "../../Api/api";
+import { getStreamUrl, addWeek, addDay, getCourses, getPresignUrl, deleteContent, deleteWeekApi, deleteDayApi, saveContent, updateContentTitle, initiateMultipartUpload, getPresignedPartUrl, completeMultipartUpload, abortMultipartUpload, createVideoUploadSession } from "../../Api/api";
+
+const GUMLET_PLAYER_DOMAIN = import.meta.env.VITE_GUMLET_PLAYER_DOMAIN || "play.gumlet.io";
 
 const CourseContentManager = () => {
   const { id } = useParams();
@@ -136,12 +138,48 @@ const CourseContentManager = () => {
 
       // console.log(`Uploading to Week ${activeWeek.weekNumber}, Day ${activeDay.dayNumber}`);
 
-      const folder = activeType === "video" ? "videos" : "documents";
-      const MULTIPART_THRESHOLD = 100 * 1024 * 1024; // 100MB threshold for multipart upload
       let key;
+      let assetId;
 
-      // Use multipart upload for files larger than 100MB
-      if (file.size > MULTIPART_THRESHOLD) {
+      if (activeType === "video") {
+        const uploadSessionRes = await createVideoUploadSession();
+        const { upload_url, asset_id } = uploadSessionRes.data;
+
+        if (!upload_url || !asset_id) {
+          throw new Error("Failed to create video upload session");
+        }
+
+        const xhr = new XMLHttpRequest();
+        await new Promise((resolve, reject) => {
+          xhr.upload.addEventListener("progress", (e) => {
+            if (e.lengthComputable) {
+              const progress = Math.round((e.loaded / e.total) * 100);
+              setUploadProgress(progress);
+            }
+          });
+
+          xhr.addEventListener("load", () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              resolve();
+            } else {
+              reject(new Error(`Upload failed with status: ${xhr.status}`));
+            }
+          });
+
+          xhr.addEventListener("error", () => reject(new Error("Upload failed")));
+
+          xhr.open("PUT", upload_url);
+          xhr.setRequestHeader("Content-Type", file.type);
+          xhr.send(file);
+        });
+
+        assetId = asset_id;
+      } else {
+        const folder = "documents";
+        const MULTIPART_THRESHOLD = 100 * 1024 * 1024; // 100MB threshold for multipart upload
+
+        // Use multipart upload for files larger than 100MB
+        if (file.size > MULTIPART_THRESHOLD) {
         // console.log(`File size: ${(file.size / 1024 / 1024).toFixed(2)}MB - Using multipart upload`);
         
         // 1. Initiate multipart upload
@@ -270,57 +308,69 @@ const CourseContentManager = () => {
           throw err;
         }
 
-      } else {
-        // Use regular single-part upload for smaller files
-        // console.log(`File size: ${(file.size / 1024 / 1024).toFixed(2)}MB - Using single-part upload`);
-        
-        const presignRes = await getPresignUrl(
-          file.name,
-          file.type,
-          folder,
-          activeWeek.weekNumber,
-          activeDay.dayNumber
-        );
+        } else {
+          // Use regular single-part upload for smaller files
+          // console.log(`File size: ${(file.size / 1024 / 1024).toFixed(2)}MB - Using single-part upload`);
+          
+          const presignRes = await getPresignUrl(
+            file.name,
+            file.type,
+            folder,
+            activeWeek.weekNumber,
+            activeDay.dayNumber
+          );
 
-        const uploadUrl = presignRes.data.uploadUrl;
-        key = presignRes.data.key;
-        // console.log("Got presigned URL and key:", { uploadUrl, key });
+          const uploadUrl = presignRes.data.uploadUrl;
+          key = presignRes.data.key;
+          // console.log("Got presigned URL and key:", { uploadUrl, key });
 
-        // Upload file to S3 with progress tracking
-        const xhr = new XMLHttpRequest();
+          // Upload file to S3 with progress tracking
+          const xhr = new XMLHttpRequest();
 
-        await new Promise((resolve, reject) => {
-          xhr.upload.addEventListener('progress', (e) => {
-            if (e.lengthComputable) {
-              const progress = Math.round((e.loaded / e.total) * 100);
-              setUploadProgress(progress);
-            }
+          await new Promise((resolve, reject) => {
+            xhr.upload.addEventListener('progress', (e) => {
+              if (e.lengthComputable) {
+                const progress = Math.round((e.loaded / e.total) * 100);
+                setUploadProgress(progress);
+              }
+            });
+
+            xhr.addEventListener('load', () => {
+              if (xhr.status === 200) {
+                resolve();
+              } else {
+                reject(new Error(`Upload failed with status: ${xhr.status}`));
+              }
+            });
+
+            xhr.addEventListener('error', () => {
+              reject(new Error('Upload failed'));
+            });
+
+            xhr.open('PUT', uploadUrl);
+            xhr.setRequestHeader('Content-Type', file.type);
+            xhr.send(file);
           });
-
-          xhr.addEventListener('load', () => {
-            if (xhr.status === 200) {
-              resolve();
-            } else {
-              reject(new Error(`Upload failed with status: ${xhr.status}`));
-            }
-          });
-
-          xhr.addEventListener('error', () => {
-            reject(new Error('Upload failed'));
-          });
-
-          xhr.open('PUT', uploadUrl);
-          xhr.setRequestHeader('Content-Type', file.type);
-          xhr.send(file);
-        });
+        }
       }
 
       // 4. Save metadata in DB
       try {
-        const saveRes = await saveContent(id, activeWeekId, activeDayId, {
+        const payload = {
           type: activeType,
-          title: file.name.split(".")[0], // remove extension
-          s3Key: key,
+          title: activeType === "video"
+            ? `Week ${activeWeek.weekNumber} - Day ${activeDay.dayNumber} - ${file.name.split(".")[0]}`
+            : file.name.split(".")[0],
+        };
+
+        if (activeType === "video") {
+          payload.asset_id = assetId;
+        } else {
+          payload.s3Key = key;
+        }
+
+        const saveRes = await saveContent(id, activeWeekId, activeDayId, {
+          ...payload,
         });
 
         // console.log("Content saved:", saveRes.data);
@@ -497,12 +547,48 @@ const CourseContentManager = () => {
 
       console.log(`Uploading to Week ${activeWeek.weekNumber}, Day ${activeDay.dayNumber}`);
 
-      const folder = activeType === "video" ? "videos" : "documents";
-      const MULTIPART_THRESHOLD = 100 * 1024 * 1024; // 100MB threshold for multipart upload
       let key;
+      let assetId;
 
-      // Use multipart upload for files larger than 100MB
-      if (file.size > MULTIPART_THRESHOLD) {
+      if (activeType === "video") {
+        const uploadSessionRes = await createVideoUploadSession();
+        const { upload_url, asset_id } = uploadSessionRes.data;
+
+        if (!upload_url || !asset_id) {
+          throw new Error("Failed to create video upload session");
+        }
+
+        const xhr = new XMLHttpRequest();
+        await new Promise((resolve, reject) => {
+          xhr.upload.addEventListener("progress", (e) => {
+            if (e.lengthComputable) {
+              const progress = Math.round((e.loaded / e.total) * 100);
+              setUploadProgress(progress);
+            }
+          });
+
+          xhr.addEventListener("load", () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              resolve();
+            } else {
+              reject(new Error(`Upload failed with status: ${xhr.status}`));
+            }
+          });
+
+          xhr.addEventListener("error", () => reject(new Error("Upload failed")));
+
+          xhr.open("PUT", upload_url);
+          xhr.setRequestHeader("Content-Type", file.type);
+          xhr.send(file);
+        });
+
+        assetId = asset_id;
+      } else {
+        const folder = "documents";
+        const MULTIPART_THRESHOLD = 100 * 1024 * 1024; // 100MB threshold for multipart upload
+
+        // Use multipart upload for files larger than 100MB
+        if (file.size > MULTIPART_THRESHOLD) {
         // console.log(`File size: ${(file.size / 1024 / 1024).toFixed(2)}MB - Using multipart upload`);
         
         // 1. Initiate multipart upload
@@ -631,49 +717,50 @@ const CourseContentManager = () => {
           throw err;
         }
 
-      } else {
-        // Use regular single-part upload for smaller files
-        // console.log(`File size: ${(file.size / 1024 / 1024).toFixed(2)}MB - Using single-part upload`);
-        
-        const presignRes = await getPresignUrl(
-          file.name,
-          file.type,
-          folder,
-          activeWeek.weekNumber,
-          activeDay.dayNumber
-        );
+        } else {
+          // Use regular single-part upload for smaller files
+          // console.log(`File size: ${(file.size / 1024 / 1024).toFixed(2)}MB - Using single-part upload`);
+          
+          const presignRes = await getPresignUrl(
+            file.name,
+            file.type,
+            folder,
+            activeWeek.weekNumber,
+            activeDay.dayNumber
+          );
 
-        const uploadUrl = presignRes.data.uploadUrl;
-        key = presignRes.data.key;
-        // console.log("Got presigned URL and key:", { uploadUrl, key });
+          const uploadUrl = presignRes.data.uploadUrl;
+          key = presignRes.data.key;
+          // console.log("Got presigned URL and key:", { uploadUrl, key });
 
-        // Upload file to S3 with progress tracking
-        const xhr = new XMLHttpRequest();
+          // Upload file to S3 with progress tracking
+          const xhr = new XMLHttpRequest();
 
-        await new Promise((resolve, reject) => {
-          xhr.upload.addEventListener('progress', (e) => {
-            if (e.lengthComputable) {
-              const progress = Math.round((e.loaded / e.total) * 100);
-              setUploadProgress(progress);
-            }
+          await new Promise((resolve, reject) => {
+            xhr.upload.addEventListener('progress', (e) => {
+              if (e.lengthComputable) {
+                const progress = Math.round((e.loaded / e.total) * 100);
+                setUploadProgress(progress);
+              }
+            });
+
+            xhr.addEventListener('load', () => {
+              if (xhr.status === 200) {
+                resolve();
+              } else {
+                reject(new Error(`Upload failed with status: ${xhr.status}`));
+              }
+            });
+
+            xhr.addEventListener('error', () => {
+              reject(new Error('Upload failed'));
+            });
+
+            xhr.open('PUT', uploadUrl);
+            xhr.setRequestHeader('Content-Type', file.type);
+            xhr.send(file);
           });
-
-          xhr.addEventListener('load', () => {
-            if (xhr.status === 200) {
-              resolve();
-            } else {
-              reject(new Error(`Upload failed with status: ${xhr.status}`));
-            }
-          });
-
-          xhr.addEventListener('error', () => {
-            reject(new Error('Upload failed'));
-          });
-
-          xhr.open('PUT', uploadUrl);
-          xhr.setRequestHeader('Content-Type', file.type);
-          xhr.send(file);
-        });
+        }
       }
 
       // 3. Add to uploaded files queue instead of saving immediately
@@ -686,6 +773,7 @@ const CourseContentManager = () => {
         dayNumber: activeDay.dayNumber,
         type: activeType,
         s3Key: key,
+        asset_id: assetId,
         uploaded: true,
         saved: false
       };
@@ -729,7 +817,9 @@ const CourseContentManager = () => {
           await saveContent(id, fileData.weekId, fileData.dayId, {
             type: fileData.type,
             title: fileData.file.name.split(".")[0], // remove extension
-            s3Key: fileData.s3Key,
+            ...(fileData.type === "video"
+              ? { asset_id: fileData.asset_id }
+              : { s3Key: fileData.s3Key }),
           });
 
           // Mark file as saved
@@ -1121,13 +1211,13 @@ const CourseContentManager = () => {
                                         )}
 
                                         {/* Content Preview */}
-                                        {content.type === "video" && content.s3Key && (
-                                          <video
-                                            src={getStreamUrl(content.s3Key)}
-                                            controls
+                                        {content.type === "video" && content.asset_id && (
+                                          <iframe
+                                            src={`https://${GUMLET_PLAYER_DOMAIN}/embed/${content.asset_id}`}
                                             className="w-100"
-                                            style={{ maxHeight: "120px", fontSize: "0.8rem" }}
-                                            preload="metadata"
+                                            style={{ height: "120px", border: 0 }}
+                                            title={content.title || "Video preview"}
+                                            allowFullScreen
                                           />
                                         )}
 

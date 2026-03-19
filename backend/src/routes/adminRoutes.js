@@ -6,6 +6,43 @@ const router = express.Router();
 const User = require("../models/userModel");
 const sendEmail = require("../utils/sendEmail");
 const { generateInvoiceEmail } = require("../utils/emailTemplates");
+const s3 = require("../config/s3");
+const { DeleteObjectCommand } = require("@aws-sdk/client-s3");
+const { deleteAsset } = require("../services/gumlet.service");
+
+function buildContentPayload(type, title, s3Key, asset_id) {
+  if (type === "video") {
+    return { type, title, asset_id };
+  }
+
+  return { type, title, s3Key };
+}
+
+async function deleteStoredContent(content) {
+  if (!content) {
+    return;
+  }
+
+  if (content.type === "video" && content.asset_id) {
+    try {
+      await deleteAsset(content.asset_id);
+    } catch (gumletError) {
+      console.warn("Failed to delete video from Gumlet:", gumletError.message);
+    }
+    return;
+  }
+
+  if (content.s3Key) {
+    try {
+      await s3.send(new DeleteObjectCommand({
+        Bucket: process.env.AWS_S3_BUCKET,
+        Key: content.s3Key,
+      }));
+    } catch (s3Error) {
+      console.warn("Failed to delete from S3:", s3Error.message);
+    }
+  }
+}
 
 
 /**
@@ -353,7 +390,17 @@ router.post("/courses/:courseId/other-documents", protect, adminOnly, async (req
  */
 router.post("/courses/:courseId/weeks/:weekId/days/:dayId/contents", protect, adminOnly, async (req, res) => {
   try {
-    const { type, title, s3Key } = req.body;
+    const { type, title, s3Key, asset_id } = req.body;
+
+    if (type === "video" && !asset_id) {
+      return res.status(400).json({ error: "asset_id is required for video content" });
+    }
+
+    if (type !== "video" && !s3Key) {
+      return res.status(400).json({ error: "s3Key is required for non-video content" });
+    }
+
+    const contentPayload = buildContentPayload(type, title, s3Key, asset_id);
     const course = await Course.findById(req.params.courseId).populate('sharedContentId');
     if (!course) return res.status(404).json({ error: "Course not found" });
 
@@ -372,7 +419,7 @@ router.post("/courses/:courseId/weeks/:weekId/days/:dayId/contents", protect, ad
       const day = week.days.id(req.params.dayId);
       if (!day) return res.status(404).json({ error: "Day not found" });
 
-      day.contents.push({ type, title, s3Key });
+      day.contents.push(contentPayload);
       await sharedContent.save();
       console.log(`✅ Content added to SharedContent day ${day.dayNumber}`);
       res.json(sharedContent);
@@ -384,7 +431,7 @@ router.post("/courses/:courseId/weeks/:weekId/days/:dayId/contents", protect, ad
       const day = week.days.id(req.params.dayId);
       if (!day) return res.status(404).json({ error: "Day not found" });
 
-      day.contents.push({ type, title, s3Key });
+      day.contents.push(contentPayload);
       await course.save();
       console.log(`✅ Content added to Course day ${day.dayNumber}`);
       res.json(course);
@@ -424,17 +471,7 @@ router.delete("/courses/:courseId/weeks/:weekId/days/:dayId/contents/:contentId"
       const content = day.contents.id(contentId);
       if (!content) return res.status(404).json({ error: "Content not found" });
 
-      // Delete from S3 if s3 is available
-      try {
-        const s3 = require("../config/s3");
-        const { DeleteObjectCommand } = require("@aws-sdk/client-s3");
-        await s3.send(new DeleteObjectCommand({
-          Bucket: process.env.AWS_S3_BUCKET,
-          Key: content.s3Key
-        }));
-      } catch (s3Error) {
-        console.warn("Failed to delete from S3:", s3Error.message);
-      }
+      await deleteStoredContent(content);
 
       // Remove from SharedContent
       content.deleteOne();
@@ -452,17 +489,7 @@ router.delete("/courses/:courseId/weeks/:weekId/days/:dayId/contents/:contentId"
       const content = day.contents.id(contentId);
       if (!content) return res.status(404).json({ error: "Content not found" });
 
-      // Delete from S3 if s3 is available
-      try {
-        const s3 = require("../config/s3");
-        const { DeleteObjectCommand } = require("@aws-sdk/client-s3");
-        await s3.send(new DeleteObjectCommand({
-          Bucket: process.env.AWS_S3_BUCKET,
-          Key: content.s3Key
-        }));
-      } catch (s3Error) {
-        console.warn("Failed to delete from S3:", s3Error.message);
-      }
+      await deleteStoredContent(content);
 
       // Remove from Course
       content.deleteOne();
@@ -498,36 +525,23 @@ router.delete("/courses/:courseId/weeks/:weekId", protect, adminOnly, async (req
       const week = sharedContent.weeks.id(weekId);
       if (!week) return res.status(404).json({ error: "Week not found in SharedContent" });
 
-      // Delete all content from S3 for this week
+      // Delete all content assets for this week
       try {
-        const s3 = require("../config/s3");
-        const { DeleteObjectCommand } = require("@aws-sdk/client-s3");
-
         // Delete week-level documents
         if (week.documents && week.documents.length > 0) {
           for (const doc of week.documents) {
-            if (doc.s3Key) {
-              await s3.send(new DeleteObjectCommand({
-                Bucket: process.env.AWS_S3_BUCKET,
-                Key: doc.s3Key
-              }));
-            }
+            await deleteStoredContent(doc);
           }
         }
 
         // Delete day-level contents
         for (const day of week.days || []) {
           for (const content of day.contents || []) {
-            if (content.s3Key) {
-              await s3.send(new DeleteObjectCommand({
-                Bucket: process.env.AWS_S3_BUCKET,
-                Key: content.s3Key
-              }));
-            }
+            await deleteStoredContent(content);
           }
         }
       } catch (s3Error) {
-        console.warn("Failed to delete some S3 content:", s3Error.message);
+        console.warn("Failed to delete some content assets:", s3Error.message);
       }
 
       // Remove week from SharedContent
@@ -540,23 +554,15 @@ router.delete("/courses/:courseId/weeks/:weekId", protect, adminOnly, async (req
       const week = course.weeks.id(weekId);
       if (!week) return res.status(404).json({ error: "Week not found" });
 
-      // Delete all content from S3 for this week
+      // Delete all content assets for this week
       try {
-        const s3 = require("../config/s3");
-        const { DeleteObjectCommand } = require("@aws-sdk/client-s3");
-
         for (const day of week.days || []) {
           for (const content of day.contents || []) {
-            if (content.s3Key) {
-              await s3.send(new DeleteObjectCommand({
-                Bucket: process.env.AWS_S3_BUCKET,
-                Key: content.s3Key
-              }));
-            }
+            await deleteStoredContent(content);
           }
         }
       } catch (s3Error) {
-        console.warn("Failed to delete some S3 content:", s3Error.message);
+        console.warn("Failed to delete some content assets:", s3Error.message);
       }
 
       // Remove week from Course
@@ -596,21 +602,13 @@ router.delete("/courses/:courseId/weeks/:weekId/days/:dayId", protect, adminOnly
       const day = week.days.id(dayId);
       if (!day) return res.status(404).json({ error: "Day not found" });
 
-      // Delete all content from S3 for this day
+      // Delete all content assets for this day
       try {
-        const s3 = require("../config/s3");
-        const { DeleteObjectCommand } = require("@aws-sdk/client-s3");
-
         for (const content of day.contents || []) {
-          if (content.s3Key) {
-            await s3.send(new DeleteObjectCommand({
-              Bucket: process.env.AWS_S3_BUCKET,
-              Key: content.s3Key
-            }));
-          }
+          await deleteStoredContent(content);
         }
       } catch (s3Error) {
-        console.warn("Failed to delete some S3 content:", s3Error.message);
+        console.warn("Failed to delete some content assets:", s3Error.message);
       }
 
       // Remove day from SharedContent
@@ -626,21 +624,13 @@ router.delete("/courses/:courseId/weeks/:weekId/days/:dayId", protect, adminOnly
       const day = week.days.id(dayId);
       if (!day) return res.status(404).json({ error: "Day not found" });
 
-      // Delete all content from S3 for this day
+      // Delete all content assets for this day
       try {
-        const s3 = require("../config/s3");
-        const { DeleteObjectCommand } = require("@aws-sdk/client-s3");
-
         for (const content of day.contents || []) {
-          if (content.s3Key) {
-            await s3.send(new DeleteObjectCommand({
-              Bucket: process.env.AWS_S3_BUCKET,
-              Key: content.s3Key
-            }));
-          }
+          await deleteStoredContent(content);
         }
       } catch (s3Error) {
-        console.warn("Failed to delete some S3 content:", s3Error.message);
+        console.warn("Failed to delete some content assets:", s3Error.message);
       }
 
       // Remove day from Course
@@ -755,21 +745,12 @@ router.delete("/courses/:id", protect, adminOnly, async (req, res) => {
     const course = await Course.findById(req.params.id);
     if (!course) return res.status(404).json({ error: "Course not found" });
 
-    // Delete all course content from S3
+    // Delete all course content assets
     try {
-      const s3 = require("../config/s3");
-      const { DeleteObjectCommand } = require("@aws-sdk/client-s3");
-
       for (const week of course.weeks || []) {
         for (const day of week.days || []) {
           for (const content of day.contents || []) {
-            if (content.s3Key) {
-              const deleteParams = {
-                Bucket: process.env.AWS_S3_BUCKET,
-                Key: content.s3Key
-              };
-              await s3.send(new DeleteObjectCommand(deleteParams));
-            }
+            await deleteStoredContent(content);
           }
         }
       }
@@ -783,7 +764,7 @@ router.delete("/courses/:id", protect, adminOnly, async (req, res) => {
         await s3.send(new DeleteObjectCommand(deleteParams));
       }
     } catch (s3Error) {
-      console.warn("Failed to delete some S3 content:", s3Error.message);
+      console.warn("Failed to delete some content assets:", s3Error.message);
     }
 
     // Delete course from database
@@ -2012,6 +1993,89 @@ router.post("/reset-device-lock/:userId", protect, adminOnly, async (req, res) =
       message: "Failed to reset device lock",
       error: err.message 
     });
+  }
+});
+
+// ===================== DISCOUNT CODE ROUTES =====================
+const DiscountCode = require("../models/DiscountCode");
+const crypto = require("crypto");
+
+/**
+ * GET /api/admin/discount-codes
+ * List all discount codes
+ */
+router.get("/discount-codes", protect, adminOnly, async (req, res) => {
+  try {
+    const codes = await DiscountCode.find().sort({ createdAt: -1 });
+    res.json({ codes });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * POST /api/admin/discount-codes
+ * Create a new discount code
+ * body: { discountPercent, code (optional — auto-generated if omitted) }
+ */
+router.post("/discount-codes", protect, adminOnly, async (req, res) => {
+  try {
+    const { discountPercent, code } = req.body;
+
+    if (!discountPercent || discountPercent < 1 || discountPercent > 100) {
+      return res.status(400).json({ error: "discountPercent must be between 1 and 100" });
+    }
+
+    // Generate a random code if not provided
+    const finalCode = code
+      ? code.trim().toUpperCase()
+      : "SOUL-" + crypto.randomBytes(4).toString("hex").toUpperCase();
+
+    const existing = await DiscountCode.findOne({ code: finalCode });
+    if (existing) {
+      return res.status(409).json({ error: "A discount code with this value already exists" });
+    }
+
+    const newCode = await DiscountCode.create({
+      code: finalCode,
+      discountPercent,
+      createdBy: req.user.id,
+    });
+
+    res.status(201).json({ code: newCode });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * PATCH /api/admin/discount-codes/:id/toggle
+ * Toggle active/inactive status
+ */
+router.patch("/discount-codes/:id/toggle", protect, adminOnly, async (req, res) => {
+  try {
+    const dc = await DiscountCode.findById(req.params.id);
+    if (!dc) return res.status(404).json({ error: "Discount code not found" });
+
+    dc.isActive = !dc.isActive;
+    await dc.save();
+    res.json({ code: dc });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * DELETE /api/admin/discount-codes/:id
+ * Permanently delete a discount code
+ */
+router.delete("/discount-codes/:id", protect, adminOnly, async (req, res) => {
+  try {
+    const dc = await DiscountCode.findByIdAndDelete(req.params.id);
+    if (!dc) return res.status(404).json({ error: "Discount code not found" });
+    res.json({ success: true, message: "Discount code deleted" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 

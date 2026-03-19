@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Card, Button, Form, Spinner } from "react-bootstrap";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { isAuthenticated } from "../../utils/auth";
-import { createMockCheckoutSession } from "../../Api/api";
+import { createMockCheckoutSession, validateDiscountCode } from "../../Api/api";
 
 export default function MockPaymentPage() {
   const [searchParams] = useSearchParams();
@@ -23,7 +23,11 @@ export default function MockPaymentPage() {
 
   const [coupon, setCoupon] = useState("");
   const [discount, setDiscount] = useState(0);
+  const [discountPercent, setDiscountPercent] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const [isCouponApplied, setIsCouponApplied] = useState(false);
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [couponError, setCouponError] = useState("");
 
   // Check authentication on component mount
   useEffect(() => {
@@ -38,18 +42,33 @@ export default function MockPaymentPage() {
     }
   }, [navigate, mockId]);
 
-  const handleApplyCoupon = () => {
-    // Real validation should be done on the backend!
-    const code = coupon.toLowerCase();
-
-    if (code === "soul10") {
-      setDiscount(0.1 * mock.price); // 10% discount
-    } else if (code === "souladc_admin_discount365") {
-      setDiscount(mock.price); 
-    } else {
+  const handleApplyCoupon = async () => {
+    if (!coupon.trim()) return;
+    setCouponError("");
+    setCouponLoading(true);
+    try {
+      const { data } = await validateDiscountCode(coupon.trim());
+      const pct = data.discountPercent;
+      setDiscountPercent(pct);
+      setDiscount((pct / 100) * mock.price);
+      setIsCouponApplied(true);
+    } catch (err) {
+      const msg = err.response?.data?.error || "Invalid or expired coupon code";
+      setCouponError(msg);
       setDiscount(0);
-      alert("Invalid coupon code");
+      setDiscountPercent(0);
+      setIsCouponApplied(false);
+    } finally {
+      setCouponLoading(false);
     }
+  };
+
+  const handleRemoveCoupon = () => {
+    setCoupon("");
+    setDiscount(0);
+    setDiscountPercent(0);
+    setIsCouponApplied(false);
+    setCouponError("");
   };
 
   const handleCheckout = async () => {
@@ -112,22 +131,42 @@ export default function MockPaymentPage() {
           </div>
 
           {/* Coupon Section */}
-          <Form className="mb-4">
-            <Form.Label className="fw-medium">Apply Coupon</Form.Label>
+          <Form
+            className="mb-4"
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (!isCouponApplied) handleApplyCoupon();
+            }}
+          >
+            <Form.Label className="fw-medium">Apply Discount Code</Form.Label>
             <div className="d-flex gap-2">
               <Form.Control
                 type="text"
-                placeholder="Enter coupon code"
+                placeholder="Enter discount code"
                 value={coupon}
-                onChange={(e) => setCoupon(e.target.value)}
+                onChange={(e) => setCoupon(e.target.value.toUpperCase())}
+                disabled={isCouponApplied}
+                style={{ textTransform: "uppercase", letterSpacing: "1px" }}
               />
-              <Button variant="primary" onClick={handleApplyCoupon}>
-                Apply
-              </Button>
+              {isCouponApplied ? (
+                <Button variant="outline-secondary" onClick={handleRemoveCoupon} type="button">
+                  Remove
+                </Button>
+              ) : (
+                <Button
+                  variant="primary"
+                  onClick={handleApplyCoupon}
+                  type="button"
+                  disabled={couponLoading || !coupon.trim()}
+                >
+                  {couponLoading ? <Spinner size="sm" /> : "Apply"}
+                </Button>
+              )}
             </div>
-            {discount > 0 && (
-              <p className="text-success mt-2">
-                Coupon applied! You saved AUD ${discount.toFixed(2)}
+            {couponError && <p className="text-danger mt-2 small">{couponError}</p>}
+            {isCouponApplied && discount > 0 && (
+              <p className="text-success mt-2 small fw-medium">
+                ✓ {discountPercent}% discount applied — you save AUD ${discount.toFixed(2)}
               </p>
             )}
           </Form>

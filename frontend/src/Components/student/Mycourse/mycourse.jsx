@@ -52,7 +52,7 @@ const Mycourse = () => {
   // Handle content opening
   const handleOpenContent = (content) => {
     if (content.type === "video") {
-      const videoId = content._id || content.s3Key;
+      const videoId = content._id || content.asset_id || content.s3Key;
       navigate(`/student/course/${courseId}/video/${videoId}`);
     } else if (content.type === "pdf" || content.type === "document") {
       const docId = content._id || content.s3Key;

@@ -29,6 +29,7 @@ export { api };
 // Auth APIs
 // ============================
 export const loginAdmin = (credentials) => api.post("/auth/login", credentials);
+export const submitDiscountEmail = (email) => api.post("/auth/discount-lead", { email });
 
 // ============================
 // Courses APIs
@@ -75,6 +76,9 @@ export const getStreamUrl = (s3Key) => {
 export const getSignedPlaybackUrl = (contentId) => 
   api.get(`/video/play-url/${contentId}`);
 
+// Create Gumlet upload URL + asset_id for direct browser upload
+export const createVideoUploadSession = () => api.get("/video/create-upload");
+
 
 export const getPresignUrl = (fileName, fileType, folder, weekNumber, dayNumber) =>
   api.get("/upload/presign", {
@@ -115,6 +119,17 @@ export const createCheckoutSession = (payload) => api.post("/payment/create-chec
 
 // Create Stripe checkout session for mock
 export const createMockCheckoutSession = (payload) => api.post("/payment/create-mock-checkout-session", payload);
+
+// Validate a discount code
+export const validateDiscountCode = (code) => api.post("/payment/validate-discount", { code });
+
+// ============================
+// Discount Code Admin APIs
+// ============================
+export const getDiscountCodes = () => api.get("/admin/discount-codes");
+export const createDiscountCode = (payload) => api.post("/admin/discount-codes", payload);
+export const toggleDiscountCode = (id) => api.patch(`/admin/discount-codes/${id}/toggle`);
+export const deleteDiscountCode = (id) => api.delete(`/admin/discount-codes/${id}`);
 
 // Handle payment success
 export const PaymentSuccessApi = (sessionId, courseId) =>
@@ -168,9 +183,9 @@ export const uploadChatImage = (chatId, senderRole, file) => {
   const baseUrl = API_BASE_URL.endsWith('/api') ? API_BASE_URL.slice(0, -4) : API_BASE_URL;
   const uploadUrl = `${baseUrl}/upload/chat-image/${chatId}/${senderRole}`;
   
-  console.log("Chat image upload URL:", uploadUrl);
-  console.log("API_BASE_URL:", API_BASE_URL);
-  console.log("Base URL:", baseUrl);
+  // console.log("Chat image upload URL:", uploadUrl);
+  // console.log("API_BASE_URL:", API_BASE_URL);
+  // console.log("Base URL:", baseUrl);
   
   return axios.post(uploadUrl, formData, {
     headers: {
@@ -228,6 +243,7 @@ export const getDocuments = () => {
 // Progress Tracking APIs
 // ============================
 export const updateVideoProgress = (progressData) => api.post("/user/video-progress", progressData);
+export const getVideoMetadata = (videoId) => api.get(`/user/video/${videoId}/metadata`);
 export const getStudentProgress = () => api.get("/user/progress");
 export const getWeeklyWatchTime = () => api.get("/user/progress/weekly");
 export const getStudentMilestones = () => api.get("/user/milestones");

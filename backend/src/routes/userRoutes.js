@@ -512,4 +512,122 @@ router.post('/notifications/mark-read', protect, async (req, res) => {
   }
 });
 
+/**
+ * Persist duration to MongoDB for a given asset_id (fire-and-forget cache).
+ * Updates both SharedContent and Course documents.
+ */
+async function persistVideoDuration(assetId, duration) {
+  if (!assetId || !duration) return;
+  const SharedContent = require('../models/SharedContent');
+  const filter = { 'weeks.days.contents.asset_id': assetId };
+  const update = { $set: { 'weeks.$[].days.$[].contents.$[c].duration': duration } };
+  const opts = { arrayFilters: [{ 'c.asset_id': assetId }] };
+  await Promise.all([
+    SharedContent.updateMany(filter, update, opts),
+    Course.updateMany(filter, update, opts),
+  ]);
+}
+
+/**
+ * GET /api/user/video/:videoId/metadata
+ * Get video metadata including playback URL, status, and duration
+ */
+router.get('/video/:videoId/metadata', protect, async (req, res) => {
+  try {
+    const { videoId } = req.params;
+    const gumletService = require('../services/gumlet.service');
+
+    // Try to get asset metadata from Gumlet
+    try {
+      const assetData = await gumletService.getAsset(videoId);
+      const embedUrl = gumletService.getEmbedUrl(videoId);
+      const duration = assetData.duration || 0;
+
+      // Cache duration back to MongoDB so future DB-fallback calls return it
+      if (duration > 0) {
+        persistVideoDuration(videoId, duration).catch(err =>
+          console.error('Failed to persist video duration:', err)
+        );
+      }
+
+      return res.json({
+        asset_id: videoId,
+        playback_url: embedUrl,
+        status: assetData.status || 'ready',
+        duration,
+        title: assetData.title || 'Video',
+        ...assetData
+      });
+    } catch (gumletError) {
+      // If Gumlet fails, search for the video in course content
+      console.log(`Gumlet lookup failed for ${videoId}, searching in courses...`);
+
+      // Search for video in all courses (direct weeks)
+      const courses = await Course.find().populate('sharedContentId');
+      let videoContent = null;
+
+      const searchWeeks = (weeks) => {
+        if (!weeks) return null;
+        for (const week of weeks) {
+          if (week.days) {
+            for (const day of week.days) {
+              if (day.contents) {
+                const content = day.contents.find(c =>
+                  c.type === 'video' && (
+                    c._id.toString() === videoId.toString() ||
+                    c.asset_id === videoId
+                  )
+                );
+                if (content) return content;
+              }
+            }
+          }
+        }
+        return null;
+      };
+
+      for (const course of courses) {
+        videoContent = searchWeeks(course.weeks);
+        if (!videoContent && course.sharedContentId) {
+          videoContent = searchWeeks(course.sharedContentId.weeks);
+        }
+        if (videoContent) break;
+      }
+
+      if (!videoContent) {
+        return res.status(404).json({ error: 'Video not found' });
+      }
+
+      const effectiveAssetId = videoContent.asset_id || videoId;
+      const embedUrl = gumletService.getEmbedUrl(effectiveAssetId);
+      let duration = videoContent.duration || 0;
+
+      // If duration is missing, try fetching from Gumlet using the stored asset_id
+      // (handles case where videoId was a MongoDB _id, not the Gumlet asset_id)
+      if (duration === 0 && videoContent.asset_id && videoContent.asset_id !== videoId) {
+        try {
+          const gumletData = await gumletService.getAsset(videoContent.asset_id);
+          duration = gumletData.duration || 0;
+          if (duration > 0) {
+            persistVideoDuration(videoContent.asset_id, duration).catch(err =>
+              console.error('Failed to persist video duration:', err)
+            );
+          }
+        } catch (e) { /* Gumlet unavailable, use 0 */ }
+      }
+
+      return res.json({
+        asset_id: effectiveAssetId,
+        playback_url: embedUrl,
+        status: 'ready',
+        duration,
+        title: videoContent.title || 'Video'
+      });
+    }
+  } catch (err) {
+    console.error('Error fetching video metadata:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

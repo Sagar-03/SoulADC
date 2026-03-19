@@ -5,6 +5,8 @@ const contentSchema = new mongoose.Schema({
   type: { type: String, enum: ["video", "pdf", "document", "quiz", "image"], required: true },
   title: String,
   s3Key: String,
+  asset_id: String,
+  duration: { type: Number, default: 0 },
   quizId: String,
 });
 

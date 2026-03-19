@@ -1,16 +1,17 @@
 const express = require('express');
-const { 
-  register, 
-  login, 
-  forgotPassword, 
-  resetPassword, 
-  sendResetOTP, 
-  verifyResetOTP, 
+const {
+  register,
+  login,
+  forgotPassword,
+  resetPassword,
+  sendResetOTP,
+  verifyResetOTP,
   resetPasswordWithToken,
   sendVerificationOTP,
   verifyEmailOTP,
   sendPreRegistrationOTP,
-  verifyPreRegistrationOTP
+  verifyPreRegistrationOTP,
+  submitDiscountLead
 } = require('../controllers/authcontroller');
 const router = express.Router();
 
@@ -34,5 +35,8 @@ router.post("/reset-password/:token", resetPassword);
 router.post("/send-reset-otp", sendResetOTP);
 router.post("/verify-reset-otp", verifyResetOTP);
 router.post("/reset-password-with-token", resetPasswordWithToken);
+
+// Discount lead — public, no auth needed
+router.post('/discount-lead', submitDiscountLead);
 
 module.exports = router;

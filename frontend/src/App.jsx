@@ -45,6 +45,7 @@ import ManageMocks from "./Components/admin/ManageMocks";
 import CreateMock from "./Components/admin/CreateMock";
 import EditMock from "./Components/admin/EditMock";
 import PreviewMock from "./Components/admin/PreviewMock";
+import DiscountCodes from "./Components/admin/DiscountCodes";
 import StudentMocks from "./Components/student/StudentMocks";
 import MockAttempt from "./Components/student/MockAttempt";
 import MockResult from "./Components/student/MockResult";
@@ -378,6 +379,14 @@ function App() {
           element={
             <ProtectedRoute adminOnly={true}>
               <PreviewMock />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/discount-codes"
+          element={
+            <ProtectedRoute adminOnly={true}>
+              <DiscountCodes />
             </ProtectedRoute>
           }
         />

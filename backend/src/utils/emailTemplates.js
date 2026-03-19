@@ -196,6 +196,152 @@ const generateInvoiceEmail = (data) => {
   `;
 };
 
+/**
+ * Generate notification email sent to Soul ADC when a student submits their email for the 5% discount
+ * @param {string} studentEmail - The email address the student entered
+ */
+const generateDiscountLeadEmail = (studentEmail) => {
+  const submittedAt = new Date().toLocaleString('en-AU', {
+    timeZone: 'Australia/Sydney',
+    year: 'numeric', month: 'long', day: 'numeric',
+    hour: '2-digit', minute: '2-digit'
+  });
+
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>New Discount Lead - SoulADC</title>
+</head>
+<body style="margin:0;padding:0;font-family:Arial,sans-serif;background-color:#f3f4f6;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f3f4f6;padding:20px;">
+    <tr>
+      <td align="center">
+        <table width="560" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.10);">
+
+          <!-- Header -->
+          <tr>
+            <td style="background:linear-gradient(135deg,#A98C6A 0%,#7B563D 100%);padding:28px 32px;text-align:center;">
+              <h1 style="color:#ffffff;margin:0;font-size:22px;letter-spacing:0.5px;">SoulADC</h1>
+              <p style="color:#f0e6d8;margin:6px 0 0;font-size:13px;">New Discount Lead</p>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding:36px 32px;">
+              <h2 style="color:#4a2c10;margin:0 0 8px;font-size:20px;">A student wants the 5% discount</h2>
+              <p style="color:#6b4c30;font-size:14px;margin:0 0 28px;line-height:1.6;">
+                Someone just submitted their email through the homepage discount popup. Reply to follow up with them.
+              </p>
+
+              <!-- Email highlight box -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="background:#faf6f0;border-left:4px solid #A98C6A;border-radius:6px;margin-bottom:28px;">
+                <tr>
+                  <td style="padding:20px 24px;">
+                    <p style="color:#7B563D;font-size:12px;text-transform:uppercase;letter-spacing:0.08em;margin:0 0 6px;font-weight:600;">Student Email</p>
+                    <p style="color:#1a1a1a;font-size:18px;font-weight:700;margin:0;">${studentEmail}</p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Meta -->
+              <table width="100%" cellpadding="6" cellspacing="0" style="font-size:13px;color:#6b7280;">
+                <tr>
+                  <td>Submitted at:</td>
+                  <td style="color:#1a1a1a;font-weight:600;text-align:right;">${submittedAt} AEST</td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background:#f9f5f0;padding:20px 32px;text-align:center;border-top:1px solid #ece5d8;">
+              <p style="color:#9ca3af;font-size:12px;margin:0;">© ${new Date().getFullYear()} SoulADC. All rights reserved.</p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `;
+};
+
+/**
+ * Generate confirmation email sent to the student with their discount coupon code
+ * @param {string} studentEmail - Student email address
+ * @param {string} couponCode - Discount coupon code
+ */
+const generateDiscountCouponEmail = (studentEmail, couponCode) => {
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your SoulADC Discount Coupon</title>
+</head>
+<body style="margin:0;padding:0;font-family:Arial,sans-serif;background-color:#f3f4f6;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f3f4f6;padding:20px;">
+    <tr>
+      <td align="center">
+        <table width="560" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.10);">
+
+          <tr>
+            <td style="background:linear-gradient(135deg,#A98C6A 0%,#7B563D 100%);padding:28px 32px;text-align:center;">
+              <h1 style="color:#ffffff;margin:0;font-size:22px;letter-spacing:0.5px;">SoulADC</h1>
+              <p style="color:#f0e6d8;margin:6px 0 0;font-size:13px;">Your Discount Code</p>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:36px 32px;">
+              <h2 style="color:#4a2c10;margin:0 0 10px;font-size:22px;">Thanks for your interest</h2>
+              <p style="color:#6b4c30;font-size:14px;margin:0 0 24px;line-height:1.6;">
+                We received your request for the SoulADC discount. Use the coupon code below at checkout.
+              </p>
+
+              <table width="100%" cellpadding="0" cellspacing="0" style="background:#faf6f0;border:1px dashed #A98C6A;border-radius:8px;margin-bottom:20px;">
+                <tr>
+                  <td style="padding:20px 24px;text-align:center;">
+                    <p style="color:#7B563D;font-size:12px;text-transform:uppercase;letter-spacing:0.08em;margin:0 0 8px;font-weight:600;">Coupon Code</p>
+                    <p style="color:#1a1a1a;font-size:28px;letter-spacing:1px;font-weight:800;margin:0;">${couponCode}</p>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="color:#4b5563;font-size:13px;line-height:1.6;margin:0 0 6px;">
+                Submitted email: <strong>${studentEmail}</strong>
+              </p>
+              <p style="color:#4b5563;font-size:13px;line-height:1.6;margin:0;">
+                Apply this code during payment to get your discount.
+              </p>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="background:#f9f5f0;padding:20px 32px;text-align:center;border-top:1px solid #ece5d8;">
+              <p style="color:#9ca3af;font-size:12px;margin:0;">© ${new Date().getFullYear()} SoulADC. All rights reserved.</p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `;
+};
+
 module.exports = {
-  generateInvoiceEmail
+  generateInvoiceEmail,
+  generateDiscountLeadEmail,
+  generateDiscountCouponEmail
 };

@@ -3,12 +3,18 @@ import { Container, Row, Col, Button } from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './registersection.css';
 import { Link } from "react-router-dom";
+import logo from "../../../assets/logo.png";
+import { submitDiscountEmail } from "../../../Api/api";
 
 const Register = memo(() => {
   const videoRef = useRef(null);
   const [muted, setMuted] = useState(true);
   const [hasInteracted, setHasInteracted] = useState(false);
   const [showPopup, setShowPopup] = useState(true);
+  const [email, setEmail] = useState('');
+  const [submitted, setSubmitted] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const hasInitialized = useRef(false); // Track if video has been initialized
 
   useEffect(() => {
@@ -71,34 +77,39 @@ const Register = memo(() => {
     };
   }, []); // Empty dependency array - only run once on mount
 
-  // Handle popup interaction
-  const handlePopupClick = async () => {
+  // Handle popup close and unmute video
+  const closePopupAndUnmute = async () => {
     const video = videoRef.current;
-    if (!video) return;
-    
-    // First, close the popup and mark as interacted
     setShowPopup(false);
     setHasInteracted(true);
-    
-    // Small delay to ensure state updates
+    if (!video) return;
     await new Promise(resolve => setTimeout(resolve, 100));
-    
     try {
-      // Keep current playback position, just unmute
       const wasPlaying = !video.paused;
-      
       video.muted = false;
       video.volume = 1.0;
       setMuted(false);
-      
-      // Ensure video continues playing
-      if (!wasPlaying || video.paused) {
-        await video.play();
-      }
-      
-      console.log("Video unmuted with sound after popup interaction");
+      if (!wasPlaying || video.paused) await video.play();
     } catch (err) {
       console.log("Failed to unmute video:", err);
+    }
+  };
+
+  const handleDiscountSubmit = async (e) => {
+    e.preventDefault();
+    if (!email || isSubmitting) return;
+    setSubmitError('');
+    setIsSubmitting(true);
+
+    try {
+      await submitDiscountEmail(email.trim());
+      setSubmitted(true);
+      setTimeout(() => closePopupAndUnmute(), 1500);
+    } catch (err) {
+      console.error('Discount lead failed:', err);
+      setSubmitError('We could not submit your request right now. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -149,65 +160,119 @@ const Register = memo(() => {
     <Container fluid className="register-section-container p-5">
       {/* Popup for user interaction - only closes when clicked */}
       {showPopup && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.7)',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 9999,
-          }}
-        >
-          <div
-            style={{
-              backgroundColor: '#fff',
-              padding: '35px 45px',
-              borderRadius: '15px',
-              textAlign: 'center',
-              maxWidth: '450px',
-              boxShadow: '0 10px 40px rgba(0, 0, 0, 0.3)',
-              position: 'relative',
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.65)',
+          display: 'flex', justifyContent: 'center', alignItems: 'center',
+          zIndex: 9999, padding: '16px',
+        }}>
+          <div style={{
+            background: '#ffffff',
+            borderRadius: '20px',
+            maxWidth: '680px', width: '100%',
+            boxShadow: '0 20px 60px rgba(107,66,38,0.25)',
+            position: 'relative',
+            display: 'flex', overflow: 'hidden',
+            minHeight: '440px',
+          }}>
+            {/* Close button */}
+            <button onClick={closePopupAndUnmute} style={{
+              position: 'absolute', top: '14px', right: '14px',
+              background: 'rgba(107,66,38,0.1)', border: 'none',
+              borderRadius: '50%', width: '32px', height: '32px',
+              cursor: 'pointer', color: '#7B563D', fontSize: '18px',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              zIndex: 2, transition: 'background 0.2s',
             }}
-          >
-            {/* Cross button */}
-            <button
-              onClick={handlePopupClick}
-              style={{
-                position: 'absolute',
-                top: '15px',
-                right: '15px',
-                background: 'transparent',
-                border: 'none',
-                fontSize: '24px',
-                cursor: 'pointer',
-                color: '#999',
-                width: '30px',
-                height: '30px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                transition: 'color 0.2s',
-              }}
-              onMouseEnter={(e) => e.target.style.color = '#333'}
-              onMouseLeave={(e) => e.target.style.color = '#999'}
-            >
-              ×
-            </button>
-            
-            <h2 style={{ marginBottom: '20px', color: '#6B4226', fontWeight: '600' }}>
-              Welcome, Learner! 🎓
-            </h2>
-            <p style={{ marginBottom: '15px', color: '#555', fontSize: '16px', lineHeight: '1.6' }}>
-              We're thrilled to have you here! Your journey to mastering the ADC Part 1 exam starts now.
-            </p>
-            <p style={{ marginBottom: '0', color: '#666', fontSize: '15px', lineHeight: '1.6' }}>
-              Explore our comprehensive courses, connect with expert mentors, and achieve your dental career goals in Australia.
-            </p>
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(107,66,38,0.2)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'rgba(107,66,38,0.1)'}
+            >×</button>
+
+            {/* Left content */}
+            <div style={{ flex: 1, padding: '40px 36px 40px 40px', display: 'flex', flexDirection: 'column', justifyContent: 'center', zIndex: 1 }}>
+              {/* Logo */}
+              <div style={{ marginBottom: '24px', textAlign: 'center' }}>
+                <img src={logo} alt="SoulADC" style={{ height: '70px', width: 'auto' }} />
+              </div>
+
+              {submitted ? (
+                <div style={{ textAlign: 'center', padding: '10px 0' }}>
+                  <div style={{ fontSize: '2rem', marginBottom: '8px' }}>🎉</div>
+                  <p style={{ color: '#7B563D', fontWeight: '600', fontSize: '1.1rem', margin: 0 }}>You're in! Check your email for your discount code you will receive soon.</p>
+                </div>
+              ) : (
+                <>
+                  <h2 style={{ color: '#4a2c10', fontWeight: '800', fontSize: '1.85rem', margin: '0 0 8px', lineHeight: 1.2 }}>
+                    Want 5% OFF?
+                  </h2>
+                  <p style={{ color: '#6b4c30', fontSize: '0.95rem', margin: '0 0 24px', lineHeight: 1.5 }}>
+                    Join SoulADC and receive{' '}
+                    <span style={{ color: '#A98C6A', fontWeight: '700' }}>5% OFF</span>{' '}
+                    your first course registration.
+                  </p>
+
+                  <form onSubmit={handleDiscountSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <input
+                      type="email"
+                      placeholder="Enter your email address"
+                      value={email}
+                      onChange={e => setEmail(e.target.value)}
+                      required
+                      style={{
+                        padding: '13px 16px',
+                        borderRadius: '10px',
+                        border: '1.5px solid #d9c4aa',
+                        fontSize: '0.95rem',
+                        outline: 'none',
+                        background: '#fff',
+                        color: '#333',
+                        width: '100%',
+                        boxSizing: 'border-box',
+                      }}
+                      onFocus={e => e.target.style.borderColor = '#A98C6A'}
+                      onBlur={e => e.target.style.borderColor = '#d9c4aa'}
+                    />
+                    {submitError && (
+                      <p style={{ color: '#b00020', margin: 0, fontSize: '0.88rem' }}>
+                        {submitError}
+                      </p>
+                    )}
+                    <button type="submit" style={{
+                      background: 'linear-gradient(135deg, #A98C6A, #7B563D)',
+                      color: '#fff', border: 'none',
+                      borderRadius: '10px', padding: '13px',
+                      fontSize: '1rem', fontWeight: '700',
+                      cursor: isSubmitting ? 'not-allowed' : 'pointer', width: '100%',
+                      opacity: isSubmitting ? 0.7 : 1,
+                      transition: 'opacity 0.2s',
+                    }}
+                      disabled={isSubmitting}
+                      onMouseEnter={e => e.currentTarget.style.opacity = '0.88'}
+                      onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+                    >
+                      {isSubmitting ? 'Submitting...' : 'Get Discount'}
+                    </button>
+                  </form>
+                </>
+              )}
+            </div>
+
+            {/* Right — person image */}
+            <div style={{
+              width: '300px', flexShrink: 0, position: 'relative',
+              overflow: 'hidden',
+            }}>
+              <img
+                src="/image.jpeg"
+                alt="SoulADC mentor"
+                style={{
+                  position: 'absolute', bottom: 0, right: 0,
+                  height: '105%', width: 'auto',
+                  objectFit: 'cover', objectPosition: 'top center',
+                  filter: 'drop-shadow(-8px 0 16px rgba(107,66,38,0.12))',
+                }}
+              />
+            </div>
           </div>
         </div>
       )}

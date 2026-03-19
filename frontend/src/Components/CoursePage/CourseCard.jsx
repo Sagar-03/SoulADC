@@ -198,7 +198,7 @@ export default function CourseCard({ course }) {
               </button>
             )}
             <a
-              href="https://wa.me/"
+              href="https://wa.me/61411671599"
               className="btn btn-gradient-outline"
               target="_blank"
               rel="noopener noreferrer"
