@@ -1278,7 +1278,7 @@ const CourseContentManager = () => {
                                     </button>
                                   </div>
 
-                                  {/* File Input (only show for active day) */}
+                                  {/* File Input + inline upload UI (only show for active day) */}
                                   {activeWeekId === week._id && activeDayId === day._id && activeType && (
                                     <div className="mb-2">
                                       <input
@@ -1290,11 +1290,57 @@ const CourseContentManager = () => {
                                         style={{ fontSize: "0.7rem" }}
                                       />
                                       <div className="form-text" style={{ fontSize: "0.6rem" }}>
-                                        {activeType === "video"
-                                          ? "MP4, WebM (Max: 100MB)"
-                                          : "PDF, DOC (Max: 10MB)"
-                                        }
+                                        {activeType === "video" ? "MP4, WebM (Max: 100MB)" : "PDF, DOC (Max: 10MB)"}
                                       </div>
+
+                                      {/* Inline upload confirmation */}
+                                      {file && (
+                                        <div className="mt-2 p-2 border border-success rounded bg-light">
+                                          <div className="mb-2" style={{ fontSize: "0.7rem" }}>
+                                            <strong>{file.name}</strong>
+                                            <span className="text-muted ms-2">({(file.size / (1024 * 1024)).toFixed(2)} MB)</span>
+                                          </div>
+
+                                          {/* Progress bar */}
+                                          {uploading && (
+                                            <div className="mb-2">
+                                              <div className="d-flex justify-content-between mb-1" style={{ fontSize: "0.65rem" }}>
+                                                <span className="text-muted">Uploading...</span>
+                                                <span className="text-muted">{uploadProgress}%</span>
+                                              </div>
+                                              <div className="progress" style={{ height: "6px" }}>
+                                                <div
+                                                  className="progress-bar progress-bar-striped progress-bar-animated"
+                                                  style={{ width: `${uploadProgress}%` }}
+                                                />
+                                              </div>
+                                            </div>
+                                          )}
+
+                                          <div className="d-flex gap-1 flex-wrap">
+                                            <button
+                                              className="btn btn-success btn-sm"
+                                              onClick={uploadContent}
+                                              disabled={uploading}
+                                              style={{ fontSize: "0.65rem" }}
+                                            >
+                                              {uploading ? (
+                                                <><span className="spinner-border spinner-border-sm me-1" />Uploading...</>
+                                              ) : (
+                                                <><i className="bi bi-upload me-1" />Upload & Save</>
+                                              )}
+                                            </button>
+                                            <button
+                                              className="btn btn-outline-secondary btn-sm"
+                                              onClick={cancelUpload}
+                                              disabled={uploading}
+                                              style={{ fontSize: "0.65rem" }}
+                                            >
+                                              <i className="bi bi-x me-1" />Cancel
+                                            </button>
+                                          </div>
+                                        </div>
+                                      )}
                                     </div>
                                   )}
                                 </div>
@@ -1322,92 +1368,6 @@ const CourseContentManager = () => {
           </div>
         )}
 
-        {/* Upload Confirmation Modal */}
-        {file && activeWeekId && activeDayId && activeType && (
-          <div className="card border-success mt-4">
-            <div className="card-header bg-success text-white">
-              <h6 className="mb-0">
-                <i className="bi bi-cloud-upload me-2"></i>
-                Ready to Upload to Module {course.weeks.find(w => w._id === activeWeekId)?.days.find(d => d._id === activeDayId)?.dayNumber}
-              </h6>
-            </div>
-            <div className="card-body">
-              <div className="d-flex justify-content-between align-items-center mb-3">
-                <div>
-                  <strong>File:</strong> {file.name}<br />
-                  <strong>Type:</strong> <span className="text-capitalize">{activeType}</span><br />
-                  <strong>Size:</strong> {(file.size / (1024 * 1024)).toFixed(2)} MB<br />
-                  <strong>Module:</strong> {course.weeks.find(w => w._id === activeWeekId)?.weekNumber} -  {course.weeks.find(w => w._id === activeWeekId)?.days.find(d => d._id === activeDayId)?.dayNumber} part
-                </div>
-                <div>
-                  <i className={`bi ${activeType === 'video' ? 'bi-camera-video' : 'bi-file-earmark-pdf'} display-4 text-muted`}></i>
-                </div>
-              </div>
-
-              {/* Progress Bar */}
-              {uploading && (
-                <div className="mb-3">
-                  <div className="d-flex justify-content-between align-items-center mb-1">
-                    <small className="text-muted">Uploading...</small>
-                    <small className="text-muted">{uploadProgress}%</small>
-                  </div>
-                  <div className="progress">
-                    <div
-                      className="progress-bar progress-bar-striped progress-bar-animated"
-                      role="progressbar"
-                      style={{ width: `${uploadProgress}%` }}
-                    ></div>
-                  </div>
-                </div>
-              )}
-
-              <div className="d-flex gap-2">
-                <button
-                  className="btn btn-success"
-                  onClick={addToUploadQueue}
-                  disabled={uploading}
-                >
-                  {uploading ? (
-                    <>
-                      <span className="spinner-border spinner-border-sm me-2" role="status"></span>
-                      Uploading...
-                    </>
-                  ) : (
-                    <>
-                      <i className="bi bi-plus-circle me-1"></i>
-                      Add to Queue
-                    </>
-                  )}
-                </button>
-                <button
-                  className="btn btn-primary"
-                  onClick={uploadContent}
-                  disabled={uploading}
-                >
-                  {uploading ? (
-                    <>
-                      <span className="spinner-border spinner-border-sm me-2" role="status"></span>
-                      Uploading...
-                    </>
-                  ) : (
-                    <>
-                      <i className="bi bi-upload me-1"></i>
-                      Upload & Save Now
-                    </>
-                  )}
-                </button>
-                <button
-                  className="btn btn-outline-secondary"
-                  onClick={cancelUpload}
-                  disabled={uploading}
-                >
-                  <i className="bi bi-x-circle me-1"></i>
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
       {showEditPopup && (
         <div

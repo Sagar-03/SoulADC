@@ -136,9 +136,10 @@ const EmbeddedVideoPlayer = () => {
                   ) : videoId ? (
                     <div style={{ position: "relative", paddingTop: "56.25%" }}>
                       <iframe
-                        src={`https://play.gumlet.io/embed/${videoId}`}
+                        key={videoId}
+                        src={`https://play.gumlet.io/embed/${videoId}?preload=true`}
                         title={videoTitle}
-                        allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture; fullscreen"
+                        allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
                         allowFullScreen
                         style={{
                           border: "none",
