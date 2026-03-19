@@ -57,8 +57,6 @@ const Mycourse = () => {
     } else if (content.type === "pdf" || content.type === "document") {
       const docId = content._id || content.s3Key;
       window.open(getStreamUrl(docId), "_blank");
-    } else {
-      alert(`Opening ${content.type}: ${content.title}`);
     }
   };
 
