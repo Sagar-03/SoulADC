@@ -155,6 +155,21 @@ export const abortMultipartUpload = (key, uploadId) =>
   api.post("/multipart-upload/abort", { key, uploadId });
 
 // ============================
+// Gumlet Video Multipart Upload APIs (for videos > 100MB)
+// ============================
+export const initiateGumletMultipart = () =>
+  api.post("/video/multipart/initiate");
+
+export const signGumletPart = (assetId, uploadId, partNumber) =>
+  api.post("/video/multipart/sign-part", { asset_id: assetId, upload_id: uploadId, part_number: partNumber });
+
+export const completeGumletMultipart = (assetId, uploadId, parts) =>
+  api.post("/video/multipart/complete", { asset_id: assetId, upload_id: uploadId, parts });
+
+export const abortGumletMultipart = (assetId, uploadId) =>
+  api.post("/video/multipart/abort", { asset_id: assetId, upload_id: uploadId });
+
+// ============================
 // Chat/Doubt System APIs
 // ============================
 

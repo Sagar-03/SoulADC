@@ -11,6 +11,10 @@ const {
   listAssets,
   getAsset,
   getEmbedUrl,
+  initiateMultipartVideoUpload,
+  signVideoMultipartPart,
+  completeMultipartVideoUpload,
+  abortMultipartVideoUpload,
 } = require("../services/gumlet.service");
 
 const router = express.Router();
@@ -77,6 +81,64 @@ router.get("/create-upload", protect, adminOnly, async (req, res) => {
   } catch (error) {
     console.error("Gumlet create upload error:", error.response?.data || error.message);
     res.status(500).json({ error: "Failed to create Gumlet upload URL" });
+  }
+});
+
+// ── Gumlet Multipart Upload Routes ──────────────────────────────────────────
+
+// POST /video/multipart/initiate  →  { asset_id, upload_id }
+router.post("/multipart/initiate", protect, adminOnly, async (req, res) => {
+  try {
+    const data = await initiateMultipartVideoUpload();
+    res.json(data);
+  } catch (error) {
+    console.error("Gumlet multipart initiate error:", error.response?.data || error.message);
+    res.status(500).json({ error: "Failed to initiate Gumlet multipart upload" });
+  }
+});
+
+// POST /video/multipart/sign-part  body: { asset_id, upload_id, part_number }  →  { signed_url }
+router.post("/multipart/sign-part", protect, adminOnly, async (req, res) => {
+  try {
+    const { asset_id, upload_id, part_number } = req.body;
+    if (!asset_id || !upload_id || !part_number) {
+      return res.status(400).json({ error: "asset_id, upload_id, and part_number are required" });
+    }
+    const data = await signVideoMultipartPart(asset_id, upload_id, part_number);
+    res.json(data);
+  } catch (error) {
+    console.error("Gumlet sign part error:", error.response?.data || error.message);
+    res.status(500).json({ error: "Failed to sign multipart part" });
+  }
+});
+
+// POST /video/multipart/complete  body: { asset_id, upload_id, parts: [{part_number, etag}] }
+router.post("/multipart/complete", protect, adminOnly, async (req, res) => {
+  try {
+    const { asset_id, upload_id, parts } = req.body;
+    if (!asset_id || !upload_id || !parts) {
+      return res.status(400).json({ error: "asset_id, upload_id, and parts are required" });
+    }
+    await completeMultipartVideoUpload(asset_id, upload_id, parts);
+    res.json({ success: true, asset_id });
+  } catch (error) {
+    console.error("Gumlet multipart complete error:", error.response?.data || error.message);
+    res.status(500).json({ error: "Failed to complete Gumlet multipart upload" });
+  }
+});
+
+// POST /video/multipart/abort  body: { asset_id, upload_id }
+router.post("/multipart/abort", protect, adminOnly, async (req, res) => {
+  try {
+    const { asset_id, upload_id } = req.body;
+    if (!asset_id || !upload_id) {
+      return res.status(400).json({ error: "asset_id and upload_id are required" });
+    }
+    await abortMultipartVideoUpload(asset_id, upload_id);
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Gumlet multipart abort error:", error.response?.data || error.message);
+    res.status(500).json({ error: "Failed to abort Gumlet multipart upload" });
   }
 });
 

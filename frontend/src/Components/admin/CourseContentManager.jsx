@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import AdminLayout from "./AdminLayout";
 import { useParams } from "react-router-dom";
 import "./admin.css";
-import { getStreamUrl, addWeek, addDay, getCourses, getPresignUrl, deleteContent, deleteWeekApi, deleteDayApi, saveContent, updateContentTitle, initiateMultipartUpload, getPresignedPartUrl, completeMultipartUpload, abortMultipartUpload, createVideoUploadSession } from "../../Api/api";
+import { getStreamUrl, addWeek, addDay, getCourses, getPresignUrl, deleteContent, deleteWeekApi, deleteDayApi, saveContent, updateContentTitle, initiateMultipartUpload, getPresignedPartUrl, completeMultipartUpload, abortMultipartUpload, createVideoUploadSession, initiateGumletMultipart, signGumletPart, completeGumletMultipart, abortGumletMultipart } from "../../Api/api";
 
 const GUMLET_PLAYER_DOMAIN = import.meta.env.VITE_GUMLET_PLAYER_DOMAIN || "play.gumlet.io";
 
@@ -146,38 +146,114 @@ const CourseContentManager = () => {
       let assetId;
 
       if (activeType === "video") {
-        const uploadSessionRes = await createVideoUploadSession();
-        const { upload_url, asset_id } = uploadSessionRes.data;
+        const VIDEO_MULTIPART_THRESHOLD = 100 * 1024 * 1024; // 100 MB
 
-        if (!upload_url || !asset_id) {
-          throw new Error("Failed to create video upload session");
+        if (file.size > VIDEO_MULTIPART_THRESHOLD) {
+          // ── Gumlet multipart upload ──────────────────────────────────────
+          const initiateRes = await initiateGumletMultipart();
+          const { asset_id, upload_id } = initiateRes.data;
+
+          if (!asset_id || !upload_id) {
+            throw new Error("Failed to initiate Gumlet multipart upload");
+          }
+
+          const PART_SIZE = 10 * 1024 * 1024; // 10 MB per part (min 5 MB for Gumlet)
+          const numParts = Math.ceil(file.size / PART_SIZE);
+          const uploadedParts = [];
+          const CONCURRENT_UPLOADS = 4;
+          let uploadedBytes = 0;
+
+          try {
+            for (let batchStart = 1; batchStart <= numParts; batchStart += CONCURRENT_UPLOADS) {
+              const batchEnd = Math.min(batchStart + CONCURRENT_UPLOADS - 1, numParts);
+              const batchPromises = [];
+
+              for (let partNumber = batchStart; partNumber <= batchEnd; partNumber++) {
+                const start = (partNumber - 1) * PART_SIZE;
+                const end = Math.min(start + PART_SIZE, file.size);
+                const partBlob = file.slice(start, end);
+
+                const uploadPromise = (async () => {
+                  let retries = 3;
+                  let etag = null;
+
+                  while (retries > 0) {
+                    try {
+                      const signRes = await signGumletPart(asset_id, upload_id, partNumber);
+                      const { signed_url } = signRes.data;
+
+                      const xhr = await new Promise((resolve, reject) => {
+                        const x = new XMLHttpRequest();
+                        x.open("PUT", signed_url);
+                        x.onload = () => (x.status === 200 ? resolve(x) : reject(new Error(`Part ${partNumber} failed: ${x.status}`)));
+                        x.onerror = () => reject(new Error(`Part ${partNumber} network error`));
+                        x.send(partBlob);
+                      });
+
+                      etag = xhr.getResponseHeader("ETag");
+                      if (!etag) throw new Error("No ETag received");
+                      break;
+                    } catch (err) {
+                      retries--;
+                      if (retries === 0) throw new Error(`Part ${partNumber} failed after 3 attempts: ${err.message}`);
+                      await new Promise(r => setTimeout(r, (4 - retries) * 1000));
+                    }
+                  }
+
+                  return { part_number: partNumber, etag };
+                })();
+
+                batchPromises.push(uploadPromise);
+              }
+
+              const batchResults = await Promise.all(batchPromises);
+              batchResults.forEach(({ part_number, etag }) => {
+                uploadedParts.push({ part_number, etag });
+                uploadedBytes += PART_SIZE;
+              });
+
+              const progress = Math.round((batchEnd / numParts) * 100);
+              setUploadProgress(Math.min(progress, 99));
+            }
+
+            uploadedParts.sort((a, b) => a.part_number - b.part_number);
+            await completeGumletMultipart(asset_id, upload_id, uploadedParts);
+            setUploadProgress(100);
+
+          } catch (err) {
+            await abortGumletMultipart(asset_id, upload_id).catch(() => {});
+            throw err;
+          }
+
+          assetId = asset_id;
+
+        } else {
+          // ── Single PUT for small videos (<= 100 MB) ──────────────────────
+          const uploadSessionRes = await createVideoUploadSession();
+          const { upload_url, asset_id } = uploadSessionRes.data;
+
+          if (!upload_url || !asset_id) {
+            throw new Error("Failed to create video upload session");
+          }
+
+          const xhr = new XMLHttpRequest();
+          await new Promise((resolve, reject) => {
+            xhr.upload.addEventListener("progress", (e) => {
+              if (e.lengthComputable) {
+                setUploadProgress(Math.round((e.loaded / e.total) * 100));
+              }
+            });
+            xhr.addEventListener("load", () => {
+              xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new Error(`Upload failed: ${xhr.status}`));
+            });
+            xhr.addEventListener("error", () => reject(new Error("Upload failed")));
+            xhr.open("PUT", upload_url);
+            xhr.setRequestHeader("Content-Type", file.type);
+            xhr.send(file);
+          });
+
+          assetId = asset_id;
         }
-
-        const xhr = new XMLHttpRequest();
-        await new Promise((resolve, reject) => {
-          xhr.upload.addEventListener("progress", (e) => {
-            if (e.lengthComputable) {
-              const progress = Math.round((e.loaded / e.total) * 100);
-              setUploadProgress(progress);
-            }
-          });
-
-          xhr.addEventListener("load", () => {
-            if (xhr.status >= 200 && xhr.status < 300) {
-              resolve();
-            } else {
-              reject(new Error(`Upload failed with status: ${xhr.status}`));
-            }
-          });
-
-          xhr.addEventListener("error", () => reject(new Error("Upload failed")));
-
-          xhr.open("PUT", upload_url);
-          xhr.setRequestHeader("Content-Type", file.type);
-          xhr.send(file);
-        });
-
-        assetId = asset_id;
       } else {
         const folder = "documents";
         const MULTIPART_THRESHOLD = 100 * 1024 * 1024; // 100MB threshold for multipart upload
@@ -562,38 +638,114 @@ const CourseContentManager = () => {
       let assetId;
 
       if (activeType === "video") {
-        const uploadSessionRes = await createVideoUploadSession();
-        const { upload_url, asset_id } = uploadSessionRes.data;
+        const VIDEO_MULTIPART_THRESHOLD = 100 * 1024 * 1024; // 100 MB
 
-        if (!upload_url || !asset_id) {
-          throw new Error("Failed to create video upload session");
+        if (file.size > VIDEO_MULTIPART_THRESHOLD) {
+          // ── Gumlet multipart upload ──────────────────────────────────────
+          const initiateRes = await initiateGumletMultipart();
+          const { asset_id, upload_id } = initiateRes.data;
+
+          if (!asset_id || !upload_id) {
+            throw new Error("Failed to initiate Gumlet multipart upload");
+          }
+
+          const PART_SIZE = 10 * 1024 * 1024; // 10 MB per part (min 5 MB for Gumlet)
+          const numParts = Math.ceil(file.size / PART_SIZE);
+          const uploadedParts = [];
+          const CONCURRENT_UPLOADS = 4;
+          let uploadedBytes = 0;
+
+          try {
+            for (let batchStart = 1; batchStart <= numParts; batchStart += CONCURRENT_UPLOADS) {
+              const batchEnd = Math.min(batchStart + CONCURRENT_UPLOADS - 1, numParts);
+              const batchPromises = [];
+
+              for (let partNumber = batchStart; partNumber <= batchEnd; partNumber++) {
+                const start = (partNumber - 1) * PART_SIZE;
+                const end = Math.min(start + PART_SIZE, file.size);
+                const partBlob = file.slice(start, end);
+
+                const uploadPromise = (async () => {
+                  let retries = 3;
+                  let etag = null;
+
+                  while (retries > 0) {
+                    try {
+                      const signRes = await signGumletPart(asset_id, upload_id, partNumber);
+                      const { signed_url } = signRes.data;
+
+                      const xhr = await new Promise((resolve, reject) => {
+                        const x = new XMLHttpRequest();
+                        x.open("PUT", signed_url);
+                        x.onload = () => (x.status === 200 ? resolve(x) : reject(new Error(`Part ${partNumber} failed: ${x.status}`)));
+                        x.onerror = () => reject(new Error(`Part ${partNumber} network error`));
+                        x.send(partBlob);
+                      });
+
+                      etag = xhr.getResponseHeader("ETag");
+                      if (!etag) throw new Error("No ETag received");
+                      break;
+                    } catch (err) {
+                      retries--;
+                      if (retries === 0) throw new Error(`Part ${partNumber} failed after 3 attempts: ${err.message}`);
+                      await new Promise(r => setTimeout(r, (4 - retries) * 1000));
+                    }
+                  }
+
+                  return { part_number: partNumber, etag };
+                })();
+
+                batchPromises.push(uploadPromise);
+              }
+
+              const batchResults = await Promise.all(batchPromises);
+              batchResults.forEach(({ part_number, etag }) => {
+                uploadedParts.push({ part_number, etag });
+                uploadedBytes += PART_SIZE;
+              });
+
+              const progress = Math.round((batchEnd / numParts) * 100);
+              setUploadProgress(Math.min(progress, 99));
+            }
+
+            uploadedParts.sort((a, b) => a.part_number - b.part_number);
+            await completeGumletMultipart(asset_id, upload_id, uploadedParts);
+            setUploadProgress(100);
+
+          } catch (err) {
+            await abortGumletMultipart(asset_id, upload_id).catch(() => {});
+            throw err;
+          }
+
+          assetId = asset_id;
+
+        } else {
+          // ── Single PUT for small videos (<= 100 MB) ──────────────────────
+          const uploadSessionRes = await createVideoUploadSession();
+          const { upload_url, asset_id } = uploadSessionRes.data;
+
+          if (!upload_url || !asset_id) {
+            throw new Error("Failed to create video upload session");
+          }
+
+          const xhr = new XMLHttpRequest();
+          await new Promise((resolve, reject) => {
+            xhr.upload.addEventListener("progress", (e) => {
+              if (e.lengthComputable) {
+                setUploadProgress(Math.round((e.loaded / e.total) * 100));
+              }
+            });
+            xhr.addEventListener("load", () => {
+              xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new Error(`Upload failed: ${xhr.status}`));
+            });
+            xhr.addEventListener("error", () => reject(new Error("Upload failed")));
+            xhr.open("PUT", upload_url);
+            xhr.setRequestHeader("Content-Type", file.type);
+            xhr.send(file);
+          });
+
+          assetId = asset_id;
         }
-
-        const xhr = new XMLHttpRequest();
-        await new Promise((resolve, reject) => {
-          xhr.upload.addEventListener("progress", (e) => {
-            if (e.lengthComputable) {
-              const progress = Math.round((e.loaded / e.total) * 100);
-              setUploadProgress(progress);
-            }
-          });
-
-          xhr.addEventListener("load", () => {
-            if (xhr.status >= 200 && xhr.status < 300) {
-              resolve();
-            } else {
-              reject(new Error(`Upload failed with status: ${xhr.status}`));
-            }
-          });
-
-          xhr.addEventListener("error", () => reject(new Error("Upload failed")));
-
-          xhr.open("PUT", upload_url);
-          xhr.setRequestHeader("Content-Type", file.type);
-          xhr.send(file);
-        });
-
-        assetId = asset_id;
       } else {
         const folder = "documents";
         const MULTIPART_THRESHOLD = 100 * 1024 * 1024; // 100MB threshold for multipart upload
@@ -1221,16 +1373,6 @@ const CourseContentManager = () => {
                                           </div>
                                         )}
 
-                                        {/* Content Preview */}
-                                        {content.type === "video" && content.asset_id && (
-                                          <iframe
-                                            src={`https://${GUMLET_PLAYER_DOMAIN}/embed/${content.asset_id}`}
-                                            className="w-100"
-                                            style={{ height: "120px", border: 0 }}
-                                            title={content.title || "Video preview"}
-                                            allowFullScreen
-                                          />
-                                        )}
 
                                         {content.type === "pdf" && (
                                           <a
@@ -1301,7 +1443,7 @@ const CourseContentManager = () => {
                                         style={{ fontSize: "0.7rem" }}
                                       />
                                       <div className="form-text" style={{ fontSize: "0.6rem" }}>
-                                        {activeType === "video" ? "MP4, WebM (Max: 100MB)" : "PDF, DOC (Max: 10MB)"}
+                                        {activeType === "video" ? "MP4, WebM (any size — large files use multipart upload)" : "PDF, DOC (Max: 10MB)"}
                                       </div>
 
                                       {/* Inline upload confirmation */}
