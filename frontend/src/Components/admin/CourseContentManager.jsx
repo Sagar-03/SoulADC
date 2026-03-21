@@ -139,10 +139,10 @@ const CourseContentManager = () => {
         const { asset_id } = initiateRes.data;
         if (!asset_id) throw new Error("Failed to initiate Gumlet multipart upload");
 
-        const PART_SIZE = 10 * 1024 * 1024;
+        const PART_SIZE = 25 * 1024 * 1024; // 25 MB per chunk
         const numParts = Math.ceil(file.size / PART_SIZE);
         const uploadedParts = [];
-        const CONCURRENT_UPLOADS = 4;
+        const CONCURRENT_UPLOADS = 8;
 
         for (let batchStart = 1; batchStart <= numParts; batchStart += CONCURRENT_UPLOADS) {
           const batchEnd = Math.min(batchStart + CONCURRENT_UPLOADS - 1, numParts);

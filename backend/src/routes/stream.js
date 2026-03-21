@@ -92,22 +92,31 @@ router.post("/multipart/initiate", protect, adminOnly, async (req, res) => {
     res.json(data);
   } catch (error) {
     console.error("Gumlet multipart initiate error:", error.response?.data || error.message);
-    res.status(500).json({ error: "Failed to initiate Gumlet multipart upload" });
+    res.status(500).json({
+      error: "Failed to initiate Gumlet multipart upload",
+      gumlet_status: error.response?.status,
+      gumlet_response: error.response?.data,
+    });
   }
 });
 
 // POST /video/multipart/sign-part  body: { asset_id, part_number }  →  { part_upload_url }
+// (Frontend sends POST; backend forwards as GET to Gumlet internally)
 router.post("/multipart/sign-part", protect, adminOnly, async (req, res) => {
   try {
     const { asset_id, part_number } = req.body;
-    if (!asset_id || !part_number) {
+    if (!asset_id || part_number == null) {
       return res.status(400).json({ error: "asset_id and part_number are required" });
     }
-    const data = await signVideoMultipartPart(asset_id, part_number);
+    const data = await signVideoMultipartPart(asset_id, Number(part_number));
     res.json(data);
   } catch (error) {
     console.error("Gumlet sign part error:", error.response?.data || error.message);
-    res.status(500).json({ error: "Failed to sign multipart part" });
+    res.status(500).json({
+      error: "Failed to sign multipart part",
+      gumlet_status: error.response?.status,
+      gumlet_response: error.response?.data,
+    });
   }
 });
 
