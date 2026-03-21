@@ -21,6 +21,8 @@ const CourseContentManager = () => {
   const [uploadQueue, setUploadQueue] = useState([]);
   const isProcessingRef = useRef(false);
   const queueRef = useRef([]);
+  const wakeLockRef = useRef(null);
+  const [interruptedUploads, setInterruptedUploads] = useState([]);
 
   // State for editing content title
   const [editingContentId, setEditingContentId] = useState(null);
@@ -122,6 +124,48 @@ const CourseContentManager = () => {
     }
   };
 
+  // ── Check localStorage for interrupted uploads on mount ─────────────────────
+  useEffect(() => {
+    const keys = Object.keys(localStorage).filter(k => k.startsWith('gumlet_resume_'));
+    const interrupted = keys.map(key => {
+      try { return JSON.parse(localStorage.getItem(key)); } catch { return null; }
+    }).filter(Boolean);
+    setInterruptedUploads(interrupted);
+  }, []);
+
+  // ── localStorage helpers ─────────────────────────────────────────────────────
+  const getStorageKey = (file, weekNumber, dayNumber) =>
+    `gumlet_resume_${file.name}_${file.size}_w${weekNumber}_d${dayNumber}`;
+
+  const saveUploadProgress = (storageKey, data) => {
+    try { localStorage.setItem(storageKey, JSON.stringify(data)); } catch (e) {
+      console.warn('localStorage save failed:', e);
+    }
+  };
+
+  const clearUploadProgress = (storageKey) => {
+    localStorage.removeItem(storageKey);
+    setInterruptedUploads(prev => prev.filter(u => u.storageKey !== storageKey));
+  };
+
+  // ── Wake Lock ────────────────────────────────────────────────────────────────
+  const acquireWakeLock = async () => {
+    if ('wakeLock' in navigator) {
+      try {
+        wakeLockRef.current = await navigator.wakeLock.request('screen');
+      } catch (e) {
+        console.warn('Wake Lock unavailable:', e.message);
+      }
+    }
+  };
+
+  const releaseWakeLock = async () => {
+    if (wakeLockRef.current) {
+      await wakeLockRef.current.release().catch(() => {});
+      wakeLockRef.current = null;
+    }
+  };
+
   // ── Keep queueRef in sync with state so async functions always read latest ──
   useEffect(() => {
     queueRef.current = uploadQueue;
@@ -135,25 +179,43 @@ const CourseContentManager = () => {
       const VIDEO_MULTIPART_THRESHOLD = 100 * 1024 * 1024;
 
       if (file.size > VIDEO_MULTIPART_THRESHOLD) {
-        const initiateRes = await initiateGumletMultipart();
-        const { asset_id } = initiateRes.data;
-        if (!asset_id) throw new Error("Failed to initiate Gumlet multipart upload");
-
-        const PART_SIZE = 25 * 1024 * 1024; // 25 MB per chunk
+        const PART_SIZE = 25 * 1024 * 1024;
         const numParts = Math.ceil(file.size / PART_SIZE);
-        const uploadedParts = [];
         const CONCURRENT_UPLOADS = 8;
+        const storageKey = getStorageKey(file, weekNumber, dayNumber);
+
+        // ── Resume check ──────────────────────────────────────────────────────
+        const saved = (() => { try { return JSON.parse(localStorage.getItem(storageKey)); } catch { return null; } })();
+        let asset_id;
+        let uploadedParts = [];
+
+        if (saved?.asset_id && Array.isArray(saved.uploadedParts) && saved.uploadedParts.length > 0) {
+          asset_id = saved.asset_id;
+          uploadedParts = saved.uploadedParts;
+          console.log(`Resuming upload: ${uploadedParts.length}/${numParts} parts already done`);
+        } else {
+          const initiateRes = await initiateGumletMultipart();
+          asset_id = initiateRes.data.asset_id;
+          if (!asset_id) throw new Error("Failed to initiate Gumlet multipart upload");
+          saveUploadProgress(storageKey, { storageKey, asset_id, uploadedParts: [], fileName: file.name, fileSize: file.size, weekNumber, dayNumber });
+        }
+
+        const completedPartNumbers = new Set(uploadedParts.map(p => p.PartNumber));
 
         for (let batchStart = 1; batchStart <= numParts; batchStart += CONCURRENT_UPLOADS) {
           const batchEnd = Math.min(batchStart + CONCURRENT_UPLOADS - 1, numParts);
-          const batchPromises = [];
 
-          for (let partNumber = batchStart; partNumber <= batchEnd; partNumber++) {
-            const start = (partNumber - 1) * PART_SIZE;
-            const end = Math.min(start + PART_SIZE, file.size);
-            const partBlob = file.slice(start, end);
+          // Only upload parts not yet completed
+          const pendingParts = [];
+          for (let p = batchStart; p <= batchEnd; p++) {
+            if (!completedPartNumbers.has(p)) pendingParts.push(p);
+          }
 
-            batchPromises.push((async () => {
+          if (pendingParts.length > 0) {
+            const batchResults = await Promise.all(pendingParts.map(partNumber => (async () => {
+              const start = (partNumber - 1) * PART_SIZE;
+              const end = Math.min(start + PART_SIZE, file.size);
+              const partBlob = file.slice(start, end);
               let retries = 3;
               let ETag = null;
               while (retries > 0) {
@@ -177,16 +239,23 @@ const CourseContentManager = () => {
                 }
               }
               return { PartNumber: partNumber, ETag };
-            })());
+            })()));
+
+            batchResults.forEach(r => {
+              uploadedParts.push(r);
+              completedPartNumbers.add(r.PartNumber);
+            });
+
+            // Save progress after every batch
+            saveUploadProgress(storageKey, { storageKey, asset_id, uploadedParts, fileName: file.name, fileSize: file.size, weekNumber, dayNumber });
           }
 
-          const batchResults = await Promise.all(batchPromises);
-          batchResults.forEach(r => uploadedParts.push(r));
           onProgress(Math.min(Math.round((batchEnd / numParts) * 100), 99));
         }
 
         uploadedParts.sort((a, b) => a.PartNumber - b.PartNumber);
         await completeGumletMultipart(asset_id, uploadedParts);
+        clearUploadProgress(storageKey); // ✅ clear on success
         onProgress(100);
         return { asset_id };
 
@@ -315,6 +384,7 @@ const CourseContentManager = () => {
     if (!nextItem) return;
 
     isProcessingRef.current = true;
+    await acquireWakeLock();
 
     setUploadQueue(prev => prev.map(item =>
       item.id === nextItem.id ? { ...item, status: 'uploading', progress: 0 } : item
@@ -345,13 +415,22 @@ const CourseContentManager = () => {
 
     } catch (err) {
       console.error("Queue upload failed:", err);
+      // Clear localStorage on error so a retry starts fresh
+      if (nextItem.type === 'video') {
+        clearUploadProgress(getStorageKey(nextItem.file, nextItem.weekNumber, nextItem.dayNumber));
+      }
       setUploadQueue(prev => prev.map(item =>
         item.id === nextItem.id ? { ...item, status: 'error', error: err.message } : item
       ));
     } finally {
       isProcessingRef.current = false;
+      // Release wake lock only when no more pending items
       const nextPending = queueRef.current.find(item => item.status === 'pending');
-      if (nextPending) processNextItem();
+      if (nextPending) {
+        processNextItem();
+      } else {
+        await releaseWakeLock();
+      }
     }
   };
 
@@ -937,6 +1016,35 @@ const CourseContentManager = () => {
           </div>
         )}
 
+        {/* Interrupted Uploads Banner */}
+        {interruptedUploads.length > 0 && (
+          <div className="alert alert-warning border-warning mb-4">
+            <div className="d-flex justify-content-between align-items-start">
+              <div>
+                <strong><i className="bi bi-exclamation-triangle me-2"></i>Interrupted Upload{interruptedUploads.length > 1 ? 's' : ''} Detected</strong>
+                <p className="mb-2 mt-1 small">Re-add the file(s) below to resume from where they stopped:</p>
+                {interruptedUploads.map((u, i) => (
+                  <div key={i} className="d-flex align-items-center gap-2 mb-1">
+                    <i className="bi bi-camera-video text-primary"></i>
+                    <small>
+                      <strong>{u.fileName}</strong> — Week {u.weekNumber} / Day {u.dayNumber}
+                      <span className="text-muted ms-2">({u.uploadedParts?.length || 0} parts saved)</span>
+                    </small>
+                    <button
+                      className="btn btn-outline-danger btn-sm py-0 px-1"
+                      style={{ fontSize: "0.65rem" }}
+                      onClick={() => clearUploadProgress(u.storageKey)}
+                      title="Discard saved progress"
+                    >
+                      Discard
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Upload Queue Panel */}
         {uploadQueue.length > 0 && (
           <div className="card mb-4 border-primary">
@@ -997,7 +1105,10 @@ const CourseContentManager = () => {
                   {item.status === 'pending' && (
                     <button
                       className="btn btn-outline-danger btn-sm ms-2 p-0 px-1"
-                      onClick={() => setUploadQueue(prev => prev.filter(i => i.id !== item.id))}
+                      onClick={() => {
+                        if (item.type === 'video') clearUploadProgress(getStorageKey(item.file, item.weekNumber, item.dayNumber));
+                        setUploadQueue(prev => prev.filter(i => i.id !== item.id));
+                      }}
                       title="Remove from queue"
                     >
                       <i className="bi bi-x"></i>
