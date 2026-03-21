@@ -160,14 +160,11 @@ export const abortMultipartUpload = (key, uploadId) =>
 export const initiateGumletMultipart = () =>
   api.post("/video/multipart/initiate");
 
-export const signGumletPart = (assetId, uploadId, partNumber) =>
-  api.post("/video/multipart/sign-part", { asset_id: assetId, upload_id: uploadId, part_number: partNumber });
+export const signGumletPart = (assetId, partNumber) =>
+  api.post("/video/multipart/sign-part", { asset_id: assetId, part_number: partNumber });
 
-export const completeGumletMultipart = (assetId, uploadId, parts) =>
-  api.post("/video/multipart/complete", { asset_id: assetId, upload_id: uploadId, parts });
-
-export const abortGumletMultipart = (assetId, uploadId) =>
-  api.post("/video/multipart/abort", { asset_id: assetId, upload_id: uploadId });
+export const completeGumletMultipart = (assetId, parts) =>
+  api.post("/video/multipart/complete", { asset_id: assetId, parts });
 
 // ============================
 // Chat/Doubt System APIs

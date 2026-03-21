@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import AdminLayout from "./AdminLayout";
 import { useParams } from "react-router-dom";
 import "./admin.css";
-import { getStreamUrl, addWeek, addDay, getCourses, getPresignUrl, deleteContent, deleteWeekApi, deleteDayApi, saveContent, updateContentTitle, initiateMultipartUpload, getPresignedPartUrl, completeMultipartUpload, abortMultipartUpload, createVideoUploadSession, initiateGumletMultipart, signGumletPart, completeGumletMultipart, abortGumletMultipart } from "../../Api/api";
+import { getStreamUrl, addWeek, addDay, getCourses, getPresignUrl, deleteContent, deleteWeekApi, deleteDayApi, saveContent, updateContentTitle, initiateMultipartUpload, getPresignedPartUrl, completeMultipartUpload, abortMultipartUpload, createVideoUploadSession, initiateGumletMultipart, signGumletPart, completeGumletMultipart } from "../../Api/api";
 
 const GUMLET_PLAYER_DOMAIN = import.meta.env.VITE_GUMLET_PLAYER_DOMAIN || "play.gumlet.io";
 
@@ -15,14 +15,12 @@ const CourseContentManager = () => {
   const [activeWeekId, setActiveWeekId] = useState(null);
   const [activeDayId, setActiveDayId] = useState(null);
   const [activeType, setActiveType] = useState(null);
-  const [uploading, setUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
   const [error, setError] = useState(null);
 
-  // State for bulk operations
-  const [uploadedFiles, setUploadedFiles] = useState([]);
-  const [bulkSaving, setBulkSaving] = useState(false);
-  const [bulkSaveProgress, setBulkSaveProgress] = useState(0);
+  // Upload queue
+  const [uploadQueue, setUploadQueue] = useState([]);
+  const isProcessingRef = useRef(false);
+  const queueRef = useRef([]);
 
   // State for editing content title
   const [editingContentId, setEditingContentId] = useState(null);
@@ -124,360 +122,275 @@ const CourseContentManager = () => {
     }
   };
 
-  const uploadContent = async () => {
-    if (!file || !activeWeekId || !activeDayId || !activeType) return;
+  // ── Keep queueRef in sync with state so async functions always read latest ──
+  useEffect(() => {
+    queueRef.current = uploadQueue;
+  }, [uploadQueue]);
 
-    setUploading(true);
-    setUploadProgress(0);
-    setError(null);
+  // ── Core upload logic (no React state, just returns result) ─────────────────
+  const doUpload = async (item, onProgress) => {
+    const { file, weekNumber, dayNumber, type } = item;
 
-    try {
-      // Find the active week and day to get their numbers
-      const activeWeek = course.weeks.find(week => week._id === activeWeekId);
-      const activeDay = activeWeek?.days.find(day => day._id === activeDayId);
+    if (type === "video") {
+      const VIDEO_MULTIPART_THRESHOLD = 100 * 1024 * 1024;
 
-      if (!activeWeek || !activeDay) {
-        throw new Error("Could not find selected week or day");
+      if (file.size > VIDEO_MULTIPART_THRESHOLD) {
+        const initiateRes = await initiateGumletMultipart();
+        const { asset_id } = initiateRes.data;
+        if (!asset_id) throw new Error("Failed to initiate Gumlet multipart upload");
+
+        const PART_SIZE = 10 * 1024 * 1024;
+        const numParts = Math.ceil(file.size / PART_SIZE);
+        const uploadedParts = [];
+        const CONCURRENT_UPLOADS = 4;
+
+        for (let batchStart = 1; batchStart <= numParts; batchStart += CONCURRENT_UPLOADS) {
+          const batchEnd = Math.min(batchStart + CONCURRENT_UPLOADS - 1, numParts);
+          const batchPromises = [];
+
+          for (let partNumber = batchStart; partNumber <= batchEnd; partNumber++) {
+            const start = (partNumber - 1) * PART_SIZE;
+            const end = Math.min(start + PART_SIZE, file.size);
+            const partBlob = file.slice(start, end);
+
+            batchPromises.push((async () => {
+              let retries = 3;
+              let ETag = null;
+              while (retries > 0) {
+                try {
+                  const signRes = await signGumletPart(asset_id, partNumber);
+                  const { part_upload_url } = signRes.data;
+                  const xhr = await new Promise((resolve, reject) => {
+                    const x = new XMLHttpRequest();
+                    x.open("PUT", part_upload_url);
+                    x.onload = () => (x.status === 200 ? resolve(x) : reject(new Error(`Part ${partNumber} failed: ${x.status}`)));
+                    x.onerror = () => reject(new Error(`Part ${partNumber} network error`));
+                    x.send(partBlob);
+                  });
+                  ETag = xhr.getResponseHeader("ETag");
+                  if (!ETag) throw new Error("No ETag received");
+                  break;
+                } catch (err) {
+                  retries--;
+                  if (retries === 0) throw new Error(`Part ${partNumber} failed after 3 attempts: ${err.message}`);
+                  await new Promise(r => setTimeout(r, (4 - retries) * 1000));
+                }
+              }
+              return { PartNumber: partNumber, ETag };
+            })());
+          }
+
+          const batchResults = await Promise.all(batchPromises);
+          batchResults.forEach(r => uploadedParts.push(r));
+          onProgress(Math.min(Math.round((batchEnd / numParts) * 100), 99));
+        }
+
+        uploadedParts.sort((a, b) => a.PartNumber - b.PartNumber);
+        await completeGumletMultipart(asset_id, uploadedParts);
+        onProgress(100);
+        return { asset_id };
+
+      } else {
+        const uploadSessionRes = await createVideoUploadSession();
+        const { upload_url, asset_id } = uploadSessionRes.data;
+        if (!upload_url || !asset_id) throw new Error("Failed to create video upload session");
+
+        await new Promise((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.upload.addEventListener("progress", (e) => {
+            if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100));
+          });
+          xhr.addEventListener("load", () => xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new Error(`Upload failed: ${xhr.status}`)));
+          xhr.addEventListener("error", () => reject(new Error("Upload failed")));
+          xhr.open("PUT", upload_url);
+          xhr.setRequestHeader("Content-Type", file.type);
+          xhr.send(file);
+        });
+        return { asset_id };
       }
 
-      // console.log(`Uploading to Week ${activeWeek.weekNumber}, Day ${activeDay.dayNumber}`);
+    } else {
+      const folder = "documents";
+      const MULTIPART_THRESHOLD = 100 * 1024 * 1024;
 
-      let key;
-      let assetId;
-
-      if (activeType === "video") {
-        const VIDEO_MULTIPART_THRESHOLD = 100 * 1024 * 1024; // 100 MB
-
-        if (file.size > VIDEO_MULTIPART_THRESHOLD) {
-          // ── Gumlet multipart upload ──────────────────────────────────────
-          const initiateRes = await initiateGumletMultipart();
-          const { asset_id, upload_id } = initiateRes.data;
-
-          if (!asset_id || !upload_id) {
-            throw new Error("Failed to initiate Gumlet multipart upload");
-          }
-
-          const PART_SIZE = 10 * 1024 * 1024; // 10 MB per part (min 5 MB for Gumlet)
-          const numParts = Math.ceil(file.size / PART_SIZE);
-          const uploadedParts = [];
-          const CONCURRENT_UPLOADS = 4;
-          let uploadedBytes = 0;
-
-          try {
-            for (let batchStart = 1; batchStart <= numParts; batchStart += CONCURRENT_UPLOADS) {
-              const batchEnd = Math.min(batchStart + CONCURRENT_UPLOADS - 1, numParts);
-              const batchPromises = [];
-
-              for (let partNumber = batchStart; partNumber <= batchEnd; partNumber++) {
-                const start = (partNumber - 1) * PART_SIZE;
-                const end = Math.min(start + PART_SIZE, file.size);
-                const partBlob = file.slice(start, end);
-
-                const uploadPromise = (async () => {
-                  let retries = 3;
-                  let etag = null;
-
-                  while (retries > 0) {
-                    try {
-                      const signRes = await signGumletPart(asset_id, upload_id, partNumber);
-                      const { signed_url } = signRes.data;
-
-                      const xhr = await new Promise((resolve, reject) => {
-                        const x = new XMLHttpRequest();
-                        x.open("PUT", signed_url);
-                        x.onload = () => (x.status === 200 ? resolve(x) : reject(new Error(`Part ${partNumber} failed: ${x.status}`)));
-                        x.onerror = () => reject(new Error(`Part ${partNumber} network error`));
-                        x.send(partBlob);
-                      });
-
-                      etag = xhr.getResponseHeader("ETag");
-                      if (!etag) throw new Error("No ETag received");
-                      break;
-                    } catch (err) {
-                      retries--;
-                      if (retries === 0) throw new Error(`Part ${partNumber} failed after 3 attempts: ${err.message}`);
-                      await new Promise(r => setTimeout(r, (4 - retries) * 1000));
-                    }
-                  }
-
-                  return { part_number: partNumber, etag };
-                })();
-
-                batchPromises.push(uploadPromise);
-              }
-
-              const batchResults = await Promise.all(batchPromises);
-              batchResults.forEach(({ part_number, etag }) => {
-                uploadedParts.push({ part_number, etag });
-                uploadedBytes += PART_SIZE;
-              });
-
-              const progress = Math.round((batchEnd / numParts) * 100);
-              setUploadProgress(Math.min(progress, 99));
-            }
-
-            uploadedParts.sort((a, b) => a.part_number - b.part_number);
-            await completeGumletMultipart(asset_id, upload_id, uploadedParts);
-            setUploadProgress(100);
-
-          } catch (err) {
-            await abortGumletMultipart(asset_id, upload_id).catch(() => {});
-            throw err;
-          }
-
-          assetId = asset_id;
-
-        } else {
-          // ── Single PUT for small videos (<= 100 MB) ──────────────────────
-          const uploadSessionRes = await createVideoUploadSession();
-          const { upload_url, asset_id } = uploadSessionRes.data;
-
-          if (!upload_url || !asset_id) {
-            throw new Error("Failed to create video upload session");
-          }
-
-          const xhr = new XMLHttpRequest();
-          await new Promise((resolve, reject) => {
-            xhr.upload.addEventListener("progress", (e) => {
-              if (e.lengthComputable) {
-                setUploadProgress(Math.round((e.loaded / e.total) * 100));
-              }
-            });
-            xhr.addEventListener("load", () => {
-              xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new Error(`Upload failed: ${xhr.status}`));
-            });
-            xhr.addEventListener("error", () => reject(new Error("Upload failed")));
-            xhr.open("PUT", upload_url);
-            xhr.setRequestHeader("Content-Type", file.type);
-            xhr.send(file);
-          });
-
-          assetId = asset_id;
-        }
-      } else {
-        const folder = "documents";
-        const MULTIPART_THRESHOLD = 100 * 1024 * 1024; // 100MB threshold for multipart upload
-
-        // Use multipart upload for files larger than 100MB
-        if (file.size > MULTIPART_THRESHOLD) {
-        // console.log(`File size: ${(file.size / 1024 / 1024).toFixed(2)}MB - Using multipart upload`);
-        
-        // 1. Initiate multipart upload
-        const initiateRes = await initiateMultipartUpload(
-          file.name,
-          file.type,
-          folder,
-          activeWeek.weekNumber,
-          activeDay.dayNumber
-        );
-        
+      if (file.size > MULTIPART_THRESHOLD) {
+        const initiateRes = await initiateMultipartUpload(file.name, file.type, folder, weekNumber, dayNumber);
         const uploadId = initiateRes.data.uploadId;
-        key = initiateRes.data.key;
-        // console.log("Multipart upload initiated:", { uploadId, key });
+        const key = initiateRes.data.key;
 
         try {
-          // 2. Upload file in parts (10MB chunks for faster uploads)
-          const PART_SIZE = 10 * 1024 * 1024; // 10MB per part (optimized for 10GB+ files)
+          const PART_SIZE = 10 * 1024 * 1024;
           const numParts = Math.ceil(file.size / PART_SIZE);
           const uploadedParts = [];
-          const CONCURRENT_UPLOADS = 5; // Upload 5 parts in parallel
+          const CONCURRENT_UPLOADS = 5;
           const startTime = Date.now();
           let uploadedBytes = 0;
 
-          // Upload parts in batches for speed
           for (let batchStart = 1; batchStart <= numParts; batchStart += CONCURRENT_UPLOADS) {
             const batchEnd = Math.min(batchStart + CONCURRENT_UPLOADS - 1, numParts);
             const batchPromises = [];
-            
+
             for (let partNumber = batchStart; partNumber <= batchEnd; partNumber++) {
               const start = (partNumber - 1) * PART_SIZE;
               const end = Math.min(start + PART_SIZE, file.size);
               const partBlob = file.slice(start, end);
 
-              // Create upload promise for this part
-              const uploadPromise = (async () => {
-                // Retry logic for each part (max 3 attempts)
+              batchPromises.push((async () => {
                 let retries = 3;
                 let etag = null;
-                
                 while (retries > 0) {
                   try {
-                    // Get presigned URL for this part
                     const partUrlRes = await getPresignedPartUrl(key, uploadId, partNumber);
                     const partUploadUrl = partUrlRes.data.uploadUrl;
-
-                    // Upload part with XMLHttpRequest for better control
                     const response = await new Promise((resolve, reject) => {
                       const xhr = new XMLHttpRequest();
-                      
                       xhr.open('PUT', partUploadUrl);
                       xhr.setRequestHeader('Content-Type', file.type);
-                      
-                      xhr.onload = () => {
-                        if (xhr.status === 200) {
-                          resolve(xhr);
-                        } else {
-                          reject(new Error(`Part ${partNumber} upload failed with status: ${xhr.status}`));
-                        }
-                      };
-                      
+                      xhr.onload = () => xhr.status === 200 ? resolve(xhr) : reject(new Error(`Part ${partNumber} failed: ${xhr.status}`));
                       xhr.onerror = () => reject(new Error(`Part ${partNumber} network error`));
-                      xhr.ontimeout = () => reject(new Error(`Part ${partNumber} timeout`));
-                      
                       xhr.send(partBlob);
                     });
-
-                    // Get ETag from response
                     etag = response.getResponseHeader('ETag');
-                    if (!etag) {
-                      throw new Error('No ETag received from server');
-                    }
-                    
-                    break; // Success, exit retry loop
+                    if (!etag) throw new Error('No ETag received');
+                    break;
                   } catch (error) {
                     retries--;
-                    console.warn(`Part ${partNumber} failed, retries left: ${retries}`, error);
-                    if (retries === 0) {
-                      throw new Error(`Part ${partNumber} failed after 3 attempts: ${error.message}`);
-                    }
-                    // Wait before retry (exponential backoff)
-                    await new Promise(resolve => setTimeout(resolve, (4 - retries) * 1000));
+                    if (retries === 0) throw new Error(`Part ${partNumber} failed after 3 attempts: ${error.message}`);
+                    await new Promise(r => setTimeout(r, (4 - retries) * 1000));
                   }
                 }
-
                 return { partNumber, etag };
-              })();
-
-              batchPromises.push(uploadPromise);
+              })());
             }
 
-            // Wait for all parts in this batch to complete
             const batchResults = await Promise.all(batchPromises);
-            
-            // Add completed parts to array
             batchResults.forEach(({ partNumber, etag }) => {
-              uploadedParts.push({
-                PartNumber: partNumber,
-                ETag: etag,
-              });
+              uploadedParts.push({ PartNumber: partNumber, ETag: etag });
               uploadedBytes += PART_SIZE;
             });
 
-            // Calculate and display upload speed
             const elapsedSeconds = (Date.now() - startTime) / 1000;
             const speedMBps = (uploadedBytes / 1024 / 1024) / elapsedSeconds;
             const remainingBytes = file.size - uploadedBytes;
-            const etaSeconds = remainingBytes / (uploadedBytes / elapsedSeconds);
-            const etaMinutes = Math.round(etaSeconds / 60);
-
-            // Update progress with speed info
-            const progress = Math.round((batchEnd / numParts) * 100);
-            setUploadProgress(progress);
-            console.log(`✅ Uploaded parts ${batchStart}-${batchEnd}/${numParts} (${progress}%) | Speed: ${speedMBps.toFixed(2)} MB/s | ETA: ${etaMinutes}min`);
+            const etaMinutes = Math.round((remainingBytes / (uploadedBytes / elapsedSeconds)) / 60);
+            onProgress(Math.round((batchEnd / numParts) * 100));
+            console.log(`✅ Parts ${batchStart}-${batchEnd}/${numParts} | Speed: ${speedMBps.toFixed(2)} MB/s | ETA: ${etaMinutes}min`);
           }
 
-          // 3. Sort parts by part number and complete multipart upload
           uploadedParts.sort((a, b) => a.PartNumber - b.PartNumber);
           await completeMultipartUpload(key, uploadId, uploadedParts);
-          console.log("✅ Multipart upload completed successfully");
+          return { s3Key: key };
 
         } catch (err) {
-          // Abort multipart upload on error
-          console.error("Multipart upload failed, aborting:", err);
           await abortMultipartUpload(key, uploadId);
           throw err;
         }
 
-        } else {
-          // Use regular single-part upload for smaller files
-          // console.log(`File size: ${(file.size / 1024 / 1024).toFixed(2)}MB - Using single-part upload`);
-          
-          const presignRes = await getPresignUrl(
-            file.name,
-            file.type,
-            folder,
-            activeWeek.weekNumber,
-            activeDay.dayNumber
-          );
+      } else {
+        const presignRes = await getPresignUrl(file.name, file.type, folder, weekNumber, dayNumber);
+        const uploadUrl = presignRes.data.uploadUrl;
+        const key = presignRes.data.key;
 
-          const uploadUrl = presignRes.data.uploadUrl;
-          key = presignRes.data.key;
-          // console.log("Got presigned URL and key:", { uploadUrl, key });
-
-          // Upload file to S3 with progress tracking
+        await new Promise((resolve, reject) => {
           const xhr = new XMLHttpRequest();
-
-          await new Promise((resolve, reject) => {
-            xhr.upload.addEventListener('progress', (e) => {
-              if (e.lengthComputable) {
-                const progress = Math.round((e.loaded / e.total) * 100);
-                setUploadProgress(progress);
-              }
-            });
-
-            xhr.addEventListener('load', () => {
-              if (xhr.status === 200) {
-                resolve();
-              } else {
-                reject(new Error(`Upload failed with status: ${xhr.status}`));
-              }
-            });
-
-            xhr.addEventListener('error', () => {
-              reject(new Error('Upload failed'));
-            });
-
-            xhr.open('PUT', uploadUrl);
-            xhr.setRequestHeader('Content-Type', file.type);
-            xhr.send(file);
+          xhr.upload.addEventListener('progress', (e) => {
+            if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100));
           });
-        }
-      }
-
-      // 4. Save metadata in DB
-      try {
-        const payload = {
-          type: activeType,
-          title: activeType === "video"
-            ? `Week ${activeWeek.weekNumber} - Day ${activeDay.dayNumber} - ${file.name.split(".")[0]}`
-            : file.name.split(".")[0],
-        };
-
-        if (activeType === "video") {
-          payload.asset_id = assetId;
-        } else {
-          payload.s3Key = key;
-        }
-
-        const saveRes = await saveContent(id, activeWeekId, activeDayId, {
-          ...payload,
+          xhr.addEventListener('load', () => xhr.status === 200 ? resolve() : reject(new Error(`Upload failed: ${xhr.status}`)));
+          xhr.addEventListener('error', () => reject(new Error('Upload failed')));
+          xhr.open('PUT', uploadUrl);
+          xhr.setRequestHeader('Content-Type', file.type);
+          xhr.send(file);
         });
-
-        // console.log("Content saved:", saveRes.data);
-      } catch (err) {
-        throw new Error("Failed to save content metadata: " + err.message);
+        return { s3Key: key };
       }
+    }
+  };
 
-      // Reset form
-      setFile(null);
-      setActiveWeekId(null);
-      setActiveDayId(null);
-      setActiveType(null);
-      setUploadProgress(0);
+  // ── Process the next pending item in the queue ───────────────────────────────
+  const processNextItem = async () => {
+    if (isProcessingRef.current) return;
 
-      // Clear file input
-      const fileInputs = document.querySelectorAll('input[type="file"]');
-      fileInputs.forEach(input => input.value = '');
+    const nextItem = queueRef.current.find(item => item.status === 'pending');
+    if (!nextItem) return;
+
+    isProcessingRef.current = true;
+
+    setUploadQueue(prev => prev.map(item =>
+      item.id === nextItem.id ? { ...item, status: 'uploading', progress: 0 } : item
+    ));
+
+    try {
+      const result = await doUpload(nextItem, (progress) => {
+        setUploadQueue(prev => prev.map(item =>
+          item.id === nextItem.id ? { ...item, progress } : item
+        ));
+      });
+
+      const title = nextItem.type === 'video'
+        ? `Week ${nextItem.weekNumber} - Day ${nextItem.dayNumber} - ${nextItem.file.name.replace(/\.[^.]+$/, '')}`
+        : nextItem.file.name.replace(/\.[^.]+$/, '');
+
+      await saveContent(id, nextItem.weekId, nextItem.dayId, {
+        type: nextItem.type,
+        title,
+        ...(nextItem.type === 'video' ? { asset_id: result.asset_id } : { s3Key: result.s3Key }),
+      });
 
       fetchCourse();
 
+      setUploadQueue(prev => prev.map(item =>
+        item.id === nextItem.id ? { ...item, status: 'done', progress: 100 } : item
+      ));
+
     } catch (err) {
-      setError(`Upload failed: ${err.message}`);
-      console.error(err);
+      console.error("Queue upload failed:", err);
+      setUploadQueue(prev => prev.map(item =>
+        item.id === nextItem.id ? { ...item, status: 'error', error: err.message } : item
+      ));
     } finally {
-      setUploading(false);
+      isProcessingRef.current = false;
+      const nextPending = queueRef.current.find(item => item.status === 'pending');
+      if (nextPending) processNextItem();
     }
   };
+
+  // ── Add file to queue and reset form ────────────────────────────────────────
+  const addToQueue = () => {
+    if (!file || !activeWeekId || !activeDayId || !activeType) return;
+
+    const activeWeek = course.weeks.find(w => w._id === activeWeekId);
+    const activeDay = activeWeek?.days.find(d => d._id === activeDayId);
+    if (!activeWeek || !activeDay) return;
+
+    const newItem = {
+      id: Date.now() + Math.random(),
+      file,
+      weekId: activeWeekId,
+      dayId: activeDayId,
+      weekNumber: activeWeek.weekNumber,
+      dayNumber: activeDay.dayNumber,
+      type: activeType,
+      status: 'pending',
+      progress: 0,
+      error: null,
+    };
+
+    setUploadQueue(prev => [...prev, newItem]);
+    setFile(null);
+    setActiveWeekId(null);
+    setActiveDayId(null);
+    setActiveType(null);
+    document.querySelectorAll('input[type="file"]').forEach(input => input.value = '');
+  };
+
+  // ── Kick queue whenever a new item is added ──────────────────────────────────
+  useEffect(() => {
+    if (!isProcessingRef.current && uploadQueue.some(item => item.status === 'pending')) {
+      processNextItem();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [uploadQueue.length]);
 
   const handleDeleteContent = (weekId, dayId, contentId) => {
     setDeleteContext({ weekId, dayId, contentId });
@@ -615,8 +528,8 @@ const CourseContentManager = () => {
     }
   };
 
-  // Add file to upload queue instead of uploading immediately
-  const addToUploadQueue = async () => {
+  // REMOVED: addToUploadQueue (replaced by addToQueue above)
+  const _placeholder_addToUploadQueue = async () => {
     if (!file || !activeWeekId || !activeDayId || !activeType) return;
 
     setUploading(true);
@@ -643,9 +556,9 @@ const CourseContentManager = () => {
         if (file.size > VIDEO_MULTIPART_THRESHOLD) {
           // ── Gumlet multipart upload ──────────────────────────────────────
           const initiateRes = await initiateGumletMultipart();
-          const { asset_id, upload_id } = initiateRes.data;
+          const { asset_id } = initiateRes.data;
 
-          if (!asset_id || !upload_id) {
+          if (!asset_id) {
             throw new Error("Failed to initiate Gumlet multipart upload");
           }
 
@@ -667,23 +580,23 @@ const CourseContentManager = () => {
 
                 const uploadPromise = (async () => {
                   let retries = 3;
-                  let etag = null;
+                  let ETag = null;
 
                   while (retries > 0) {
                     try {
-                      const signRes = await signGumletPart(asset_id, upload_id, partNumber);
-                      const { signed_url } = signRes.data;
+                      const signRes = await signGumletPart(asset_id, partNumber);
+                      const { part_upload_url } = signRes.data;
 
                       const xhr = await new Promise((resolve, reject) => {
                         const x = new XMLHttpRequest();
-                        x.open("PUT", signed_url);
+                        x.open("PUT", part_upload_url);
                         x.onload = () => (x.status === 200 ? resolve(x) : reject(new Error(`Part ${partNumber} failed: ${x.status}`)));
                         x.onerror = () => reject(new Error(`Part ${partNumber} network error`));
                         x.send(partBlob);
                       });
 
-                      etag = xhr.getResponseHeader("ETag");
-                      if (!etag) throw new Error("No ETag received");
+                      ETag = xhr.getResponseHeader("ETag");
+                      if (!ETag) throw new Error("No ETag received");
                       break;
                     } catch (err) {
                       retries--;
@@ -692,15 +605,15 @@ const CourseContentManager = () => {
                     }
                   }
 
-                  return { part_number: partNumber, etag };
+                  return { PartNumber: partNumber, ETag };
                 })();
 
                 batchPromises.push(uploadPromise);
               }
 
               const batchResults = await Promise.all(batchPromises);
-              batchResults.forEach(({ part_number, etag }) => {
-                uploadedParts.push({ part_number, etag });
+              batchResults.forEach(({ PartNumber, ETag }) => {
+                uploadedParts.push({ PartNumber, ETag });
                 uploadedBytes += PART_SIZE;
               });
 
@@ -708,12 +621,11 @@ const CourseContentManager = () => {
               setUploadProgress(Math.min(progress, 99));
             }
 
-            uploadedParts.sort((a, b) => a.part_number - b.part_number);
-            await completeGumletMultipart(asset_id, upload_id, uploadedParts);
+            uploadedParts.sort((a, b) => a.PartNumber - b.PartNumber);
+            await completeGumletMultipart(asset_id, uploadedParts);
             setUploadProgress(100);
 
           } catch (err) {
-            await abortGumletMultipart(asset_id, upload_id).catch(() => {});
             throw err;
           }
 
@@ -962,81 +874,6 @@ const CourseContentManager = () => {
     }
   };
 
-  // Bulk save all uploaded files
-  const bulkSaveFiles = async () => {
-    if (uploadedFiles.length === 0) return;
-
-    setBulkSaving(true);
-    setBulkSaveProgress(0);
-    setError(null);
-
-    try {
-      const unsavedFiles = uploadedFiles.filter(file => !file.saved);
-
-      for (let i = 0; i < unsavedFiles.length; i++) {
-        const fileData = unsavedFiles[i];
-
-        try {
-          await saveContent(id, fileData.weekId, fileData.dayId, {
-            type: fileData.type,
-            title: fileData.file.name.split(".")[0], // remove extension
-            ...(fileData.type === "video"
-              ? { asset_id: fileData.asset_id }
-              : { s3Key: fileData.s3Key }),
-          });
-
-          // Mark file as saved
-          setUploadedFiles(prev =>
-            prev.map(file =>
-              file.id === fileData.id
-                ? { ...file, saved: true }
-                : file
-            )
-          );
-
-          // Update progress
-          setBulkSaveProgress(Math.round(((i + 1) / unsavedFiles.length) * 100));
-
-        } catch (err) {
-          console.error(`Failed to save ${fileData.file.name}:`, err);
-          // Continue with other files even if one fails
-        }
-      }
-
-      // Refresh course data to show saved content
-      fetchCourse();
-
-      // Show success message
-      const successDiv = document.createElement('div');
-      successDiv.className = 'alert alert-success alert-dismissible fade show mt-3';
-      successDiv.innerHTML = `
-        <i class="bi bi-check-circle me-2"></i>
-        Successfully saved ${unsavedFiles.length} file(s) to the course.
-        <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
-      `;
-      document.querySelector('.container-fluid').insertBefore(successDiv, document.querySelector('.container-fluid').children[2]);
-      setTimeout(() => successDiv.remove(), 5000);
-
-    } catch (err) {
-      setError(`Bulk save failed: ${err.message}`);
-      console.error(err);
-    } finally {
-      setBulkSaving(false);
-      setBulkSaveProgress(0);
-    }
-  };
-
-  // Remove file from upload queue
-  const removeFromQueue = (fileId) => {
-    setUploadedFiles(prev => prev.filter(file => file.id !== fileId));
-  };
-
-  // Clear all uploaded files
-  const clearUploadQueue = () => {
-    if (confirm("Are you sure you want to clear all uploaded files? Files that haven't been saved will be lost.")) {
-      setUploadedFiles([]);
-    }
-  };
 
 
   const cancelUpload = () => {
@@ -1044,12 +881,8 @@ const CourseContentManager = () => {
     setActiveWeekId(null);
     setActiveDayId(null);
     setActiveType(null);
-    setUploadProgress(0);
     setError(null);
-
-    // Clear file inputs
-    const fileInputs = document.querySelectorAll('input[type="file"]');
-    fileInputs.forEach(input => input.value = '');
+    document.querySelectorAll('input[type="file"]').forEach(input => input.value = '');
   };
 
   if (!course) return (
@@ -1104,106 +937,74 @@ const CourseContentManager = () => {
           </div>
         )}
 
-        {/* Bulk Upload Queue */}
-        {uploadedFiles.length > 0 && (
-          <div className="card mb-4 border-info">
-            <div className="card-header bg-info text-white">
-              <div className="d-flex justify-content-between align-items-center">
-                <h5 className="mb-0">
-                  <i className="bi bi-files me-2"></i>
-                  Upload Queue ({uploadedFiles.length} files)
-                </h5>
-                <div className="d-flex gap-2">
-                  {uploadedFiles.some(file => !file.saved) && (
+        {/* Upload Queue Panel */}
+        {uploadQueue.length > 0 && (
+          <div className="card mb-4 border-primary">
+            <div className="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+              <h5 className="mb-0">
+                <i className="bi bi-list-task me-2"></i>
+                Upload Queue ({uploadQueue.filter(i => i.status !== 'done').length} active / {uploadQueue.length} total)
+              </h5>
+              <button
+                className="btn btn-outline-light btn-sm"
+                onClick={() => setUploadQueue(prev => prev.filter(i => i.status !== 'done'))}
+              >
+                <i className="bi bi-check2-all me-1"></i>
+                Clear Done
+              </button>
+            </div>
+            <div className="card-body py-2">
+              {uploadQueue.map(item => (
+                <div
+                  key={item.id}
+                  className={`d-flex align-items-center p-2 mb-2 rounded border ${
+                    item.status === 'done'     ? 'border-success bg-success bg-opacity-10' :
+                    item.status === 'error'    ? 'border-danger bg-danger bg-opacity-10' :
+                    item.status === 'uploading'? 'border-primary bg-primary bg-opacity-10' :
+                    'border-secondary'
+                  }`}
+                >
+                  <i className={`bi me-2 ${item.type === 'video' ? 'bi-camera-video text-primary' : 'bi-file-earmark-pdf text-danger'}`}></i>
+                  <div className="flex-grow-1 me-2" style={{ minWidth: 0 }}>
+                    <div className="d-flex justify-content-between align-items-center">
+                      <small className="fw-semibold text-truncate" style={{ maxWidth: '55%' }} title={item.file.name}>
+                        {item.file.name}
+                      </small>
+                      <small className="text-muted text-nowrap ms-2">
+                        W{item.weekNumber} / D{item.dayNumber} &bull; {(item.file.size / (1024 * 1024)).toFixed(1)} MB
+                      </small>
+                    </div>
+                    {item.status === 'uploading' && (
+                      <div className="progress mt-1" style={{ height: '4px' }}>
+                        <div
+                          className="progress-bar progress-bar-striped progress-bar-animated"
+                          style={{ width: `${item.progress}%` }}
+                        ></div>
+                      </div>
+                    )}
+                    {item.status === 'error' && (
+                      <small className="text-danger d-block mt-1">{item.error}</small>
+                    )}
+                  </div>
+                  <span className={`badge text-nowrap ms-1 ${
+                    item.status === 'done'      ? 'bg-success' :
+                    item.status === 'error'     ? 'bg-danger' :
+                    item.status === 'uploading' ? 'bg-primary' :
+                    'bg-secondary'
+                  }`}>
+                    {item.status === 'uploading' ? `${item.progress}%` : item.status}
+                  </span>
+                  {item.status === 'pending' && (
                     <button
-                      className="btn btn-success btn-sm"
-                      onClick={bulkSaveFiles}
-                      disabled={bulkSaving}
+                      className="btn btn-outline-danger btn-sm ms-2 p-0 px-1"
+                      onClick={() => setUploadQueue(prev => prev.filter(i => i.id !== item.id))}
+                      title="Remove from queue"
                     >
-                      {bulkSaving ? (
-                        <>
-                          <span className="spinner-border spinner-border-sm me-2" role="status"></span>
-                          Saving... {bulkSaveProgress}%
-                        </>
-                      ) : (
-                        <>
-                          <i className="bi bi-save me-2"></i>
-                          Save All ({uploadedFiles.filter(file => !file.saved).length})
-                        </>
-                      )}
+                      <i className="bi bi-x"></i>
                     </button>
                   )}
-                  <button
-                    className="btn btn-outline-light btn-sm"
-                    onClick={clearUploadQueue}
-                    disabled={bulkSaving}
-                  >
-                    <i className="bi bi-trash me-1"></i>
-                    Clear All
-                  </button>
                 </div>
-              </div>
-              {bulkSaving && (
-                <div className="mt-2">
-                  <div className="progress">
-                    <div
-                      className="progress-bar progress-bar-striped progress-bar-animated"
-                      role="progressbar"
-                      style={{ width: `${bulkSaveProgress}%` }}
-                    ></div>
-                  </div>
-                </div>
-              )}
-            </div>
-            <div className="card-body">
-              <div className="row">
-                {uploadedFiles.map((fileData) => (
-                  <div key={fileData.id} className="col-md-6 col-lg-4 mb-3">
-                    <div className={`card border ${fileData.saved ? 'border-success' : 'border-warning'}`}>
-                      <div className="card-body p-3">
-                        <div className="d-flex justify-content-between align-items-start mb-2">
-                          <div className="flex-grow-1">
-                            <h6 className="card-title mb-1 text-truncate" title={fileData.file.name}>
-                              <i className={`bi ${fileData.type === 'video' ? 'bi-camera-video text-primary' : 'bi-file-earmark-pdf text-danger'} me-2`}></i>
-                              {fileData.file.name}
-                            </h6>
-                            <small className="text-muted">
-                              Week {fileData.weekNumber}, Day {fileData.dayNumber} • {(fileData.file.size / (1024 * 1024)).toFixed(2)} MB
-                            </small>
-                          </div>
-                          {!bulkSaving && (
-                            <button
-                              className="btn btn-outline-danger btn-sm"
-                              onClick={() => removeFromQueue(fileData.id)}
-                              title="Remove from queue"
-                            >
-                              <i className="bi bi-x"></i>
-                            </button>
-                          )}
-                        </div>
-                        <div className="d-flex justify-content-between align-items-center">
-                          <span className={`badge ${fileData.saved ? 'bg-success' : 'bg-warning'}`}>
-                            {fileData.saved ? (
-                              <>
-                                <i className="bi bi-check-circle me-1"></i>
-                                Saved
-                              </>
-                            ) : (
-                              <>
-                                <i className="bi bi-clock me-1"></i>
-                                Pending
-                              </>
-                            )}
-                          </span>
-                          <small className="text-muted text-capitalize">
-                            {fileData.type}
-                          </small>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              ))}
             </div>
           </div>
         )}
@@ -1408,7 +1209,7 @@ const CourseContentManager = () => {
                                         setFile(null);
                                         setError(null);
                                       }}
-                                      disabled={uploading}
+                                      disabled={false}
                                       style={{ fontSize: "0.7rem" }}
                                     >
                                       <i className="bi bi-camera-video me-1"></i>
@@ -1423,7 +1224,7 @@ const CourseContentManager = () => {
                                         setFile(null);
                                         setError(null);
                                       }}
-                                      disabled={uploading}
+                                      disabled={false}
                                       style={{ fontSize: "0.7rem" }}
                                     >
                                       <i className="bi bi-file-earmark-pdf me-1"></i>
@@ -1439,7 +1240,7 @@ const CourseContentManager = () => {
                                         onChange={handleFileChange}
                                         className="form-control form-control-sm"
                                         accept={activeType === "video" ? "video/*" : ".pdf,.doc,.docx"}
-                                        disabled={uploading}
+                                        disabled={false}
                                         style={{ fontSize: "0.7rem" }}
                                       />
                                       <div className="form-text" style={{ fontSize: "0.6rem" }}>
@@ -1454,39 +1255,18 @@ const CourseContentManager = () => {
                                             <span className="text-muted ms-2">({(file.size / (1024 * 1024)).toFixed(2)} MB)</span>
                                           </div>
 
-                                          {/* Progress bar */}
-                                          {uploading && (
-                                            <div className="mb-2">
-                                              <div className="d-flex justify-content-between mb-1" style={{ fontSize: "0.65rem" }}>
-                                                <span className="text-muted">Uploading...</span>
-                                                <span className="text-muted">{uploadProgress}%</span>
-                                              </div>
-                                              <div className="progress" style={{ height: "6px" }}>
-                                                <div
-                                                  className="progress-bar progress-bar-striped progress-bar-animated"
-                                                  style={{ width: `${uploadProgress}%` }}
-                                                />
-                                              </div>
-                                            </div>
-                                          )}
 
                                           <div className="d-flex gap-1 flex-wrap">
                                             <button
                                               className="btn btn-success btn-sm"
-                                              onClick={uploadContent}
-                                              disabled={uploading}
+                                              onClick={addToQueue}
                                               style={{ fontSize: "0.65rem" }}
                                             >
-                                              {uploading ? (
-                                                <><span className="spinner-border spinner-border-sm me-1" />Uploading...</>
-                                              ) : (
-                                                <><i className="bi bi-upload me-1" />Upload & Save</>
-                                              )}
+                                              <i className="bi bi-plus-circle me-1" />Add to Queue
                                             </button>
                                             <button
                                               className="btn btn-outline-secondary btn-sm"
                                               onClick={cancelUpload}
-                                              disabled={uploading}
                                               style={{ fontSize: "0.65rem" }}
                                             >
                                               <i className="bi bi-x me-1" />Cancel

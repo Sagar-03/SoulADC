@@ -71,67 +71,50 @@ function getEmbedUrl(assetId) {
 }
 
 // ── Gumlet Multipart Upload ─────────────────────────────────────────────────
+// Official flow (no separate initiate step, no upload_id):
+//   1. POST /video/assets/upload                              → { asset_id }
+//   2. GET  /video/assets/{asset_id}/multipartupload/{n}/sign → { part_upload_url }
+//      PUT  {part_upload_url}  (raw chunk bytes)              → ETag header
+//   3. POST /video/assets/{asset_id}/multipartupload/complete
+//      Body: { parts: [{ PartNumber, ETag }] }
 
 /**
- * Step 1 (multipart): Create an upload asset and initiate a multipart session.
- * POST /video/assets/upload  →  { upload_url, asset_id }
- * POST /video/assets/{asset_id}/multipart  →  { upload_id }
+ * Step 1: Create an upload asset. Returns { asset_id } for use in subsequent steps.
  */
 async function initiateMultipartVideoUpload() {
   const sourceId = getRequiredEnv("GUMLET_SOURCE_ID");
   const client = getClient();
 
-  // 1. Create the asset
   const createRes = await client.post("/video/assets/upload", { source_id: sourceId });
   const { asset_id } = createRes.data || {};
   if (!asset_id) throw new Error("Invalid response from Gumlet upload API");
 
-  // 2. Initiate multipart on that asset
-  const mpRes = await client.post(`/video/assets/${asset_id}/multipart`);
-  const { upload_id } = mpRes.data || {};
-  if (!upload_id) throw new Error("Gumlet did not return upload_id for multipart");
-
-  return { asset_id, upload_id };
+  return { asset_id };
 }
 
 /**
- * Step 2 (multipart): Get a presigned URL for one part.
- * POST /video/assets/{asset_id}/multipart/sign  →  { signed_url }
+ * Step 2: Get a presigned S3 URL for one part.
+ * GET /video/assets/{asset_id}/multipartupload/{part_number}/sign
+ * Returns { part_upload_url }
  */
-async function signVideoMultipartPart(assetId, uploadId, partNumber) {
+async function signVideoMultipartPart(assetId, partNumber) {
   const client = getClient();
-  const res = await client.post(`/video/assets/${assetId}/multipart/sign`, {
-    upload_id: uploadId,
-    part_number: partNumber,
-  });
-  const { signed_url } = res.data || {};
-  if (!signed_url) throw new Error(`No signed_url returned for part ${partNumber}`);
-  return { signed_url };
+  const res = await client.get(
+    `/video/assets/${assetId}/multipartupload/${partNumber}/sign`
+  );
+  const { part_upload_url } = res.data || {};
+  if (!part_upload_url) throw new Error(`No part_upload_url returned for part ${partNumber}`);
+  return { part_upload_url };
 }
 
 /**
- * Step 3 (multipart): Complete the multipart upload.
- * POST /video/assets/{asset_id}/multipart/complete
- * Body: { upload_id, parts: [{ part_number, etag }] }
+ * Step 3: Complete the multipart upload.
+ * POST /video/assets/{asset_id}/multipartupload/complete
+ * Body: { parts: [{ PartNumber: number, ETag: string }] }
  */
-async function completeMultipartVideoUpload(assetId, uploadId, parts) {
+async function completeMultipartVideoUpload(assetId, parts) {
   const client = getClient();
-  await client.post(`/video/assets/${assetId}/multipart/complete`, {
-    upload_id: uploadId,
-    parts,
-  });
-}
-
-/**
- * Abort a multipart upload.
- * DELETE /video/assets/{asset_id}/multipart
- * Body: { upload_id }
- */
-async function abortMultipartVideoUpload(assetId, uploadId) {
-  const client = getClient();
-  await client.delete(`/video/assets/${assetId}/multipart`, {
-    data: { upload_id: uploadId },
-  });
+  await client.post(`/video/assets/${assetId}/multipartupload/complete`, { parts });
 }
 
 module.exports = {
@@ -143,5 +126,4 @@ module.exports = {
   initiateMultipartVideoUpload,
   signVideoMultipartPart,
   completeMultipartVideoUpload,
-  abortMultipartVideoUpload,
 };
