@@ -168,6 +168,12 @@ const Navbar = () => {
             </li>
 
             <li>
+              <Link to="/live" className="btn btn-enroll mx-3">
+                Live
+              </Link>
+            </li>
+
+            <li>
               <Link to="/ContactUs" className="btn btn-enroll mx-3">
                 Contact
               </Link>

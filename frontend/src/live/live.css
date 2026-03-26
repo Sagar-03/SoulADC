@@ -1,0 +1,230 @@
+.live-page {
+  min-height: 100vh;
+  background: #FAF9F6;
+  padding: 24px;
+}
+
+.live-page__container {
+  max-width: 1200px;
+  margin: 0 auto;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  padding: 32px;
+}
+
+.live-page__header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #f0ede8;
+}
+
+.live-page__header h1 {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #5A3825;
+}
+
+.live-page__badge {
+  background: #cc1f1f;
+  color: #ffffff;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+}
+
+.live-page__subtitle {
+  text-align: flex-start;
+  margin: 0 0 24px;
+  color: #8B5E3C;
+  font-size: 0.95rem;
+}
+
+.live-player__frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #000;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.live-player__fallback,
+.live-page__message {
+  display: grid;
+  place-items: center;
+  min-height: 280px;
+  border: 2px solid #e8dfd6;
+  border-radius: 12px;
+  background: #fdfcfa;
+  color: #5A3825;
+  text-align: center;
+  padding: 24px;
+  margin-bottom: 20px;
+  font-size: 0.95rem;
+}
+
+.live-page__message--error {
+  background: #fff5f5;
+  border-color: #f0ded9;
+  color: #8e1818;
+}
+
+.live-page__refresh,
+.live-admin__create {
+  margin-top: 0;
+  background: #8B5E3C;
+  color: #fff;
+  border: 0;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.live-page__refresh:hover,
+.live-admin__create:hover {
+  background: #5A3825;
+  transform: translateY(-2px);
+}
+
+.live-page__refresh:disabled,
+.live-admin__create:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.live-admin {
+  margin-top: 32px;
+  border-top: 2px solid #f0ede8;
+  padding-top: 24px;
+}
+
+.live-admin h2 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: #5A3825;
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.live-admin__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.live-admin__grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: #5A3825;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.live-admin__grid input {
+  border: 1px solid #d4c5bb;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 0.9rem;
+  background: #fdfcfa;
+  color: #333;
+  transition: border-color 0.3s ease, background 0.3s ease;
+}
+
+.live-admin__grid input:focus {
+  outline: none;
+  border-color: #8B5E3C;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(139, 94, 60, 0.1);
+}
+
+.live-admin__full {
+  grid-column: 1 / -1;
+}
+
+.live-admin__credentials {
+  margin-top: 24px;
+  border: 1px solid #d4c5bb;
+  border-radius: 12px;
+  background: #fdfcfa;
+  padding: 20px;
+  border-left: 4px solid #8B5E3C;
+}
+
+.live-admin__credentials h3 {
+  margin-top: 0;
+  margin-bottom: 16px;
+  color: #5A3825;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.live-admin__credentials p {
+  margin: 10px 0;
+  word-break: break-all;
+  color: #333;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  padding: 8px 12px;
+  background: #fff;
+  border-radius: 6px;
+  border-left: 3px solid #8B5E3C;
+}
+
+@media (max-width: 968px) {
+  .live-page__container {
+    padding: 20px;
+  }
+
+  .live-page__header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .live-page__header h1 {
+    font-size: 1.6rem;
+  }
+
+  .live-admin__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .live-page {
+    padding: 12px;
+  }
+
+  .live-page__container {
+    padding: 16px;
+  }
+
+  .live-page__header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .live-page__header h1 {
+    font-size: 1.4rem;
+  }
+
+  .live-admin__grid {
+    grid-template-columns: 1fr;
+  }
+}

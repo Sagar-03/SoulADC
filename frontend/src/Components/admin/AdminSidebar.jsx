@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { RxDashboard } from "react-icons/rx";
-import { FaBook, FaUsers, FaPlus, FaFilePdf, FaSignOutAlt, FaClipboardList, FaCheckCircle, FaTag } from "react-icons/fa";
+import { FaBook, FaUsers, FaPlus, FaFilePdf, FaSignOutAlt, FaClipboardList, FaCheckCircle, FaTag, FaBroadcastTower } from "react-icons/fa";
 import { FiMessageCircle } from "react-icons/fi";
 import logo from "../../assets/logo.png";
 import { logout } from "../../utils/auth";
@@ -90,6 +90,12 @@ const AdminSidebar = () => {
                     text="Discount Codes"
                     active={location.pathname === "/admin/discount-codes"}
                     onClick={() => navigate("/admin/discount-codes")}
+                />
+                <SidebarItem
+                    icon={<FaBroadcastTower />}
+                    text="Live Stream"
+                    active={location.pathname === "/live"}
+                    onClick={() => navigate("/live")}
                 />
                 <SidebarItem
                     icon={<FaSignOutAlt />}

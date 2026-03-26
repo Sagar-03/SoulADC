@@ -50,6 +50,7 @@ import StudentMocks from "./Components/student/StudentMocks";
 import MockAttempt from "./Components/student/MockAttempt";
 import MockResult from "./Components/student/MockResult";
 import MocksPage from "./Components/MocksPage/MocksPage";
+import LivePage from "./live/LivePage";
 
 // 🔹 Protected Route Wrapper
 const ProtectedRoute = ({ children, requirePurchased = false, adminOnly = false }) => {
@@ -105,6 +106,7 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/Tnc" element={<Tnc />} />
         <Route path="/ContactUs" element={<ContactUs />} />
+        <Route path="/live" element={<LivePage />} />
         {/* <Route path="/studentdoubts" element={<StudentDoubtPanel />} />
         <Route path="/admindoubts" element={<AdminDoubtPanel />} /> */}
 

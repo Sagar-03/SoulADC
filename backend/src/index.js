@@ -17,6 +17,7 @@ const streamRoutes = require("./routes/stream.js");
 const multipartUploadRoutes = require("./routes/multipartUpload.js");
 const mockRoutes = require("./routes/mockRoutes.js");
 const sharedContentRoutes = require("./routes/sharedContentRoutes.js");
+const liveRoutes = require("./live/liveRoutes");
 // const doubtRoutes = require("./routes/doubtRoutes.js");
 // const Doubt = require("./models/Chat.js");
 
@@ -78,6 +79,7 @@ app.use("/api/stream", streamRoutes);
 app.use("/api/video", streamRoutes); // Route for new signed URL endpoint
 app.use("/api/multipart-upload", multipartUploadRoutes);
 app.use("/api/mocks", mockRoutes);
+app.use("/api/live", liveRoutes);
 // app.use("/api/doubts", doubtRoutes);
 
 // ===================== CHAT SOCKET.IO =====================
